@@ -1,38 +1,34 @@
 import * as THREE from "three";
 import "./style.css";
 import { createWorld } from "./world.js";
+import { createCombat, ENCOUNTERS } from "./game/combat.js";
+import {
+  freshState,
+  normalizeSave,
+  SAVE_KEY,
+  claimReward,
+} from "./game/save.js";
 
-const defaults = {
-  gold: 240,
-  potions: 3,
-  quest: false,
-  visited: [],
-  roster: ["Ilyra", "Bram", "Eira"],
-  weapon: false,
-  stash: 0,
-};
-let state = { ...defaults };
+let state = freshState();
 try {
-  const s = JSON.parse(localStorage.getItem("emberfall-camp-v1"));
-  if (s && s.version === 1) state = { ...defaults, ...s };
-} catch {}
+  state = normalizeSave(JSON.parse(localStorage.getItem(SAVE_KEY)));
+} catch {
+  /* Browser storage can be unavailable. */
+}
 const save = () => {
   try {
-    localStorage.setItem(
-      "emberfall-camp-v1",
-      JSON.stringify({ ...state, version: 1 }),
-    );
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch {
     toast("Browser storage unavailable. Progress lasts for this session.");
   }
 };
 const app = document.querySelector("#app");
 app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to move, or use WASD. Press E near a towns-person to interact."></canvas><div id="vignette"></div><div class="labels" id="labels"></div>
-<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · CAMP PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle ambient sound" aria-label="Toggle ambient sound">♫</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">?</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">⚙</button></div></header>
+<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle ambient sound" aria-label="Toggle ambient sound">♫</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">?</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">⚙</button></div></header>
 <aside class="party" id="party" aria-label="Your party"></aside><aside class="quest"><div class="eyebrow">Quest journal</div><h2 id="quest-title">A light in the darkness</h2><p id="quest-text">Speak to Akara.<br>Find your footing in camp.</p><button id="journal-link">OPEN JOURNAL &nbsp; [J]</button></aside>
 <div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div></div>
 <div class="controls">CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP</div><div class="chapter"><strong>ACT I · THE SIGHTLESS EYE</strong><span id="save-note">PROGRESS SAVED ON THIS DEVICE</span></div>
-<footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="level-bar"><i></i></div><div class="slots"><button class="slot" data-action="attack" title="Practice swing [1]"><kbd>1</kbd>⚔</button><button class="slot" data-action="guard" title="Guard stance [2]"><kbd>2</kbd>⛨</button><button class="slot" data-action="rally" title="Regroup party [3]"><kbd>3</kbd>⚑</button><button class="slot" data-action="heal" title="Healing potion [4]"><kbd>4</kbd>♜<small id="potions">3</small></button><button class="slot" data-action="hold" title="Hold / follow [5]"><kbd>5</kbd>✥</button><button class="slot" data-action="portal" title="Return to campfire [6]"><kbd>6</kbd>◉</button></div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><div class="toast" role="status" id="toast"></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">×</button><div id="dialog-content"></div></dialog>`;
+<footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="level-bar"><i></i></div><div class="slots"><button class="slot" data-action="attack" title="Cleave [1] · 8 mana"><kbd>1</kbd>⚔</button><button class="slot" data-action="guard" title="Guard [2] · 10 mana"><kbd>2</kbd>⛨</button><button class="slot" data-action="rally" title="Regroup party [3]"><kbd>3</kbd>⚑</button><button class="slot" data-action="heal" title="Healing potion [4]"><kbd>4</kbd>♜<small id="potions">3</small></button><button class="slot" data-action="hold" title="Hold / follow [5]"><kbd>5</kbd>✥</button><button class="slot" data-action="portal" title="Return to campfire [6]"><kbd>6</kbd>◉</button></div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">×</button><div id="dialog-content"></div></dialog>`;
 const dialog = document.querySelector("dialog"),
   content = document.querySelector("#dialog-content");
 let toastTimer;
@@ -77,6 +73,117 @@ try {
   throw e;
 }
 const { hero, companions, npcs, camera, renderer } = game;
+let combat = createCombat(state, combatEvent, game.blocked);
+game.setCombat(combat);
+const damageNumbers = [];
+function combatEvent(event) {
+  if (event.type === "swing") {
+    game.animateAttack(event.id);
+    if (event.target && (event.id === "Ilyra" || event.id === "Eira"))
+      game.projectile(event.id, event.target);
+    if (event.cleave) game.pulse(0xe4d6a6);
+  }
+  if (event.type === "hit") {
+    const el = document.createElement("span");
+    el.className = "damage-number" + (event.victim === "hero" ? " taken" : "");
+    el.textContent = Math.round(event.damage);
+    document.querySelector("#damage-numbers").append(el);
+    damageNumbers.push({ el, x: event.x, z: event.z, life: 0.9 });
+  }
+  if (event.type === "kill") {
+    update();
+    if (event.complete)
+      toast("The Blood Moor is clear. Return to Akara for your reward.");
+  }
+  if (event.type === "loot") {
+    update();
+    toast(
+      event.charm
+        ? "Ashen charm acquired · +3 attack damage"
+        : `Picked up ${event.gold} gold.`,
+    );
+  }
+  if (event.type === "heal") {
+    game.pulse(0x91c8a5);
+    save();
+  }
+  if (event.type === "down" && event.id !== "hero")
+    toast(`${event.id} is down. Return to camp to revive your company.`);
+  if (event.type === "defeat")
+    queueMicrotask(() => {
+      const loss = Math.min(25, Math.floor(state.gold * 0.1));
+      state.gold -= loss;
+      returnToCamp();
+      update();
+      modal(
+        "The company retreats",
+        `<p>Your companions carried you back to safety. You lost ${loss} gold; your equipment and expedition progress are intact.</p>`,
+        [{ label: "Rest at camp", run: () => dialog.close() }],
+      );
+    });
+}
+function refreshEnemyLabels() {
+  const container = document.querySelector("#combat-labels");
+  container.replaceChildren();
+  for (const enemy of combat.enemies) {
+    const el = document.createElement("button");
+    el.className = "enemy-label" + (enemy.elite ? " elite" : "");
+    el.setAttribute("aria-label", `Attack ${enemy.name} ${enemy.id}`);
+    el.innerHTML = `<span>${enemy.name}</span><i><b></b></i>`;
+    el.onclick = () => {
+      pending = null;
+      combat.select(enemy.id);
+    };
+    container.append(el);
+    enemy.label = el;
+  }
+}
+function enterMoor() {
+  pending = null;
+  dialog.close();
+  game.setZone("moor");
+  game.hold = false;
+  combat.cancel();
+  document.querySelector(".place h1").textContent = "Blood Moor";
+  document.querySelector(".safe").textContent = "HOSTILE TERRITORY";
+  document.querySelector(".safe").classList.add("hostile");
+  document.querySelector(".map-caption").textContent = "BLOOD MOOR";
+  document.querySelector("#return-camp").hidden = false;
+  document.querySelector(".controls").innerHTML =
+    "CLICK ENEMY TO ATTACK <span>·</span> 1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION";
+  update();
+  toast("Stay together. Enemy attacks are telegraphed—move to dodge.");
+}
+function returnToCamp() {
+  pending = null;
+  game.returnHome();
+  combat.restore();
+  document.querySelector(".place h1").textContent = "Rogue Encampment";
+  document.querySelector(".safe").textContent = "SANCTUARY";
+  document.querySelector(".safe").classList.remove("hostile");
+  document.querySelector(".map-caption").textContent = "ROGUE ENCAMPMENT";
+  document.querySelector("#return-camp").hidden = true;
+  document.querySelector('[data-action="hold"]').classList.remove("active");
+  document.querySelector(".controls").innerHTML =
+    "CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP";
+  update();
+}
+function expeditionModal() {
+  modal(
+    "Beyond the palisade",
+    `<p>Fallen and restless dead stalk the old road. Lead your company into the Blood Moor, defeat its 12 enemies, and bring word back to Akara.</p><p class="muted">Click an enemy to approach and attack. Use Cleave [1], Guard [2], and potions [4]. Collect glowing drops by walking near them.</p>`,
+    [
+      { label: "Enter the Blood Moor", run: enterMoor },
+      { label: "Stay in camp", run: () => dialog.close() },
+    ],
+    "Chapter I · First expedition",
+  );
+}
+refreshEnemyLabels();
+document.querySelector("#return-camp").onclick = () => {
+  returnToCamp();
+  toast("The company returns to camp and recovers.");
+};
 const roster = {
   Ilyra: { role: "Rogue scout", symbol: "♜", color: "#9cad79" },
   Bram: { role: "Shield mercenary", symbol: "⛨", color: "#c1a37f" },
@@ -102,12 +209,25 @@ function update() {
   companions.forEach(
     (c, i) => (c.visible = state.roster.includes(Object.keys(roster)[i])),
   );
-  document.querySelector("#quest-title").textContent = state.quest
-    ? "Prepare for the wilderness"
-    : "A light in the darkness";
-  document.querySelector("#quest-text").innerHTML = state.quest
-    ? `${state.visited.length}/3 camp services visited.<br>${state.visited.length === 3 ? "Camp preparations complete." : "Meet Charsi, Kashya, and the stash."}`
-    : "Speak to Akara.<br>Find your footing in camp.";
+  const inMoor = game.zone === "moor";
+  document.querySelector("#quest-title").textContent = state.rewardClaimed
+    ? "The road is clear"
+    : state.defeated.length === ENCOUNTERS.length
+      ? "Return to Akara"
+      : inMoor
+        ? "Clear the Blood Moor"
+        : state.quest
+          ? "Prepare for the wilderness"
+          : "A light in the darkness";
+  document.querySelector("#quest-text").innerHTML = inMoor
+    ? `${state.defeated.length} / ${ENCOUNTERS.length} enemies defeated.<br>${state.defeated.length === ENCOUNTERS.length ? "Return to camp to claim your reward." : "Collect glowing drops. Stay together."}`
+    : state.rewardClaimed
+      ? "Expedition complete.<br>The Den of Evil is next."
+      : state.defeated.length === ENCOUNTERS.length
+        ? "The company has prevailed.<br>Speak to Akara for your reward."
+        : state.quest
+          ? `${state.visited.length}/3 camp services visited.<br>${state.visited.length === 3 ? "Enter the eastern gate when ready." : "Meet Charsi, Kashya, and the stash."}`
+          : "Speak to Akara.<br>Find your footing in camp.";
   save();
 }
 function visited(id) {
@@ -119,26 +239,44 @@ function visited(id) {
 function showCharacter() {
   modal(
     "The Wanderer",
-    `<p>A traveler on the western road. A sword, a few coins, and three souls willing to stand beside you.</p><div class="item-row"><span>Class</span><strong>Warrior · Level 1</strong></div><div class="item-row"><span>Life / Mana</span><strong>120 / 60</strong></div><div class="item-row"><span>Weapon</span><strong>${state.weapon ? "Tempered longsword" : "Worn longsword"}</strong></div><div class="item-row"><span>Attack damage</span><strong>${state.weapon ? "12–18" : "6–10"}</strong></div><p class="muted">Combat progression begins beyond the camp in a future build.</p>`,
+    `<p>A traveler on the western road. A sword, a few coins, and three souls willing to stand beside you.</p><div class="item-row"><span>Class</span><strong>Warrior · Level 1</strong></div><div class="item-row"><span>Life / Mana</span><strong>120 / 60</strong></div><div class="item-row"><span>Weapon</span><strong>${state.weapon ? "Tempered longsword" : "Worn longsword"}</strong></div><div class="item-row"><span>Attack damage</span><strong>${state.weapon ? "12–18" : "6–10"}${state.charm ? " + 3" : ""}</strong></div><div class="item-row"><span>Experience earned</span><strong>${state.xp}</strong></div><p class="muted">Cleave hits nearby enemies. Guard reduces incoming damage for three seconds.</p>`,
   );
 }
 function showInventory() {
   modal(
     "Your belongings",
-    `<div class="item-row"><span>${state.weapon ? "Tempered" : "Worn"} longsword</span><span>Equipped</span></div><div class="item-row"><span>Traveler’s armor</span><span>Equipped</span></div><div class="item-row"><span>Healing potions</span><span>× ${state.potions}</span></div><div class="item-row"><span>Town portal stone</span><span>Reusable</span></div><p class="gold">◈ ${state.gold} gold carried · ${state.stash} in stash</p>`,
+    `<div class="item-row"><span>${state.weapon ? "Tempered" : "Worn"} longsword</span><span>Equipped</span></div><div class="item-row"><span>Traveler’s armor</span><span>Equipped</span></div><div class="item-row"><span>Healing potions</span><span>× ${state.potions}</span></div><div class="item-row"><span>Town portal stone</span><span>Reusable</span></div>${state.charm ? '<div class="item-row"><span>Ashen charm</span><span>Equipped · +3 damage</span></div>' : ""}<p class="gold">◈ ${state.gold} gold carried · ${state.stash} in stash</p>`,
   );
 }
 function showJournal() {
+  if (game.zone === "moor" || state.defeated.length) {
+    modal(
+      "The old road",
+      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${state.defeated.length} / ${ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "Reward claimed. The Den of Evil is the next development milestone." : state.defeated.length === ENCOUNTERS.length ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>`,
+      [],
+      "Act I · First expedition",
+    );
+    return;
+  }
   modal(
     "A light in the darkness",
     state.quest
-      ? `<p>Akara has asked you to prepare your company before venturing beyond the palisade.</p>${["Charsi", "Kashya", "Stash"].map((n) => `<div class="item-row"><span>${n}</span><span>${state.visited.includes(n) ? "✓ Visited" : "Not yet visited"}</span></div>`).join("")}<p>${state.visited.length === 3 ? "Your company is ready. The wilderness chapter is the next build." : "Visit the blacksmith, recruitment post, and shared stash."}</p>`
+      ? `<p>Akara has asked you to prepare your company before venturing beyond the palisade.</p>${["Charsi", "Kashya", "Stash"].map((n) => `<div class="item-row"><span>${n}</span><span>${state.visited.includes(n) ? "✓ Visited" : "Not yet visited"}</span></div>`).join("")}<p>${state.visited.length === 3 ? "Your company is ready. Enter the eastern gate to explore the Blood Moor." : "Visit the blacksmith, recruitment post, and shared stash."}</p>`
       : "<p>The encampment is the last safe haven on the western road. Find Akara near the violet tent and learn what troubles these lands.</p>",
     [],
     "Act I · Camp preparations",
   );
 }
 function showParty() {
+  if (game.zone === "moor") {
+    modal(
+      "Your company",
+      "<p>Return to Kashya in camp to recruit or dismiss companions. Downed allies recover when you return to safety.</p>",
+      [],
+      "Party management",
+    );
+    return;
+  }
   modal(
     "Your company",
     `<p>One hero. Three companions. Your company follows you through the camp.</p>`,
@@ -161,7 +299,28 @@ function showParty() {
   );
 }
 function interact(id) {
+  if (game.zone !== "camp") return;
   if (id === "Akara") {
+    if (state.defeated.length === ENCOUNTERS.length && !state.rewardClaimed) {
+      modal(
+        "The road is clear",
+        "<p>“You have given us a little breathing room, traveler. Take these supplies. There will be darker paths ahead.”</p>",
+        [
+          {
+            label: "Claim reward · 100 gold + 2 potions",
+            run: () => {
+              if (claimReward(state)) {
+                update();
+                toast("Expedition complete. Reward added to your inventory.");
+              }
+              dialog.close();
+            },
+          },
+        ],
+        "Akara · Expedition complete",
+      );
+      return;
+    }
     modal(
       "Akara",
       `<p>“There is a darkness beyond these walls, traveler. But here, for a moment, you may rest. Gather your company. We will need every willing blade.”</p><p class="muted">Healer · Potions · Camp preparations</p>`,
@@ -180,6 +339,7 @@ function interact(id) {
           label: "Rest and restore the party",
           run: () => {
             dialog.close();
+            combat.restore();
             game.pulse(0x9bbba0);
             toast("The party is rested. Life and mana restored.");
           },
@@ -264,21 +424,18 @@ function interact(id) {
           label: "Rogue Encampment · Current location",
           run: () => {
             dialog.close();
-            game.returnHome();
+            returnToCamp();
             toast("Returned to the campfire.");
           },
         },
       ],
     );
-  if (id === "Blood Moor")
-    modal(
-      "Beyond the palisade",
-      '<p>The road leads into the Blood Moor. For this first playtest, the explorable area ends at the camp.</p><p class="muted">Next: wilderness encounters, loot drops, and the Den of Evil.</p>',
-      [{ label: "Return to camp", run: () => dialog.close() }],
-      "Chapter I · Next expedition",
-    );
+  if (id === "Blood Moor") expeditionModal();
 }
 let pending = null;
+game.onManualMove = () => {
+  pending = null;
+};
 for (const npc of npcs) {
   const el = document.createElement("button");
   el.className = "npc-label";
@@ -298,6 +455,7 @@ function action(name) {
   if (name === "rally") {
     game.hold = false;
     game.regroup();
+    combat.rally();
     toast("Your company gathers around you.");
   }
   if (name === "hold") {
@@ -310,18 +468,35 @@ function action(name) {
       .classList.toggle("active", game.hold);
   }
   if (name === "portal") {
-    game.returnHome();
+    returnToCamp();
     toast("Returned to the campfire.");
   }
   if (name === "attack") {
+    if (game.zone === "moor") {
+      if (!combat.cleave())
+        toast("Cleave needs a nearby enemy, 8 mana, and a ready blade.");
+      return;
+    }
     game.swing();
     toast("Practice swing · The camp is a sanctuary.");
   }
   if (name === "guard") {
+    if (game.zone === "moor") {
+      if (combat.defend()) {
+        game.pulse(0xd5bd78);
+        toast("Guard raised · damage reduced for 3 seconds.");
+      } else toast("Guard needs 10 mana and an 8-second cooldown.");
+      return;
+    }
     game.pulse(0xd5bd78);
     toast("Guard stance · Ready for what lies beyond.");
   }
   if (name === "heal") {
+    if (game.zone === "moor" && combat.heal()) {
+      update();
+      toast("Healing potion used · restored up to 65 life.");
+      return;
+    }
     if (state.potions === 0)
       return toast("No healing potions. Visit Akara to buy more.");
     toast("Life is already full. Potion preserved.");
@@ -338,7 +513,7 @@ document.querySelector("#party-menu").onclick = showParty;
 const help = () =>
   modal(
     "The road begins here",
-    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. This build contains the camp; wilderness combat comes next.</p>',
+    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. Click an enemy to attack, 1 to cleave, 2 to guard, and 4 to heal. Press 6 to retreat. The Den of Evil comes next.</p>',
   );
 document.querySelector("#help").onclick = help;
 document.querySelector("#settings").onclick = () =>
@@ -365,13 +540,12 @@ document.querySelector("#settings").onclick = () =>
             {
               label: "Reset this playtest",
               run: () => {
-                state = {
-                  ...defaults,
-                  roster: [...defaults.roster],
-                  visited: [],
-                };
+                state = freshState();
+                combat = createCombat(state, combatEvent, game.blocked);
+                game.setCombat(combat);
+                refreshEnemyLabels();
                 update();
-                game.returnHome();
+                returnToCamp();
                 dialog.close();
                 toast("A new journey begins.");
               },
@@ -422,6 +596,15 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
   const k = e.key.toLowerCase();
   if (k === "e") {
+    if (game.zone === "moor") {
+      if (hero.position.distanceTo(new THREE.Vector3(-15, 0, 10)) < 4)
+        returnToCamp();
+      else
+        toast(
+          "Walk over glowing drops to collect them. Press 6 to return to camp.",
+        );
+      return;
+    }
     const npc = [...npcs].sort(
       (a, b) =>
         a.point.distanceTo(hero.position) - b.point.distanceTo(hero.position),
@@ -459,7 +642,7 @@ function drawMap() {
   ctx.moveTo(65, 108);
   ctx.lineTo(241, 108);
   ctx.stroke();
-  for (const n of npcs) {
+  for (const n of game.zone === "camp" ? npcs : []) {
     ctx.fillStyle = n.name === "Akara" ? "#d6b575" : "#859983";
     const [x, z] = pos(n.point);
     ctx.fillRect(x - 2, z - 2, 4, 4);
@@ -469,6 +652,12 @@ function drawMap() {
     ctx.fillStyle = "#99b3a1";
     ctx.fillRect(x - 2, z - 2, 4, 4);
   }
+  if (game.zone === "moor")
+    for (const enemy of combat.enemies.filter((e) => e.hp > 0)) {
+      const [x, z] = pos(enemy);
+      ctx.fillStyle = enemy.elite ? "#e0b068" : "#c36554";
+      ctx.fillRect(x - 2, z - 2, 4, 4);
+    }
   const [x, z] = pos(hero.position);
   ctx.fillStyle = "#ffe2a1";
   ctx.beginPath();
@@ -478,12 +667,20 @@ function drawMap() {
   ctx.closePath();
   ctx.fill();
 }
-let last = performance.now();
+let last = performance.now(),
+  accumulator = 0,
+  simulationTime = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
-  game.update(dt, now / 1000, dialog.open);
+  accumulator += dialog.open || document.hidden ? 0 : dt;
+  while (accumulator >= 1 / 30) {
+    simulationTime += 1 / 30;
+    game.update(1 / 30, simulationTime, false);
+    accumulator -= 1 / 30;
+  }
+  if (dialog.open) game.update(0, simulationTime, true);
   if (pending && hero.position.distanceTo(pending.point) < 2) {
     const id = pending.name;
     pending = null;
@@ -496,7 +693,53 @@ function frame(now) {
     v.project(camera);
     npc.label.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
     npc.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
-    npc.label.hidden = v.z > 1;
+    npc.label.hidden = game.zone !== "camp" || v.z > 1;
+  }
+  for (const enemy of combat.enemies) {
+    const v = new THREE.Vector3(
+      enemy.x,
+      enemy.elite ? 3.4 : 2.25,
+      enemy.z,
+    ).project(camera);
+    enemy.label.hidden = game.zone !== "moor" || enemy.hp <= 0 || v.z > 1;
+    enemy.label.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
+    enemy.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
+    enemy.label.querySelector("b").style.width =
+      `${(enemy.hp / enemy.maxHp) * 100}%`;
+    enemy.label.classList.toggle("winding", enemy.windup > 0);
+  }
+  const focused = combat.enemies.find(
+    (e) => e.id === combat.target && e.hp > 0,
+  );
+  const targetInfo = document.querySelector("#target-info");
+  targetInfo.hidden = !focused || game.zone !== "moor";
+  if (focused)
+    targetInfo.textContent = `${focused.name} · ${Math.ceil(focused.hp)} / ${focused.maxHp}`;
+  document.querySelector(".orb.red").textContent =
+    `${Math.ceil(combat.allies[0].hp)} / 120`;
+  document.querySelector(".orb.blue").textContent =
+    `${Math.floor(combat.mana)} / 60`;
+  document.querySelector(".orb.red").style.filter =
+    combat.allies[0].hp < 40 ? "brightness(1.35)" : "none";
+  document.querySelector(".level-bar i").style.width =
+    `${Math.min(100, (state.xp / 320) * 100)}%`;
+  for (const ally of combat.allies) {
+    const bar = document.querySelector(
+      `.party-card[data-name="${ally.id}"] .health-line i`,
+    );
+    if (bar) bar.style.width = `${(ally.hp / ally.maxHp) * 100}%`;
+  }
+  for (let i = damageNumbers.length - 1; i >= 0; i--) {
+    const d = damageNumbers[i];
+    d.life -= dt;
+    const v = new THREE.Vector3(d.x, 2.7 + (1 - d.life), d.z).project(camera);
+    d.el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
+    d.el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
+    d.el.style.opacity = Math.min(1, d.life * 2);
+    if (d.life <= 0) {
+      d.el.remove();
+      damageNumbers.splice(i, 1);
+    }
   }
   drawMap();
   renderer.render(game.scene, camera);
@@ -514,5 +757,9 @@ if (import.meta.env.DEV)
       })),
     moveTo: (x, z) => game.moveTo(new THREE.Vector3(x, 0, z)),
     interact,
+    action,
+    enterMoor,
+    returnToCamp,
+    getCombat: () => combat,
     game,
   };

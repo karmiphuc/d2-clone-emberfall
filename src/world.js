@@ -1,4 +1,5 @@
 import * as T from "three";
+import { createWilderness } from "./wilderness.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export function createWorld(canvas) {
@@ -772,6 +773,17 @@ export function createWorld(canvas) {
     if (n.kind) n.model = person(n.point.x, n.point.z, n.color, n.kind);
   person(15, 2.5, "#8b7564");
   person(15, -2.5, "#756e58", "ranger");
+  const campObjects = scene.children.filter(
+    (o) =>
+      (!o.isLight || o.isPointLight) && o !== hero && !companions.includes(o),
+  );
+  const campObstacles = [...obstacles];
+  const wilderness = createWilderness(ground.material);
+  scene.add(wilderness.root);
+  const enemyModels = new Map(),
+    lootModels = new Map();
+  const projectiles = [];
+  const actorNames = ["hero", "Ilyra", "Bram", "Eira"];
   // Grid A* for every commanded move. A clearance margin prevents clipping tents and props.
   const STEP = 0.65,
     MIN = -18.2,
@@ -901,6 +913,83 @@ export function createWorld(canvas) {
     obstacles,
     hold: false,
     low: false,
+    zone: "camp",
+    combat: null,
+    enemyModels,
+    blocked,
+    setZone(zone) {
+      api.zone = zone;
+      campObjects.forEach((o) => (o.visible = zone === "camp"));
+      wilderness.root.visible = zone === "moor";
+      enemyModels.forEach((o) => (o.visible = zone === "moor"));
+      lootModels.forEach((o) => (o.visible = zone === "moor"));
+      obstacles.splice(
+        0,
+        obstacles.length,
+        ...(zone === "camp" ? campObstacles : wilderness.obstacles),
+      );
+      scene.background.set(zone === "camp" ? "#283b3e" : "#333e36");
+      scene.fog.color.copy(scene.background);
+      api.stop();
+      hero.position.set(zone === "camp" ? 0 : -14, 0, zone === "camp" ? 5 : 10);
+      companions.forEach((c, i) => {
+        c.position.copy(hero.position).add(v((i - 1) * 1.1, 0, 1.4));
+        c.userData.path = [];
+      });
+      repath = 0;
+    },
+    setCombat(combat) {
+      api.combat = combat;
+      for (const obj of lootModels.values()) {
+        obj.geometry.dispose();
+        obj.removeFromParent();
+      }
+      lootModels.clear();
+      for (const obj of enemyModels.values()) {
+        obj.traverse((o) => {
+          if (o.isMesh) o.geometry.dispose();
+        });
+        obj.removeFromParent();
+      }
+      enemyModels.clear();
+      for (const enemy of combat.enemies) {
+        const obj = person(
+          enemy.x,
+          enemy.z,
+          enemy.elite
+            ? "#8f664b"
+            : enemy.name === "Fallen"
+              ? "#9a4d3f"
+              : "#87917e",
+        );
+        obj.userData.enemyId = enemy.id;
+        if (enemy.elite) obj.scale.setScalar(1.5);
+        obj.visible = api.zone === "moor" && enemy.hp > 0;
+        enemyModels.set(enemy.id, obj);
+      }
+    },
+    projectile(sourceId, targetId) {
+      const source = [hero, ...companions][actorNames.indexOf(sourceId)],
+        target = enemyModels.get(targetId);
+      if (!source || !target) return;
+      const a = source.position.clone().add(v(0, 1.2, 0)),
+        b = target.position.clone().add(v(0, 1, 0));
+      const line = new T.Line(
+        new T.BufferGeometry().setFromPoints([a, b]),
+        new T.LineBasicMaterial({
+          color: sourceId === "Eira" ? 0x9fcce1 : 0xd3bd85,
+          transparent: true,
+          opacity: 0.8,
+        }),
+      );
+      scene.add(line);
+      projectiles.push({ line, life: 0.17 });
+    },
+    animateAttack(id) {
+      const actor =
+        [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
+      if (actor) actor.userData.swing = 0.5;
+    },
     moveTo(p) {
       hero.userData.path = route(hero.position, p);
       marker.position.set(p.x, 0.045, p.z);
@@ -914,6 +1003,7 @@ export function createWorld(canvas) {
       repath = 0;
     },
     returnHome() {
+      api.setZone("camp");
       hero.position.set(0, 0, 5);
       hero.userData.path = [];
       companions.forEach((c, i) => {
@@ -954,8 +1044,27 @@ export function createWorld(canvas) {
       (-e.clientY / innerHeight) * 2 + 1,
     );
     ray.setFromCamera(pointer, camera);
+    if (api.zone === "moor" && api.combat) {
+      const hit = ray.intersectObjects(
+        [...enemyModels.values()].filter((o) => o.visible),
+        true,
+      )[0];
+      if (hit) {
+        let obj = hit.object;
+        while (obj && !obj.userData.enemyId) obj = obj.parent;
+        if (obj) {
+          api.combat.select(obj.userData.enemyId);
+          api.onManualMove?.();
+          return;
+        }
+      }
+    }
     const hits = ray.intersectObject(ground);
-    if (hits.length) api.moveTo(hits[0].point);
+    if (hits.length) {
+      api.combat?.cancel();
+      api.onManualMove?.();
+      api.moveTo(hits[0].point);
+    }
   });
   const keys = new Set();
   window.addEventListener("keydown", (e) => keys.add(e.code));
@@ -963,7 +1072,7 @@ export function createWorld(canvas) {
   window.addEventListener("blur", () => keys.clear());
   function walk(person, dt, speed) {
     const data = person.userData;
-    let moving = false;
+    let moving = !!person.userData.manualMoving;
     if (data.path.length) {
       const target = data.path[0],
         d = target.clone().sub(person.position);
@@ -992,6 +1101,17 @@ export function createWorld(canvas) {
   }
   let repath = 0;
   api.update = (dt, time, paused) => {
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+      const p = projectiles[i];
+      p.life -= dt;
+      p.line.material.opacity = Math.max(0, p.life / 0.17) * 0.8;
+      if (p.life <= 0) {
+        p.line.removeFromParent();
+        p.line.geometry.dispose();
+        p.line.material.dispose();
+        projectiles.splice(i, 1);
+      }
+    }
     flames.forEach((f, i) => {
       f.scale.y = 0.6 + Math.sin(time * 9 + i) * 0.15 + (i % 3) * 0.2;
       f.rotation.y = time + i;
@@ -1038,7 +1158,10 @@ export function createWorld(canvas) {
       mz =
         (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0) -
         (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0);
+    hero.userData.manualMoving = !!(mx || mz);
     if (mx || mz) {
+      api.combat?.cancel();
+      api.onManualMove?.();
       hero.userData.path = [];
       const d = v(mx * 0.81 + mz * 0.58, 0, -mx * 0.58 + mz * 0.81).normalize();
       let nx = hero.position.x + d.x * dt * 4,
@@ -1046,7 +1169,67 @@ export function createWorld(canvas) {
       if (!blocked(nx, hero.position.z)) hero.position.x = nx;
       if (!blocked(hero.position.x, nz)) hero.position.z = nz;
       hero.rotation.y = Math.atan2(d.x, d.z);
-      hero.userData.path = [hero.position.clone().addScaledVector(d, 0.01)];
+    }
+    if (api.zone === "moor" && api.combat) {
+      api.combat.tick(
+        dt,
+        [hero, ...companions].map((o, i) => ({
+          id: actorNames[i],
+          x: o.position.x,
+          z: o.position.z,
+          active: o.visible,
+        })),
+        api.hold,
+      );
+      const order = api.combat.allies[0].order;
+      if (
+        order &&
+        (!hero.userData.path.length ||
+          hero.userData.path.at(-1).distanceTo(v(order.x, 0, order.z)) > 1.3)
+      )
+        hero.userData.path = route(hero.position, v(order.x, 0, order.z));
+      if (api.combat.target && !order) hero.userData.path = [];
+      for (const enemy of api.combat.enemies) {
+        const model = enemyModels.get(enemy.id);
+        model.visible = enemy.hp > 0;
+        const prev = model.position.clone();
+        model.position.set(enemy.x, 0, enemy.z);
+        const dir = model.position.clone().sub(prev);
+        if (dir.lengthSq() > 0.00001)
+          model.rotation.y = Math.atan2(dir.x, dir.z);
+        model.userData.body.position.y = Math.sin(time * 8) * 0.035;
+        model.userData.body.rotation.z =
+          enemy.windup > 0 ? Math.sin(time * 18) * 0.08 : 0;
+        if (enemy.windup > 0) model.userData.body.rotation.x = -0.15;
+        else model.userData.body.rotation.x = 0;
+      }
+      const activeDrops = new Set(api.combat.drops.map((d) => d.id));
+      for (const [id, obj] of lootModels) {
+        if (!activeDrops.has(id)) {
+          obj.geometry.dispose();
+          obj.removeFromParent();
+          lootModels.delete(id);
+        }
+      }
+      for (const drop of api.combat.drops) {
+        let obj = lootModels.get(drop.id);
+        if (!obj) {
+          obj = mesh(
+            new T.OctahedronGeometry(drop.elite ? 0.28 : 0.17),
+            mat(drop.elite ? "#a9daca" : "#e2bc69", {
+              emissive: drop.elite ? "#559e8a" : "#ac762a",
+              emissiveIntensity: 0.8,
+            }),
+            drop.x,
+            0.35,
+            drop.z,
+          );
+          lootModels.set(drop.id, obj);
+        }
+        obj.visible = true;
+        obj.position.y = 0.4 + Math.sin(time * 3) * 0.12;
+        obj.rotation.y = time;
+      }
     }
     walk(hero, dt, 4);
     repath -= dt;
@@ -1054,6 +1237,30 @@ export function createWorld(canvas) {
       repath = 0.7;
       companions.forEach((comp, i) => {
         if (!comp.visible) return;
+        const ally = api.zone === "moor" ? api.combat?.allies[i + 1] : null;
+        if (ally && !ally.hp) {
+          comp.userData.path = [];
+          return;
+        }
+        if (ally?.order) {
+          comp.userData.path = route(
+            comp.position,
+            v(ally.order.x, 0, ally.order.z),
+          );
+          return;
+        }
+        if (
+          api.zone === "moor" &&
+          api.combat?.enemies.some(
+            (e) =>
+              e.hp > 0 &&
+              Math.hypot(e.x - comp.position.x, e.z - comp.position.z) <
+                (i === 1 ? 2 : 7),
+          )
+        ) {
+          comp.userData.path = [];
+          return;
+        }
         const offset = v((i - 1) * 1.65, 0, 2).applyAxisAngle(
           v(0, 1, 0),
           hero.rotation.y - Math.PI,
@@ -1063,8 +1270,10 @@ export function createWorld(canvas) {
           comp.userData.path = route(comp.position, target);
       });
     }
-    companions.forEach((c) => {
-      if (c.visible && !api.hold) walk(c, dt, 4.2);
+    companions.forEach((c, i) => {
+      const down = api.zone === "moor" && api.combat?.allies[i + 1].hp === 0;
+      c.userData.body.rotation.z = down ? Math.PI / 2 : 0;
+      if (c.visible && !api.hold && !down) walk(c, dt, 4.2);
     });
   };
   return api;

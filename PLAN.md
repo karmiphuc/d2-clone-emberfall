@@ -1,10 +1,10 @@
 # Chapter I implementation plan
 
-## Current milestone: main camp
+## Current milestone: camp and first expedition
 
-Playable camp, party movement and town services. Built with Three.js, original procedural environment/character geometry and a DOM interface. One player-controlled warrior and three recruitable companions. Device-local persistence; desktop-first controls.
+Playable camp, party movement and town services. Built with Three.js, original procedural environment/character geometry and a DOM interface. One player-controlled warrior and three recruitable companions. Device-local persistence; desktop-first controls. Blood Moor now includes an authored 12-enemy encounter, elite, companion combat, persistent drops, defeat recovery and a one-time camp reward.
 
-## Next: combat vertical slice
+## Next: Den of Evil vertical slice
 
 1. Extract fixed-step simulation, collision and navigation from rendering.
 2. Build Blood Moor connected to the camp, keeping existing services and party state.
