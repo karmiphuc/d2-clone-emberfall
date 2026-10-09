@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import "./style.css";
+import { portrait, itemIcon } from "./art.js";
+import { createCharacterPreview } from "./characters.js";
 import { createWorld } from "./world.js";
 import { createCombat, ENCOUNTERS } from "./game/combat.js";
 import {
@@ -47,14 +49,32 @@ const save = () => {
 };
 const app = document.querySelector("#app");
 app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to move, or use WASD. Press E near a towns-person to interact."></canvas><div id="vignette"></div><div class="labels" id="labels"></div>
-<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle ambient sound" aria-label="Toggle ambient sound">♫</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">?</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">⚙</button></div></header>
+<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle ambient sound" aria-label="Toggle ambient sound">Sound</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">Help</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">Settings</button></div></header>
 <aside class="party" id="party" aria-label="Your party"></aside><aside class="quest"><div class="eyebrow">Quest journal</div><h2 id="quest-title">A light in the darkness</h2><p id="quest-text">Speak to Akara.<br>Find your footing in camp.</p><button id="journal-link">OPEN JOURNAL &nbsp; [J]</button></aside>
 <div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div></div>
 <div class="controls">CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP</div><div class="chapter"><strong>ACT I · THE SIGHTLESS EYE</strong><span id="save-note">PROGRESS SAVED ON THIS DEVICE</span></div>
-<footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="xp-caption" id="xp-caption"></div><div class="level-bar"><i></i></div><div class="slots"><button class="slot" data-action="attack" title="Cleave [1] · 8 mana"><kbd>1</kbd>⚔</button><button class="slot" data-action="guard" title="Guard [2] · 10 mana"><kbd>2</kbd>⛨</button><button class="slot" data-action="rally" title="Regroup party [3]"><kbd>3</kbd>⚑</button><button class="slot" data-action="heal" title="Healing potion [4]"><kbd>4</kbd>♜<small id="potions">3</small></button><button class="slot" data-action="hold" title="Hold / follow [5]"><kbd>5</kbd>✥</button><button class="slot" data-action="portal" title="Return to campfire [6]"><kbd>6</kbd>◉</button></div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">×</button><div id="dialog-content"></div></dialog>`;
+<footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="xp-caption" id="xp-caption"></div><div class="level-bar"><i></i></div><div class="slots">${[
+  ["attack", "Cleave", "8 mana"],
+  ["guard", "Guard", "10 mana"],
+  ["rally", "Rally", "Regroup party"],
+  ["heal", "Potion", "Restore life"],
+  ["hold", "Hold", "Hold / follow"],
+  ["portal", "Town", "Return to camp"],
+]
+  .map(
+    ([id, label, hint], i) =>
+      `<button class="slot" data-action="${id}" title="${label} [${i + 1}] · ${hint}" aria-label="${label} [${i + 1}]">${itemIcon(id)}<kbd>${i + 1}</kbd><span class="slot-label">${label}</span>${id === "heal" ? '<small id="potions">3</small>' : ""}</button>`,
+  )
+  .join(
+    "",
+  )}</div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="loot-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">Close <kbd>Esc</kbd></button><div id="dialog-content"></div></dialog>`;
 const dialog = document.querySelector("dialog"),
   content = document.querySelector("#dialog-content");
-let toastTimer, levelTimer;
+let toastTimer, levelTimer, preview;
+function clearPreview() {
+  preview?.dispose();
+  preview = null;
+}
 function toast(message) {
   const el = document.querySelector("#toast");
   el.textContent = message;
@@ -63,7 +83,13 @@ function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove("visible"), 3500);
 }
 function modal(title, body, actions = [], eyebrow = "Rogue Encampment") {
-  dialog.classList.remove("wide");
+  clearPreview();
+  dialog.classList.remove(
+    "wide",
+    "inventory-dialog",
+    "skills-dialog",
+    "company-dialog",
+  );
   content.innerHTML = `<div class="eyebrow">${eyebrow}</div><h2 id="dialog-title">${title}</h2>${body}<div id="actions"></div>`;
   for (const a of actions) {
     let b = document.createElement("button");
@@ -76,6 +102,7 @@ function modal(title, body, actions = [], eyebrow = "Rogue Encampment") {
   if (!dialog.open) dialog.showModal();
 }
 document.querySelector(".close").onclick = () => dialog.close();
+dialog.addEventListener("close", clearPreview);
 dialog.addEventListener("click", (e) => {
   if (e.target === dialog) {
     const r = dialog.getBoundingClientRect();
@@ -252,14 +279,15 @@ document.querySelector("#return-camp").onclick = () => {
 };
 const roster = COMPANIONS;
 function update() {
+  game.setEquipment(state.equipment);
   document.querySelector("#potions").textContent = state.potions;
   document.querySelector("#party").innerHTML =
-    `<button class="party-card" data-name="hero"><div class="portrait" data-level="${levelOf(state)}">⚔</div><div><div class="member-name">The Wanderer</div><div class="health-line"><i style="width:100%"></i></div><div class="member-role">WARRIOR · YOU</div></div></button>` +
+    `<button class="party-card" data-name="hero"><div class="portrait" data-level="${levelOf(state)}">${portrait("hero")}</div><div><div class="member-name">The Wanderer</div><div class="health-line"><i style="width:100%"></i></div><div class="member-role">WARRIOR · YOU</div></div></button>` +
     Object.entries(roster)
       .filter(([name]) => state.roster.includes(name))
       .map(
         ([name, r]) =>
-          `<button class="party-card" data-name="${name}" style="opacity:${state.roster.includes(name) ? 1 : 0.4}"><div class="portrait" data-level="${levelOf(state)}">${r.symbol}</div><div><div class="member-name">${name}</div><div class="health-line"><i style="width:${state.roster.includes(name) ? 100 : 0}%"></i></div><div class="member-role">${state.roster.includes(name) ? r.role.toUpperCase() : "IN RESERVE"}</div></div></button>`,
+          `<button class="party-card" data-name="${name}" style="opacity:${state.roster.includes(name) ? 1 : 0.4}"><div class="portrait" data-level="${levelOf(state)}">${portrait(name)}</div><div><div class="member-name">${name}</div><div class="health-line"><i style="width:${state.roster.includes(name) ? 100 : 0}%"></i></div><div class="member-role">${state.roster.includes(name) ? r.role.toUpperCase() : "IN RESERVE"}</div></div></button>`,
       )
       .join("");
   document
@@ -326,14 +354,14 @@ function showSkills() {
     ]
       .map(
         (branch) =>
-          `<section class="skill-branch"><h3>${branch}</h3>${Object.entries(
+          `<section class="skill-branch"><h3>${{ Vanguard: "Combat masteries", Slayer: "Combat skills", Tactician: "War cries" }[branch]}</h3>${Object.entries(
             TALENTS,
           )
             .filter(([, t]) => t.branch === branch)
             .map(([key, t]) => {
               const rank = state.skills[key] || 0,
                 lock = talentLock(state, key);
-              return `<article class="talent ${rank ? "learned" : ""}"><div class="talent-name">${t.name}<span>${rank}/${t.max}</span></div><p>${t.description}</p><small>Level ${t.level}${t.requires ? ` · ${TALENTS[t.requires].name} rank 1` : ""}</small><button class="action" data-talent="${key}" ${!camp || lock ? "disabled" : ""}>${rank === t.max ? "Mastered" : `Learn ${t.name}`}</button><small>${lock || "Costs 1 point"}</small></article>`;
+              return `<article class="talent ${rank ? "learned" : ""} ${lock ? "locked" : "available"}">${itemIcon(key, "", "talent-icon")}<div class="talent-name">${t.name}<span>${rank}/${t.max}</span></div><p>${t.description}</p><small>Level ${t.level}${t.requires ? ` · ${TALENTS[t.requires].name} rank 1` : ""}</small><button class="action" data-talent="${key}" ${!camp || lock ? "disabled" : ""}>${rank === t.max ? "Mastered" : `Learn ${t.name}`}</button><small>${lock || "Costs 1 point"}</small></article>`;
             })
             .join("")}</section>`,
       )
@@ -352,7 +380,7 @@ function showSkills() {
     ],
     "Three paths · Mix branches or specialize",
   );
-  dialog.classList.add("wide");
+  dialog.classList.add("wide", "skills-dialog");
   content.querySelectorAll("[data-talent]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -376,45 +404,102 @@ function itemCard(item, equipped = false) {
         })
         .join(" · ")
     : "";
-  return `<article class="item-card ${def.rarity}"><div class="item-heading"><strong>${def.name}</strong><small>${def.rarity} · ${def.slot} · Lv ${def.level}</small></div><p>${itemStats(def)}</p>${!equipped && diff ? `<div class="item-compare">vs equipped: ${diff}</div>` : ""}${equipped ? '<span class="equipped-tag">Equipped</span>' : `<div class="item-actions"><button data-equip="${item.uid}" ${game.zone !== "camp" || def.level > levelOf(state) ? "disabled" : ""}>${def.level > levelOf(state) ? `Requires level ${def.level}` : "Equip"}</button><button data-sell="${item.uid}" ${game.zone !== "camp" ? "disabled" : ""}>Sell · ${def.value} gold</button></div>`}</article>`;
+  return `<article class="item-card ${def.rarity}">${itemIcon(item.itemId, def.slot)}<div class="item-heading"><strong>${def.name}</strong><small>${def.rarity} · ${def.slot} · Lv ${def.level}</small></div><p>${itemStats(def)}</p>${!equipped && diff ? `<div class="item-compare">vs equipped: ${diff}</div>` : ""}${equipped ? '<span class="equipped-tag">Equipped</span>' : `<div class="item-actions"><button data-equip="${item.uid}" ${game.zone !== "camp" || def.level > levelOf(state) ? "disabled" : ""}>${def.level > levelOf(state) ? `Requires level ${def.level}` : "Equip"}</button><button data-sell="${item.uid}" ${game.zone !== "camp" ? "disabled" : ""}>Sell · ${def.value} gold</button></div>`}</article>`;
 }
+let selectedItem;
+let inspectModel = false;
+const weaponArtwork = {
+  worn_sword: 0,
+  tempered_sword: 1,
+  iron_axe: 2,
+  hunters_blade: 3,
+  frost_edge: 4,
+  ember_cleaver: 5,
+  dawnsteel: 6,
+};
 function showInventory() {
+  const selected =
+    selectedItem === "equipped"
+      ? null
+      : state.inventory.find((i) => i.uid === selectedItem) ||
+        state.inventory.find((i) => ITEMS[i.itemId].level <= levelOf(state)) ||
+        state.inventory[0];
+  if (selectedItem !== "equipped") selectedItem = selected?.uid;
+  const def = selected ? ITEMS[selected.itemId] : null;
+  const current = def ? state.equipment[def.slot] : null;
+  const currentDef = current ? ITEMS[current.itemId] : null;
+  const compare = def
+    ? ["damage", "life", "mana", "armor"]
+        .filter((k) => def[k] || 0 || currentDef?.[k] || 0)
+        .map((k) => {
+          const delta = (def[k] || 0) - (currentDef?.[k] || 0);
+          return `<div class="compare-row"><span>${k === "armor" ? "Protection" : k[0].toUpperCase() + k.slice(1)}</span><span>${currentDef?.[k] || 0}${k === "armor" ? "%" : ""}</span><strong>${def[k] || 0}${k === "armor" ? "%" : ""}</strong><span class="${delta > 0 ? "stat-up" : delta < 0 ? "stat-down" : ""}">${delta > 0 ? "+" : ""}${delta || "—"}</span></div>`;
+        })
+        .join("")
+    : "";
+  const canEquip = game.zone === "camp" && def && def.level <= levelOf(state);
+  const weapon =
+    def?.slot === "weapon" ? selected.itemId : state.equipment.weapon?.itemId;
+  const appearance = weaponArtwork[weapon] ?? 0;
   modal(
-    "Your belongings",
-    `<div class="inventory-summary"><span>◈ ${state.gold} gold · ${state.stash} stashed</span><span>${state.potions} potions · ${state.inventory.length}/${BAG_LIMIT} bag slots</span></div><p class="muted">${game.zone === "camp" ? "Equip and sell items in camp. Compare bonuses before swapping." : "Return to camp to change equipment or sell. Potions work in the field [4]."} Every enemy drops an item. Excess drops are sold if the bag is full.</p><h3 class="section-label">Equipped</h3><div class="equipment-grid">${Object.entries(
+    "Inventory",
+    `
+    <div class="inventory-summary"><span>${state.gold} gold <small> · ${state.stash} stashed</small></span><span>${state.inventory.length} / ${BAG_LIMIT} items</span></div>
+    <div class="equipment-stage"><div class="hero-preview"><div class="hero-illustration" role="img" aria-label="The Wanderer holding ${ITEMS[weapon]?.name || "a weapon"}" style="--hx:${((appearance % 4) * 100) / 3}%;--hy:${Math.floor(appearance / 4) * 100}%" ${inspectModel ? "hidden" : ""}></div><canvas id="equipment-preview" aria-label="Directional character preview. Drag to turn." ${inspectModel ? "" : "hidden"}></canvas><button class="preview-toggle" id="preview-toggle">${inspectModel ? "Character portrait" : "Turn character"}</button><span class="preview-caption">${def?.slot === "weapon" ? `Preview: ${def.name}` : "The Wanderer · Level " + levelOf(state)}</span></div><div class="equipped-slots">${Object.entries(
       state.equipment,
     )
-      .map(([slot, item]) =>
-        item
-          ? itemCard(item, true)
-          : `<article class="item-card empty"><strong>${slot}</strong><p>Empty slot</p></article>`,
+      .map(
+        ([slot, item]) =>
+          `<div class="equipped-slot"><span class="slot-name">${slot}</span>${item ? `${itemIcon(item.itemId, slot)}<strong>${ITEMS[item.itemId].name}</strong>` : '<span class="empty-slot">Empty</span>'}</div>`,
       )
-      .join(
-        "",
-      )}</div><h3 class="section-label">Backpack</h3><div class="bag-grid">${state.inventory.length ? state.inventory.map((i) => itemCard(i)).join("") : '<p class="muted">Your bag is empty. Find equipment in the Blood Moor or browse Charsi’s stock.</p>'}</div>`,
+      .join("")}</div></div>
+    ${selected ? `<section class="item-detail ${def.rarity}"><div class="compare-head"><div><small>Equipped</small><strong>${currentDef?.name || "Empty slot"}</strong></div><div><small>Selected · ${def.rarity}</small><strong>${def.name}</strong></div></div>${compare}<p class="requirement">${canEquip ? "Ready to equip" : game.zone !== "camp" ? "Return to camp to change equipment" : `Requires level ${def.level}`}</p><div class="item-actions"><button class="primary" data-equip="${selected.uid}" ${canEquip ? "" : "disabled"}>Equip ${def.slot}</button><button data-sell="${selected.uid}" ${game.zone === "camp" ? "" : "disabled"}>Sell · ${def.value} gold</button></div></section>` : `<p class="empty-bag">${state.inventory.length ? "Equipment updated. Select another item below to compare." : "Your backpack is empty. Find equipment in the Blood Moor or visit Charsi at the forge."}</p>`}
+    <div class="bag-heading"><h3>Backpack</h3><span>${state.potions} healing potions · [4]</span></div>
+    <div class="inventory-bag" role="group" aria-label="Backpack">${state.inventory
+      .map((i) => {
+        const d = ITEMS[i.itemId];
+        return `<button class="bag-item ${d.rarity} ${i.uid === selectedItem ? "selected" : ""}" data-select-item="${i.uid}" aria-label="${d.name}, ${d.rarity}, level ${d.level}" aria-pressed="${i.uid === selectedItem}" title="${d.name} · ${itemStats(d)}">${itemIcon(i.itemId, d.slot)}<span>${d.name}</span></button>`;
+      })
+      .join("")}</div>
+    <p class="inventory-help">Select an item to compare. Equip and sell in camp. Progress saves automatically.</p>`,
     [],
-    "Equipment · Four hero slots",
+    "The Wanderer · Equipment",
   );
-  dialog.classList.add("wide");
-  content.querySelectorAll("[data-equip]").forEach(
+  dialog.classList.add("inventory-dialog");
+  if (inspectModel)
+    preview = createCharacterPreview(
+      document.querySelector("#equipment-preview"),
+      "hero",
+      weapon,
+    );
+  document.querySelector("#preview-toggle").onclick = () => {
+    inspectModel = !inspectModel;
+    showInventory();
+  };
+  content.querySelectorAll("[data-select-item]").forEach(
     (b) =>
       (b.onclick = () => {
-        if (game.zone === "camp" && equipItem(state, b.dataset.equip)) {
-          combat.refreshStats(true);
-          update();
-          showInventory();
-        }
+        selectedItem = b.dataset.selectItem;
+        showInventory();
       }),
   );
-  content.querySelectorAll("[data-sell]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        if (game.zone === "camp" && sellItem(state, b.dataset.sell)) {
-          update();
-          showInventory();
-        }
-      }),
-  );
+  content.querySelector("[data-equip]")?.addEventListener("click", () => {
+    if (game.zone === "camp" && equipItem(state, selected.uid)) {
+      combat.refreshStats(true);
+      selectedItem = "equipped";
+      update();
+      showInventory();
+      toast(`${def.name} equipped`);
+    }
+  });
+  content.querySelector("[data-sell]")?.addEventListener("click", () => {
+    if (game.zone === "camp" && sellItem(state, selected.uid)) {
+      selectedItem = null;
+      update();
+      showInventory();
+      toast(`${def.name} sold for ${def.value} gold`);
+    }
+  });
 }
 function showShop() {
   modal(
@@ -422,7 +507,7 @@ function showShop() {
     `<p>◈ ${state.gold} gold · Purchased items go to your backpack [I]. Level requirements apply when equipping.</p><div class="bag-grid">${VENDOR_STOCK.map(
       (id) => {
         const d = ITEMS[id];
-        return `<article class="item-card ${d.rarity}"><strong>${d.name}</strong><small>${d.slot} · Level ${d.level}</small><p>${itemStats(d)}</p><button class="action" data-buy="${id}" ${state.gold < d.value * 3 || state.inventory.length >= BAG_LIMIT ? "disabled" : ""}>Buy ${d.name} · ${d.value * 3} gold</button></article>`;
+        return `<article class="item-card ${d.rarity}">${itemIcon(id, d.slot)}<strong>${d.name}</strong><small>${d.slot} · Level ${d.level}</small><p>${itemStats(d)}</p><button class="action" data-buy="${id}" ${state.gold < d.value * 3 || state.inventory.length >= BAG_LIMIT ? "disabled" : ""}>Buy ${d.name} · ${d.value * 3} gold</button></article>`;
       },
     ).join("")}</div>`,
     [],
@@ -467,13 +552,33 @@ function showParty() {
     )
       .map(([name, r]) => {
         const active = state.roster.includes(name);
-        return `<article class="companion-card ${active ? "in-party" : ""}"><div class="companion-title"><span style="color:${r.color}">${r.symbol}</span><div><h3>${name}</h3><small>${r.role} · ${active ? "In your party" : "At camp"}</small></div></div><p>${r.description}</p><div class="muted">${r.special} · ${r.hp + (levelOf(state) - 1) * 12} life</div><button class="action" data-companion="${name}" ${!camp || (!active && state.roster.length >= 3) ? "disabled" : ""}>${active ? "Dismiss" : "Recruit"} ${name} · ${r.role}</button></article>`;
+        return `<article class="companion-card ${active ? "in-party" : ""}"><div class="companion-title">${portrait(name, "company-portrait")}<div><h3>${name}</h3><small>${r.role} · ${active ? "In your party" : "At camp"}</small></div></div><p>${r.description}</p><div class="muted">${r.special} · ${r.hp + (levelOf(state) - 1) * 12} life</div><button class="action" data-companion="${name}" ${!camp || (!active && state.roster.length >= 3) ? "disabled" : ""}>${active ? "Dismiss" : "Recruit"} ${name} · ${r.role}</button>${!active && state.roster.length === 3 && camp ? `<div class="swap-row"><select aria-label="Companion to replace with ${name}" data-swap-choice="${name}">${state.roster.map((id) => `<option value="${id}">Replace ${id}</option>`).join("")}</select><button data-swap="${name}">Swap</button></div>` : ""}</article>`;
       })
       .join("")}</div>`,
     [],
     "Kashya · Six specialists",
   );
-  dialog.classList.add("wide");
+  dialog.classList.add("wide", "company-dialog");
+  content.querySelectorAll("[data-swap]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (game.zone !== "camp") return;
+        const replacement = b.dataset.swap,
+          old = content.querySelector(
+            `[data-swap-choice="${replacement}"]`,
+          ).value;
+        if (!state.roster.includes(old) || state.roster.includes(replacement))
+          return;
+        state.roster[state.roster.indexOf(old)] = replacement;
+        companions[Object.keys(roster).indexOf(replacement)].position
+          .copy(hero.position)
+          .add(new THREE.Vector3(1, 0, 1));
+        combat.refreshStats(true);
+        update();
+        showParty();
+        toast(`${replacement} replaced ${old}`);
+      }),
+  );
   content.querySelectorAll("[data-companion]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -829,7 +934,7 @@ window.addEventListener("keydown", (e) => {
   if (k === "j") showJournal();
   if (k === "c") showCharacter();
   if (k === "p") showParty();
-  if (k === "k") showSkills();
+  if (k === "k" || k === "t") showSkills();
   if (e.code === "Space") action("rally");
   if (/^[1-6]$/.test(k))
     action(
@@ -881,6 +986,7 @@ function drawMap() {
   ctx.closePath();
   ctx.fill();
 }
+const lootLabels = new Map();
 let last = performance.now(),
   accumulator = 0,
   simulationTime = 0;
@@ -895,6 +1001,7 @@ function frame(now) {
     accumulator -= 1 / 30;
   }
   if (dialog.open) game.update(0, simulationTime, true);
+  game.updateCamera(dt);
   if (pending && hero.position.distanceTo(pending.point) < 2) {
     const id = pending.name;
     pending = null;
@@ -907,7 +1014,11 @@ function frame(now) {
     v.project(camera);
     npc.label.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
     npc.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
-    npc.label.hidden = game.zone !== "camp" || v.z > 1;
+    npc.label.hidden =
+      game.zone !== "camp" ||
+      v.z > 1 ||
+      (-v.y * 0.5 + 0.5) * innerHeight < 78 ||
+      (-v.y * 0.5 + 0.5) * innerHeight > innerHeight - 151;
   }
   for (const enemy of combat.enemies) {
     const v = new THREE.Vector3(
@@ -960,7 +1071,40 @@ function frame(now) {
     }
   }
   drawMap();
+  const visibleDrops = new Set(combat.drops.map((d) => d.id));
+  for (const [id, el] of lootLabels) {
+    if (!visibleDrops.has(id)) {
+      el.remove();
+      lootLabels.delete(id);
+    }
+  }
+  for (const drop of combat.drops) {
+    let el = lootLabels.get(drop.id);
+    if (!el) {
+      el = document.createElement("button");
+      const def = ITEMS[drop.item.itemId];
+      el.className = `loot-label ${def.rarity}`;
+      el.textContent = def.name;
+      el.setAttribute("aria-label", `Collect ${def.name}`);
+      el.onclick = () => {
+        combat.cancel();
+        pending = null;
+        game.moveTo(new THREE.Vector3(drop.x, 0, drop.z));
+      };
+      document.querySelector("#loot-labels").append(el);
+      lootLabels.set(drop.id, el);
+    }
+    const p = new THREE.Vector3(drop.x, 0.65, drop.z).project(camera);
+    el.hidden =
+      game.zone !== "moor" ||
+      Math.hypot(drop.x - hero.position.x, drop.z - hero.position.z) > 9 ||
+      Math.abs(p.x) > 1 ||
+      Math.abs(p.y) > 1;
+    el.style.left = `${(p.x * 0.5 + 0.5) * innerWidth}px`;
+    el.style.top = `${(-p.y * 0.5 + 0.5) * innerHeight}px`;
+  }
   renderer.render(game.scene, camera);
+  preview?.render(now / 1000);
 }
 update();
 requestAnimationFrame(frame);

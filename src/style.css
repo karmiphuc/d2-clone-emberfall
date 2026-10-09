@@ -1078,3 +1078,1126 @@ dialog h3 {
     padding: 12px;
   }
 }
+
+/* Classic field interface: original raster materials and art, clear persistent controls. */
+:root {
+  color: #e5ddc8;
+  background: #12110f;
+}
+body {
+  font-size: 14px;
+}
+#vignette {
+  background: none;
+  box-shadow: inset 0 0 95px 18px #05040380;
+}
+.top {
+  top: 16px;
+  left: 20px;
+  right: 20px;
+}
+.brand {
+  font-size: 18px;
+  letter-spacing: 4px;
+}
+.edition,
+.place .eyebrow,
+.chapter {
+  display: none;
+}
+.place h1 {
+  font-size: 22px;
+  margin: 0 0 7px;
+  text-shadow: 0 2px 4px #000;
+}
+.safe {
+  font-size: 11px;
+  color: #c1b390;
+}
+.safe:before {
+  content: none;
+}
+.icon-button {
+  width: auto;
+  min-width: 40px;
+  padding: 0 10px;
+  font-size: 12px;
+  background: #191714;
+  border-color: #6b5b3f;
+}
+.party {
+  top: 82px;
+  left: 18px;
+  gap: 8px;
+}
+.party-card {
+  background: #100f0dc9;
+  width: 195px;
+  gap: 10px;
+  padding: 0 8px 0 0;
+}
+.portrait,
+.party-card:nth-child(n) .portrait {
+  width: 48px;
+  height: 52px;
+  background: #12110f;
+  box-shadow: none;
+  border: 1px solid #89744b;
+}
+.portrait-art {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("../public/art/portraits.webp");
+  background-size: 700% 100%;
+  background-position: var(--portrait) 50%;
+}
+.member-name {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.member-role {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: #c3bda9;
+}
+.health-line {
+  height: 5px;
+  background: #281711;
+  width: 118px;
+}
+.health-line i {
+  background: #993e2d;
+}
+.quest {
+  top: 89px;
+  right: 22px;
+  width: 225px;
+  background: #14120dc2;
+  padding: 12px;
+  text-align: left;
+}
+.quest .eyebrow {
+  display: none;
+}
+.quest h2 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.quest p {
+  font-size: 12px;
+  color: #d0c8b6;
+  line-height: 1.55;
+}
+.quest button {
+  padding: 8px 0 0;
+  font-size: 11px;
+  color: #cfbb87;
+  letter-spacing: 0.4px;
+}
+.npc-label {
+  font-size: 14px;
+  background: #17140ecc;
+  border: 1px solid #78623f70;
+  padding: 5px 10px;
+}
+.npc-label small {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #c4b79b;
+}
+.bottom {
+  height: 144px;
+  gap: 24px;
+  background: #141311 url("../public/art/stone.webp") center/420px;
+  border-top: 3px ridge #776448;
+  box-shadow: 0 -6px 30px #000b;
+}
+.orb {
+  width: 100px;
+  height: 100px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  font-size: 18px;
+  border-radius: 0;
+}
+.orb.red,
+.orb.blue {
+  background-image: url("../public/art/orbs.webp");
+  background-size: 200% 100%;
+  background-color: transparent;
+}
+.orb.red {
+  background-position: 0 50%;
+}
+.orb.blue {
+  background-position: 100% 50%;
+}
+.orb-label {
+  font-size: 11px;
+  margin-top: 0;
+  color: #d3c8ad;
+  letter-spacing: 1px;
+}
+.slots {
+  gap: 7px;
+}
+.slot {
+  background: #0f0e0c;
+  border: 2px ridge #817053;
+  width: 58px;
+  height: 68px;
+  padding: 2px;
+  box-shadow: none;
+}
+.item-art {
+  display: block;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  background-image: url("../public/art/items.webp");
+  background-size: 400% 400%;
+  background-position: var(--ix) var(--iy);
+}
+.slot .item-art {
+  width: 100%;
+  height: 45px;
+}
+.slot-label {
+  font:
+    11px Inter,
+    Arial,
+    sans-serif;
+  color: #e7d9ba;
+  display: block;
+  line-height: 16px;
+}
+.slot kbd {
+  top: 3px;
+  left: 3px;
+  background: #16110c;
+  padding: 2px 3px;
+  font-size: 10px;
+  color: #f0d39b;
+}
+.slot small {
+  top: 29px;
+  bottom: auto;
+  right: 4px;
+  background: #15120ed9;
+  padding: 1px 3px;
+  font-size: 11px;
+}
+.bar-menu {
+  gap: 14px;
+  margin-top: 9px;
+}
+.bar-menu button {
+  font-size: 11px;
+  color: #d8c9a9;
+  letter-spacing: 0.5px;
+  min-height: 22px;
+}
+.level-bar {
+  height: 4px;
+  border: 1px solid #5d513a;
+  margin-bottom: 7px;
+}
+.level-bar i {
+  background: #a88b45;
+}
+.xp-caption {
+  font-size: 10px;
+  color: #d9c79c;
+}
+.controls {
+  bottom: 153px;
+  color: #d4c8ae;
+  font-size: 11px;
+  background: #17140ead;
+  padding: 6px 12px;
+  letter-spacing: 0.2px;
+}
+.minimap {
+  bottom: 169px;
+  right: 22px;
+}
+.map-frame {
+  background: #14130ed4;
+  border-color: #8b7449;
+}
+.map-caption {
+  color: #ccbd9c;
+}
+.return-camp {
+  top: 222px;
+  background: #20190ff0;
+}
+.toast {
+  top: 60px;
+  background: #181510f2;
+  z-index: 6;
+}
+dialog {
+  background: #171512 url("../public/art/stone.webp") center/620px;
+  border: 3px ridge #8e784f;
+  box-shadow: 0 15px 80px #000e;
+  padding: 25px;
+  color: #e3dcc9;
+  max-height: calc(100dvh - 34px);
+}
+dialog::backdrop {
+  background: #0008;
+  backdrop-filter: none;
+}
+dialog h2 {
+  font-size: 25px;
+  margin: 8px 0 16px;
+}
+dialog h3 {
+  color: #dfc99a;
+}
+dialog p {
+  color: #c9c0ad;
+  line-height: 1.6;
+}
+.close {
+  position: sticky;
+  float: right;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  font: 12px Inter;
+  background: #201b14;
+  border: 1px solid #84714d;
+  padding: 7px 10px;
+  color: #e9d8b4;
+}
+.close kbd {
+  font-size: 10px;
+  color: #ae9b79;
+  margin-left: 5px;
+}
+.action,
+.item-actions button {
+  background: #30291d;
+  border: 1px solid #927b4f;
+  color: #ead7af;
+}
+.action:hover,
+.item-actions button:hover {
+  background: #493a22;
+}
+.action:disabled,
+.item-actions button:disabled {
+  opacity: 0.5;
+}
+.muted {
+  color: #b6ab94;
+}
+.portrait:after {
+  background: #1a1710;
+  border-color: #968052;
+}
+.item-card {
+  background: #13120f;
+  border-color: #544632;
+}
+.item-card .item-art {
+  float: left;
+  width: 54px;
+  height: 54px;
+  margin: 0 10px 8px 0;
+}
+.item-card p,
+.item-card .action {
+  clear: both;
+}
+.item-card small {
+  color: #b5aa92;
+}
+dialog.inventory-dialog {
+  width: 570px;
+  max-width: 96vw;
+  margin: 17px 17px 17px auto;
+  max-height: calc(100dvh - 34px);
+  padding: 18px 22px;
+}
+.inventory-dialog::backdrop {
+  background: #0002;
+}
+.inventory-dialog h2 {
+  margin-bottom: 10px;
+}
+.inventory-summary {
+  font-size: 13px;
+  color: #e0c289;
+  border-bottom: 1px solid #6c5735;
+  padding-bottom: 10px;
+}
+.inventory-summary small {
+  color: #b2a991;
+  font-size: 11px;
+}
+.equipment-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+.hero-preview {
+  min-width: 0;
+  position: relative;
+  background: #10100e99;
+  border: 1px solid #4c402b;
+}
+#equipment-preview {
+  display: block;
+  width: 100%;
+  height: 258px;
+  touch-action: none;
+  cursor: grab;
+}
+.preview-hint {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: #ab9a7c;
+  pointer-events: none;
+}
+.preview-caption {
+  display: block;
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #e0cb9e;
+  pointer-events: none;
+}
+.equipped-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.equipped-slot {
+  border: 1px solid #74603b;
+  background: #10100e;
+  padding: 6px;
+  text-align: center;
+  min-width: 0;
+}
+.slot-name {
+  display: block;
+  font:
+    11px Cinzel,
+    Georgia,
+    serif;
+  text-transform: uppercase;
+  color: #d4bb83;
+  margin-bottom: 3px;
+}
+.equipped-slot .item-art {
+  width: 65px;
+  height: 65px;
+  margin: auto;
+}
+.equipped-slot strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #ccc0a4;
+}
+.empty-slot {
+  display: grid;
+  place-items: center;
+  min-height: 70px;
+  font-size: 12px;
+  color: #827761;
+}
+.item-detail {
+  border-top: 1px solid #8e7346;
+  border-bottom: 1px solid #8e7346;
+  padding: 10px 0;
+}
+.compare-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.compare-head small {
+  display: block;
+  color: #afa084;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+.compare-head strong {
+  font:
+    13px Cinzel,
+    Georgia,
+    serif;
+}
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 50px 50px 40px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+.requirement {
+  font-size: 11px !important;
+  margin: 6px 0 !important;
+  color: #bdae8d !important;
+}
+.item-detail .item-actions {
+  margin-top: 7px;
+}
+.item-actions button {
+  min-height: 36px;
+  font-size: 12px;
+}
+.item-actions .primary {
+  flex: 1;
+  background: #54261b;
+  border-color: #a17b48;
+}
+.bag-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.bag-heading h3 {
+  font-size: 16px;
+  margin: 14px 0 9px;
+}
+.bag-heading span {
+  font-size: 11px;
+  color: #b4a689;
+}
+.inventory-bag {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  max-height: 194px;
+  overflow: auto;
+}
+.bag-item {
+  position: relative;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid #564832;
+  background: #0f0f0d;
+}
+.bag-item .item-art {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+.bag-item > span:last-child:not(.item-art) {
+  position: absolute;
+  clip-path: inset(100%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.bag-item:hover,
+.bag-item.selected {
+  border-color: #eed39a;
+  box-shadow: inset 0 0 0 1px #a98d53;
+}
+.bag-item.magic {
+  border-bottom-color: #7c9ed1;
+}
+.bag-item.rare {
+  border-bottom-color: #d7af5c;
+}
+.inventory-help,
+.empty-bag {
+  font-size: 12px !important;
+  color: #baae92 !important;
+}
+dialog.skills-dialog {
+  width: min(860px, 96vw);
+}
+.skills-dialog > div > p {
+  margin: 6px 0 15px;
+  font-size: 13px;
+}
+.skill-trees {
+  gap: 24px;
+}
+.skill-branch h3 {
+  font-size: 15px;
+  text-align: center;
+  margin: 0 0 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #8b7347;
+}
+.talent {
+  background: #17140ecc;
+  border: 1px solid #574932;
+  padding: 10px;
+  margin: 16px 0;
+  min-height: 148px;
+}
+.talent.learned {
+  background: #292419;
+  border-color: #c2a365;
+}
+.talent.available {
+  border-color: #9d834e;
+}
+.talent.locked:not(.learned) .talent-icon {
+  filter: saturate(0.3);
+  opacity: 0.65;
+}
+.talent:not(:last-child):after {
+  content: "";
+  height: 17px;
+  width: 1px;
+  background: #917b50;
+  bottom: -18px;
+}
+.talent-icon {
+  float: left;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #8f7849;
+  margin: 0 8px 4px 0;
+}
+.talent-name {
+  font-size: 12px;
+  display: block;
+  min-height: 42px;
+  padding-top: 2px;
+}
+.talent-name span {
+  display: block;
+  font: 11px Inter;
+  color: #dbc48e;
+  margin-top: 4px;
+}
+.talent p {
+  clear: both;
+  font-size: 11px;
+  min-height: 30px;
+  line-height: 1.4;
+  margin: 6px 0;
+}
+.talent small {
+  font-size: 10px;
+  color: #c1b395;
+}
+.talent .action {
+  padding: 6px;
+  margin: 6px 0;
+  font-size: 11px;
+  text-align: center;
+}
+.skills-dialog #actions .action {
+  width: auto;
+  min-width: 240px;
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+}
+.company-dialog .companion-grid {
+  gap: 10px;
+}
+.companion-card {
+  padding: 13px;
+  background: #17140fd9;
+  border-color: #5d4c30;
+}
+.companion-card.in-party {
+  background: #29251a;
+  border-color: #ad9156;
+}
+.company-portrait {
+  width: 64px;
+  height: 72px;
+  border: 1px solid #9c8353;
+}
+.companion-title {
+  gap: 10px;
+}
+.companion-title h3 {
+  font-size: 18px;
+}
+.companion-title small {
+  font-size: 11px;
+  color: #c6b897;
+}
+.companion-card p {
+  font-size: 12px;
+  min-height: 70px;
+}
+.companion-card .muted {
+  font-size: 11px;
+}
+.companion-card .action {
+  font-size: 11px;
+  min-height: 38px;
+}
+.enemy-label {
+  font-size: 11px;
+  background: #20130fd9;
+}
+.level-up {
+  background: #211a10ed;
+}
+@media (max-height: 760px) and (min-width: 801px) {
+  #equipment-preview {
+    height: 210px;
+  }
+  .equipped-slot .item-art {
+    width: 48px;
+    height: 48px;
+  }
+  .equipped-slot strong {
+    font-size: 9px;
+  }
+  .talent {
+    min-height: 132px;
+    margin: 10px 0;
+  }
+  .talent p {
+    min-height: 26px;
+  }
+  .talent:not(:last-child):after {
+    height: 11px;
+    bottom: -12px;
+  }
+  .skills-dialog > div > p {
+    margin-bottom: 8px;
+  }
+  dialog.skills-dialog {
+    padding: 18px 24px;
+  }
+  .inventory-bag {
+    max-height: 128px;
+  }
+}
+@media (max-width: 800px) {
+  .top {
+    left: 12px;
+    right: 12px;
+  }
+  .brand {
+    font-size: 14px;
+  }
+  .place {
+    top: 40px;
+  }
+  .place h1 {
+    font-size: 18px;
+  }
+  .top-actions {
+    gap: 5px;
+  }
+  .icon-button {
+    font-size: 11px;
+    padding: 0 7px;
+    min-width: 34px;
+    height: 32px;
+  }
+  .party {
+    top: 104px;
+    left: 10px;
+    gap: 5px;
+  }
+  .party-card {
+    width: 150px;
+  }
+  .portrait,
+  .party-card:nth-child(n) .portrait {
+    width: 36px;
+    height: 40px;
+  }
+  .member-name {
+    font-size: 11px;
+  }
+  .member-role {
+    font-size: 9px;
+  }
+  .health-line {
+    width: 91px;
+  }
+  .quest {
+    top: 112px;
+    right: 10px;
+    width: 175px;
+    padding: 9px;
+  }
+  .quest h2 {
+    font-size: 13px;
+  }
+  .quest p {
+    font-size: 11px;
+  }
+  .bottom {
+    height: 124px;
+    gap: 8px;
+  }
+  .orb {
+    width: 66px;
+    height: 66px;
+    font-size: 12px;
+  }
+  .orb-label {
+    font-size: 9px;
+  }
+  .slot {
+    width: 43px;
+    height: 55px;
+    padding: 1px;
+  }
+  .slot .item-art {
+    height: 32px;
+  }
+  .slot-label {
+    font-size: 9px;
+  }
+  .slots {
+    gap: 3px;
+  }
+  .bar-menu {
+    gap: 9px;
+    margin-top: 7px;
+  }
+  .bar-menu button {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+  .bar-menu kbd {
+    margin-left: 1px;
+  }
+  .controls {
+    bottom: 131px;
+    font-size: 9px;
+    padding: 5px;
+  }
+  .xp-caption {
+    font-size: 8px;
+  }
+  .return-camp {
+    top: 244px;
+  }
+  .talent-name {
+    font-size: 11px;
+  }
+  .skill-trees {
+    gap: 10px;
+  }
+  .talent p {
+    font-size: 11px;
+  }
+  .company-portrait {
+    width: 48px;
+    height: 58px;
+  }
+}
+@media (max-width: 540px) {
+  .party-card {
+    width: 140px;
+  }
+  .quest {
+    top: auto;
+    bottom: 162px;
+    width: 162px;
+    background: #17140eeb;
+  }
+  .quest p {
+    font-size: 11px;
+  }
+  .bottom {
+    gap: 4px;
+    height: 119px;
+  }
+  .orb {
+    width: 47px;
+    height: 47px;
+    font-size: 10px;
+  }
+  .slot {
+    width: 41px;
+    height: 52px;
+  }
+  .slot-label {
+    font-size: 8px;
+  }
+  .slots {
+    gap: 2px;
+  }
+  .bar-menu {
+    gap: 6px;
+  }
+  .bar-menu button {
+    font-size: 8px;
+  }
+  .bar-menu kbd {
+    display: none;
+  }
+  .controls {
+    bottom: 123px;
+    font-size: 8px;
+    padding: 4px;
+  }
+  .controls span {
+    margin: 0 2px;
+  }
+  .xp-caption {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  .portrait:after {
+    font-size: 8px;
+  }
+  .return-camp {
+    top: auto;
+    bottom: 255px;
+  }
+  .place {
+    width: 240px;
+  }
+  .top-actions .optional {
+    display: none;
+  }
+  dialog {
+    padding: 18px;
+    max-width: 96vw;
+  }
+  .close {
+    font-size: 11px;
+    padding: 6px;
+  }
+  dialog h2 {
+    font-size: 23px;
+  }
+  dialog.inventory-dialog {
+    margin: 8px auto;
+    padding: 14px;
+    width: 96vw;
+    max-height: calc(100dvh - 16px);
+  }
+  #equipment-preview {
+    height: 232px;
+  }
+  .equipped-slot .item-art {
+    width: 52px;
+    height: 52px;
+  }
+  .equipment-stage {
+    gap: 8px;
+  }
+  .inventory-bag {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .inventory-summary {
+    font-size: 11px;
+  }
+  .compare-head strong {
+    font-size: 12px;
+  }
+  .skill-trees {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+  }
+  .talent {
+    padding: 6px;
+    min-height: 200px;
+  }
+  .talent-icon {
+    float: none;
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 6px;
+  }
+  .talent-name {
+    font-size: 10px;
+    min-height: 39px;
+    text-align: center;
+  }
+  .talent-name span {
+    font-size: 10px;
+  }
+  .talent p {
+    font-size: 10px;
+    min-height: 55px;
+  }
+  .talent small {
+    font-size: 9px;
+  }
+  .talent .action {
+    font-size: 9px;
+    padding: 7px 2px;
+  }
+  .skill-branch h3 {
+    font-size: 10px;
+    min-height: 40px;
+  }
+  .skills-dialog {
+    padding: 14px 9px;
+  }
+  .skills-dialog > div > p {
+    font-size: 12px;
+  }
+  .companion-grid {
+    grid-template-columns: 1fr;
+  }
+  .companion-card p {
+    min-height: 0;
+  }
+  .company-portrait {
+    width: 58px;
+    height: 66px;
+  }
+  .company-dialog .action {
+    font-size: 12px;
+  }
+  .toast {
+    top: 75px;
+    font-size: 12px;
+    width: max-content;
+    max-width: 90vw;
+  }
+}
+/* Quiet material surfaces keep the illustration and readable text in the foreground. */
+.bottom,
+dialog {
+  background-color: #58534a;
+  background-blend-mode: multiply;
+}
+.orb {
+  border-radius: 50%;
+}
+.talent,
+.talent.learned,
+.talent.available {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #6c593a;
+  padding: 10px 5px;
+}
+.talent-icon {
+  width: 48px;
+  height: 48px;
+  border: 2px ridge #a28b56;
+}
+.talent.learned .talent-icon {
+  border-color: #e5c679;
+  box-shadow: 0 0 10px #a68b3b40;
+}
+.talent-name {
+  font-size: 13px;
+  min-height: 48px;
+}
+.talent p {
+  font-size: 12px;
+  min-height: 34px;
+}
+.talent:not(:last-child):after {
+  left: 29px;
+}
+@media (max-width: 540px) {
+  .talent-name {
+    font-size: 10px;
+  }
+  .talent-icon {
+    width: 42px;
+    height: 42px;
+  }
+  .talent p {
+    font-size: 10px;
+    min-height: 55px;
+  }
+  .talent:not(:last-child):after {
+    left: 50%;
+  }
+}
+.loot-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  border: 1px solid #766446;
+  background: #0b0907ed;
+  padding: 5px 8px;
+  color: #ded5ba;
+  font:
+    12px Georgia,
+    serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px #000;
+}
+.loot-label.magic {
+  color: #9cb8ec;
+}
+.loot-label.rare {
+  color: #e3c765;
+}
+.loot-label:hover {
+  background: #3b2d1c;
+  border-color: #e6c98a;
+}
+.swap-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.swap-row select {
+  min-width: 0;
+  flex: 1;
+  background: #17140e;
+  color: #d8c7a1;
+  border: 1px solid #80704f;
+  padding: 8px;
+  font: 11px Inter;
+}
+.swap-row button {
+  background: #4c3820;
+  color: #efdaad;
+  border: 1px solid #a38a53;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+.hero-illustration {
+  height: 258px;
+  width: 129px;
+  margin: auto;
+  background-image: url("../public/art/hero-appearances.webp");
+  background-size: 400% 200%;
+  background-position: var(--hx) var(--hy);
+}
+.preview-toggle {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  z-index: 1;
+  background: #16120ee8;
+  border: 1px solid #796340;
+  color: #d5c29b;
+  font: 10px Inter;
+  padding: 5px 7px;
+}
+@media (max-height: 760px) and (min-width: 801px) {
+  .hero-illustration {
+    height: 210px;
+    width: 105px;
+  }
+}
+@media (max-width: 540px) {
+  .hero-illustration {
+    height: 232px;
+    width: 116px;
+  }
+}

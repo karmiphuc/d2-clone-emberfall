@@ -1,7 +1,7 @@
 import * as T from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
-export function createWilderness(groundMaterial) {
+export function createWilderness(groundMaterial, oakTexture) {
   const root = new T.Group();
   root.visible = false;
   const materials = new Map();
@@ -30,7 +30,7 @@ export function createWilderness(groundMaterial) {
     new T.PlaneGeometry(80, 80),
     groundMaterial.clone(),
   );
-  ground.material.color.set("#adb4a4");
+  ground.material.color.set("#939b77");
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.03;
   ground.receiveShadow = true;
@@ -64,6 +64,7 @@ export function createWilderness(groundMaterial) {
     let x = (random() - 0.5) * 58,
       z = (random() - 0.5) * 48;
     if (Math.abs(x) < 20 && Math.abs(z) < 16) continue;
+    if (x + z > 22) continue;
     const h = 3 + random() * 4;
     add(new T.CylinderGeometry(0.12, 0.4, h, 6), "#464b44", x, h / 2, z);
     for (let j = 0; j < 3; j++) {
@@ -76,17 +77,20 @@ export function createWilderness(groundMaterial) {
       );
       branch.rotation.z = j % 2 ? 0.7 : -0.7;
     }
-    if (i % 3 === 0)
-      for (let k = 0; k < 3; k++) {
-        const tree = add(
-          new T.ConeGeometry(2 - k * 0.4, 2.8, 6),
-          "#344a3d",
-          x,
-          2.8 + k * 1.3,
-          z,
-        );
-        tree.rotation.y = random();
-      }
+    if (i % 3 === 0 && oakTexture) {
+      const tree = new T.Sprite(
+        new T.SpriteMaterial({
+          map: oakTexture,
+          color: "#7b8465",
+          alphaTest: 0.15,
+          depthWrite: true,
+        }),
+      );
+      tree.center.set(0.58, 0.04);
+      tree.position.set(x, 0, z);
+      tree.scale.set(6, 6.3, 1);
+      root.add(tree);
+    }
   }
   for (const [x, z] of [
     [-12, -7],
@@ -144,6 +148,57 @@ export function createWilderness(groundMaterial) {
     grass.setMatrixAt(i, dummy.matrix);
   }
   root.add(grass);
+  // Low dry-stone field boundaries frame the route without blocking the combat path.
+  for (let i = 0; i < 35; i++) {
+    const x = -18 + i * 0.92;
+    for (let layer = 0; layer < 2; layer++) {
+      const b = add(
+        new T.DodecahedronGeometry(0.42, 0),
+        i % 2 ? "#6b6b55" : "#79745d",
+        x + (layer ? 0.25 : 0),
+        0.18 + layer * 0.32,
+        -14,
+      );
+      b.scale.set(1.15, 0.55, 0.7);
+      b.rotation.y = random();
+    }
+  }
+  // Ruined wagon, barrels and abandoned supplies by the safe entry.
+  add(new T.BoxGeometry(2.3, 0.14, 1.2), "#54422e", -17, 0.6, 7);
+  for (const z of [6.3, 7.7])
+    for (const x of [-17.7, -16.3]) {
+      const w = add(
+        new T.TorusGeometry(0.48, 0.07, 5, 12),
+        "#493c2c",
+        x,
+        0.45,
+        z,
+      );
+      w.rotation.y = Math.PI / 2;
+    }
+  for (let i = 0; i < 8; i++) {
+    const b = add(
+      new T.BoxGeometry(0.13, 0.15, 1.25),
+      "#695035",
+      -18 + i * 0.28,
+      0.77,
+      7,
+    );
+    b.rotation.y = (random() - 0.5) * 0.2;
+  }
+  // Scattered ground clutter gives the Moor its desolate, inhabited history.
+  for (let i = 0; i < 85; i++) {
+    const x = (random() - 0.5) * 37,
+      z = (random() - 0.5) * 28;
+    const r = add(
+      new T.DodecahedronGeometry(0.07 + random() * 0.12, 0),
+      "#85806a",
+      x,
+      0.025,
+      z,
+    );
+    r.scale.y = 0.35;
+  }
   root.updateMatrixWorld(true);
   for (const m of materials.values()) {
     const items = root.children.filter(

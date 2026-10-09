@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { resolve } from "node:path";
+import { resolve, dirname, extname } from "node:path";
 
 // The current Vite build is one JS bundle and one stylesheet. Inline both so
 // testers can run the downloaded HTML without Node or a local server.
@@ -12,7 +12,21 @@ if (scripts.length !== 1)
     "Expected one application bundle; update the packager before publishing.",
   );
 for (const match of scripts) {
-  const source = await readFile(resolve("dist", match[1]), "utf8");
+  const scriptPath = resolve("dist", match[1]);
+  let source = await readFile(scriptPath, "utf8");
+  // Vite resolves 3D material URLs relative to the bundle. Inline those too.
+  for (const asset of [
+    ...source.matchAll(
+      /new URL\("([^"\n]+\.(?:webp|png|jpg))",import\.meta\.url\)\.href/g,
+    ),
+  ]) {
+    const data = await readFile(resolve(dirname(scriptPath), asset[1]));
+    source = source.replace(asset[0], () =>
+      JSON.stringify(
+        `data:image/${extname(asset[1]).slice(1)};base64,${data.toString("base64")}`,
+      ),
+    );
+  }
   html = html.replace(
     match[0],
     () =>
@@ -22,7 +36,18 @@ for (const match of scripts) {
 for (const match of [
   ...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g),
 ]) {
-  const css = await readFile(resolve("dist", match[1]), "utf8");
+  const cssPath = resolve("dist", match[1]);
+  let css = await readFile(cssPath, "utf8");
+  for (const asset of [
+    ...css.matchAll(/url\((?:["']?)([^)"']+\.(?:webp|png|jpg))(?:["']?)\)/g),
+  ]) {
+    const data = await readFile(resolve(dirname(cssPath), asset[1]));
+    css = css.replace(
+      asset[0],
+      () =>
+        `url("data:image/${extname(asset[1]).slice(1)};base64,${data.toString("base64")}")`,
+    );
+  }
   html = html.replace(match[0], () => `<style>${css}</style>`);
 }
 html = html.replace(/<link[^>]*rel="icon"[^>]*>/g, "");

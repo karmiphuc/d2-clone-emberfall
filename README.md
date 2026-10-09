@@ -6,6 +6,8 @@
 
 A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment and a complete first Blood Moor expedition: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–6, usable skill trees, and six companion specialties.
 
+![Emberfall v0.4 camp and redesigned party](docs/screenshots/camp-v0.4.webp)
+
 ## Downloadable playtest
 
 Run `npm run package:playtest` to produce a single HTML file in `artifacts/`. Downloaded release builds can be opened directly in a modern browser with WebGL enabled; no Node installation is needed to play. Fonts fall back to system fonts offline. Browser storage keeps progress on that device.
@@ -26,10 +28,16 @@ Open the URL printed by Vite. For a production build, run `npm run build` and `n
 - Click the ground or use WASD / arrow keys to move.
 - Click a town label to approach and interact; E interacts with a nearby service.
 - Space or 3 regroups the party. 5 toggles hold/follow.
-- Mouse wheel zooms. I opens inventory; J journal; P party; C character; K opens skill trees.
+- Mouse wheel zooms. I opens inventory; J journal; P party; C character; K or T opens skill trees.
 - Click enemies to approach and attack. 1 cleaves (8 mana); 2 guards for 3 seconds (10 mana, 8-second cooldown); 4 heals; 6 retreats and restores the company.
-- Glowing drops are collected by walking nearby. Downed companions recover in camp.
+- Click a nearby loot label or walk over a drop to collect it. Downed companions recover in camp.
 - Escape closes dialogs. Sound is opt-in from the music button.
+
+## Classic presentation
+
+The camp and Blood Moor use a closer hero-following isometric camera, original illustrated foliage and fire, textured ground and detailed directional character sprites. The classic stone HUD has illustrated portraits, life/mana globes and labelled actions. Inventory is a side panel with a painted equipment portrait and directional character preview, illustrated slots and side-by-side item comparisons. Sword and axe world sprites switch immediately when equipped and survive reload; elemental weapons add a light accent. All seven weapons have individual inventory illustrations. Nearby drops have clickable name labels. The skill tree shows connected ranks and requirements, with free camp respecs.
+
+This is a stylized, original-asset interpretation of the classic game, not a pixel-perfect recreation of Diablo II or Resurrected.
 
 ## Included
 
@@ -37,7 +45,7 @@ Open the URL printed by Vite. For a production build, run `npm run build` and `n
 - Click-to-move A\* paths with obstacle clearance and companion following.
 - Akara's introduction, camp preparation quest, rest, and potion purchases.
 - Charsi's weapon purchase and equipment change.
-- Recruitment/dismissal through Kashya, shared gold stash, and a camp waypoint.
+- Recruitment, direct companion swaps and dismissal through Kashya, shared gold stash, and a camp waypoint.
 - Local browser save, reset option, performance mode, and a live minimap.
 
 Enter the eastern gate to fight 12 enemies, including the Ashen Brute. Clear the encounter, collect the Ashen charm, and claim 100 gold and two potions from Akara. Retreat at any time; slain enemies and uncollected drops persist. Reloading starts the party safely in camp.
@@ -46,7 +54,7 @@ After collecting all 12 drops, return to the eastern gate and choose **Start fre
 
 Bram taunts and absorbs damage; Eira heals injured allies; Ilyra fires volleys; Soren slows groups with frost; Aldric protects nearby allies; Nyx flanks and backstabs. Companions share your level and grow in life and damage.
 
-This is an early vertical slice, not a completed Act I. The Den of Evil, remaining campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and polygonal art are provisional. Models are original procedural placeholders; no Diablo assets are bundled.
+This is an early vertical slice, not a completed Act I. The Den of Evil, remaining campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites with movement bob and attack lean; full walk/attack frame animations are not implemented. No Diablo assets are bundled.
 
 ## GitHub Pages
 

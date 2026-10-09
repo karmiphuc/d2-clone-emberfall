@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 — Classic presentation and visible equipment
+
+- Rebuilt the HUD with original illustrated portraits, item/action icons, life/mana globes and dark stone materials.
+- Added a compact inventory side panel with a painted equipment portrait and directional preview, equipped slots, selectable backpack and explicit comparisons.
+- Equipping swords and axes switches the hero’s world sprite; elemental weapons add light accents. Seven weapon-specific inventory illustrations show individual equipment.
+- Replaced primitive humanoids with original directional sprites for the hero, all six companions, camp NPCs and monsters.
+- Reframed the skill tree with illustrated connected ranks, clearer requirements and visible training actions.
+- Added a closer hero-following camera, original forest/fire sprites, textured terrain and more legible first-area scenery.
+- Added clickable named loot and direct companion swaps.
+- Preserved saves, first-area encounters, levels 1–6 and repeat hunts.
+- Added regression checks for equipped sprite persistence, narrow-screen UI and camera following.
+- Embedded all material and UI images in the standalone downloadable build.
+
 ## 0.3.0 — First-area progression
 
 - Made the Blood Moor repeatable after clearing enemies and collecting drops; each hunt retains the hero’s progression.

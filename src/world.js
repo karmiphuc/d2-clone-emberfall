@@ -1,12 +1,13 @@
 import * as T from "three";
+import { createActor, setActorWeapon, createMonster } from "./characters.js";
 import { COMPANIONS } from "./game/companions.js";
 import { createWilderness } from "./wilderness.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export function createWorld(canvas) {
   const scene = new T.Scene();
-  scene.background = new T.Color("#283b3e");
-  scene.fog = new T.FogExp2("#293c3e", 0.013);
+  scene.background = new T.Color("#1e2223");
+  scene.fog = new T.FogExp2("#252927", 0.008);
   const renderer = new T.WebGLRenderer({
     canvas,
     antialias: true,
@@ -18,13 +19,13 @@ export function createWorld(canvas) {
   renderer.shadowMap.type = T.PCFSoftShadowMap;
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.35;
-  let zoom = 27;
+  let zoom = 19;
   const camera = new T.OrthographicCamera();
   camera.position.set(30, 36, 42);
   camera.lookAt(0, 0, 0);
   function resize() {
     const a = innerWidth / innerHeight;
-    const viewHeight = Math.max(zoom, 34 / a);
+    const viewHeight = Math.max(zoom, 18 / a);
     camera.left = (-viewHeight * a) / 2;
     camera.right = (viewHeight * a) / 2;
     camera.top = viewHeight / 2;
@@ -40,13 +41,13 @@ export function createWorld(canvas) {
     "wheel",
     (e) => {
       e.preventDefault();
-      zoom = T.MathUtils.clamp(zoom + e.deltaY * 0.015, 19, 43);
+      zoom = T.MathUtils.clamp(zoom + e.deltaY * 0.015, 14, 35);
       resize();
     },
     { passive: false },
   );
-  scene.add(new T.HemisphereLight("#b6ced0", "#49493a", 2.1));
-  const sun = new T.DirectionalLight("#edc792", 2.6);
+  scene.add(new T.HemisphereLight("#9ca5ab", "#4d3b25", 1.45));
+  const sun = new T.DirectionalLight("#d9c8a5", 2.1);
   sun.position.set(-16, 28, -15);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -164,6 +165,48 @@ export function createWorld(canvas) {
   const texture = new T.CanvasTexture(tex);
   texture.colorSpace = T.SRGBColorSpace;
   texture.anisotropy = 8;
+  new T.TextureLoader().load(
+    new URL("../public/art/earth.webp", import.meta.url).href,
+    (loaded) => {
+      for (let x = 0; x < 8; x++)
+        for (let y = 0; y < 8; y++)
+          c.drawImage(loaded.image, x * 128, y * 128, 128, 128);
+      path(
+        [
+          [0, 15],
+          [0, 4],
+          [-4, -4],
+          [-8, -8],
+        ],
+        62,
+      );
+      path(
+        [
+          [-15, 0],
+          [1, 3],
+          [20, 0],
+        ],
+        60,
+      );
+      path(
+        [
+          [0, 4],
+          [9, 8],
+        ],
+        40,
+      );
+      path(
+        [
+          [0, 3],
+          [8, -9],
+        ],
+        45,
+      );
+      texture.needsUpdate = true;
+      loaded.dispose();
+    },
+  );
+
   const ground = mesh(
     new T.PlaneGeometry(80, 80),
     mat("#ffffff", { map: texture }),
@@ -173,6 +216,14 @@ export function createWorld(canvas) {
   );
   ground.rotation.x = -Math.PI / 2;
   ground.castShadow = false;
+  const oakTexture = new T.TextureLoader().load(
+    new URL("../public/art/oak.webp", import.meta.url).href,
+  );
+  oakTexture.colorSpace = T.SRGBColorSpace;
+  const flameTexture = new T.TextureLoader().load(
+    new URL("../public/art/flame.webp", import.meta.url).href,
+  );
+  flameTexture.colorSpace = T.SRGBColorSpace;
   const obstacles = [];
   function obstacle(x, z, w, d) {
     obstacles.push({ x, z, w, d });
@@ -187,7 +238,7 @@ export function createWorld(canvas) {
   for (let x = -19; x <= 19; x += 0.7) {
     for (const z of [-15, 15]) {
       if (z === 15 && x > 6 && x < 11) continue;
-      const h = 2 + rand() * 0.55;
+      const h = (z === 15 ? 0.65 : 2) + rand() * 0.35;
       cyl(0.2, 0.28, h, wood, x, h / 2, z);
       mesh(new T.ConeGeometry(0.2, 0.5, 5), wood, x, h + 0.2, z);
     }
@@ -195,7 +246,7 @@ export function createWorld(canvas) {
   for (let z = -14.5; z <= 14.5; z += 0.7) {
     for (const x of [-19, 19]) {
       if (x === 19 && Math.abs(z) < 3) continue;
-      const h = 2 + rand() * 0.55;
+      const h = (z === 15 ? 0.65 : 2) + rand() * 0.35;
       cyl(0.2, 0.27, h, wood, x, h / 2, z);
       mesh(new T.ConeGeometry(0.2, 0.45, 5), wood, x, h + 0.15, z);
     }
@@ -212,18 +263,24 @@ export function createWorld(canvas) {
     tree(x, z, 1 + rand() * 1.1);
   }
   function tree(x, z, s) {
-    cyl(0.2 * s, 0.48 * s, 4 * s, bark, x, 2 * s, z);
-    for (let k = 0; k < 4; k++) {
-      const p = mesh(
-        new T.ConeGeometry((2.3 - k * 0.35) * s, 3 * s, 7),
-        mat(["#304b42", "#3a5749", "#3d5a4b", "#486354"][k]),
-        x,
-        (3 + k * 1.25) * s,
-        z,
-      );
-      p.rotation.y = rand();
+    // Foreground vegetation stays low so it never masks the company.
+    if (x + z > 20) {
+      cyl(0.1, 0.25, 0.7, bark, x, 0.35, z);
+      rock(x + 0.4, z, 0.4);
+      return;
     }
-    if (rand() > 0.5) rock(x + 1, z, 0.6 * s);
+    const sprite = new T.Sprite(
+      new T.SpriteMaterial({
+        map: oakTexture,
+        color: "#9c9b83",
+        alphaTest: 0.15,
+        depthWrite: true,
+      }),
+    );
+    sprite.center.set(0.58, 0.04);
+    sprite.position.set(x, 0, z);
+    sprite.scale.set(6.7 * s, 7 * s, 1);
+    scene.add(sprite);
   }
   // Canvas tents, timber frames, stitched seams and rope guy lines.
   function tent(x, z, w, d, color, rot = 0) {
@@ -332,9 +389,9 @@ export function createWorld(canvas) {
     obstacle(x, z, rot ? d : w, rot ? w : d);
     return g;
   }
-  tent(-11, -8, 5.2, 5.6, "#786480", 0.1);
+  tent(-11, -8, 5.2, 5.6, "#675343", 0.1);
   tent(8, -9, 5.8, 5.5, "#9f8a62", -0.12);
-  tent(-12, 7, 5.2, 5, "#78816d", 0.25);
+  tent(-12, 7, 5.2, 5, "#5e6046", 0.25);
   tent(10, 9, 4.8, 5, "#8e7156", -0.15);
   tent(-4, -12, 3.4, 3, "#68716a", 0);
   function crate(x, z, s = 1) {
@@ -491,22 +548,20 @@ export function createWorld(canvas) {
     log.rotation.y = a;
   }
   const flames = [];
-  for (let i = 0; i < 9; i++) {
-    const f = mesh(
-      new T.IcosahedronGeometry(1, 0),
-      new T.MeshBasicMaterial({
-        color: i % 2 ? "#ffc66b" : "#ec742f",
-        transparent: true,
-        opacity: 0.8,
-      }),
-      (rand() - 0.5) * 0.7,
-      0.65,
-      (rand() - 0.5) * 0.7,
-    );
-    f.scale.set(0.2 + rand() * 0.2, 0.65 + rand() * 0.4, 0.2 + rand() * 0.2);
-    flames.push(f);
-  }
-  const firelight = new T.PointLight("#ffb060", 25, 13, 2);
+  const fireSprite = new T.Sprite(
+    new T.SpriteMaterial({
+      map: flameTexture,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  fireSprite.center.set(0.5, 0);
+  fireSprite.position.set(0, 0.2, 0);
+  fireSprite.scale.set(2.6, 2.8, 1);
+  scene.add(fireSprite);
+  flames.push(fireSprite);
+  const firelight = new T.PointLight("#ff9c49", 55, 18, 2);
   firelight.position.set(0, 1.8, 0);
   scene.add(firelight);
   obstacle(0, 0, 2.5, 2.5);
@@ -542,16 +597,20 @@ export function createWorld(canvas) {
   function torch(x, z) {
     cyl(0.065, 0.1, 1.9, wood, x, 0.95, z);
     cyl(0.19, 0.1, 0.3, metal, x, 1.85, z);
-    const flame = mesh(
-      new T.IcosahedronGeometry(0.22, 0),
-      new T.MeshBasicMaterial({ color: "#ffc878" }),
-      x,
-      2.12,
-      z,
+    const flame = new T.Sprite(
+      new T.SpriteMaterial({
+        map: flameTexture,
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+      }),
     );
-    flame.scale.y = 1.7;
+    flame.center.set(0.5, 0);
+    flame.position.set(x, 1.85, z);
+    flame.scale.set(0.6, 0.8, 1);
+    scene.add(flame);
     torches.push(flame);
-    const light = new T.PointLight("#ffac61", 7, 6, 2);
+    const light = new T.PointLight("#ffac61", 14, 9, 2);
     light.position.set(x, 2.1, z);
     scene.add(light);
   }
@@ -606,6 +665,22 @@ export function createWorld(canvas) {
     if (Math.abs(x) < 16 && Math.abs(z) < 12) continue;
     rock(x, z, 0.2 + rand() * 0.7);
   }
+  for (let i = 0; i < 110; i++) {
+    const x = -16 + i * 0.32,
+      z = 2.4 + Math.sin(i * 0.07) * 0.75;
+    const tile = mesh(
+      new T.DodecahedronGeometry(0.16 + rand() * 0.12, 0),
+      mat(i % 3 ? "#746650" : "#88795f"),
+      x,
+      0.015,
+      z + (rand() - 0.5) * 1.5,
+    );
+    tile.scale.set(1.4, 0.15, 1);
+    tile.rotation.y = rand() * 6;
+  }
+  for (let x = -18; x < 19; x += 4) {
+    beam(v(x, 0.9, -14.7), v(x + 3.8, 1.5, -14.7), 0.08, darkwood);
+  }
   // Batch static scenery by material to avoid thousands of draw calls.
   scene.updateMatrixWorld(true);
   const movingMeshes = new Set([...flames, ...torches, ...banners, ring]);
@@ -639,101 +714,24 @@ export function createWorld(canvas) {
       });
     }
   }
-  function person(x, z, color, kind = "warrior") {
-    const g = new T.Group();
-    g.position.set(x, 0, z);
-    scene.add(g);
-    const body = new T.Group();
-    g.add(body);
-    const cloth = mat(color),
-      skin = mat("#b49a7d");
-    cyl(0.25, 0.32, 0.65, cloth, 0, 0.95, 0, body);
-    cyl(0.28, 0.37, 0.4, cloth, 0, 0.55, 0, body);
-    const head = mesh(
-      new T.IcosahedronGeometry(0.22, 1),
-      skin,
-      0,
-      1.52,
-      0,
-      body,
-    );
-    const hood = mesh(
-      new T.SphereGeometry(0.235, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.55),
-      kind === "warrior" ? metal : cloth,
-      0,
-      1.57,
-      0,
-      body,
-    );
-    box(0.46, 0.12, 0.31, metal, 0, 1.04, 0, body);
-    const legs = [];
-    for (let s of [-1, 1]) {
-      const l = new T.Group();
-      l.position.set(s * 0.14, 0.55, 0);
-      body.add(l);
-      box(0.17, 0.5, 0.19, darkwood, 0, -0.22, 0, l);
-      box(0.2, 0.16, 0.33, darkwood, 0, -0.46, 0.05, l);
-      legs.push(l);
-      const arm = box(0.15, 0.55, 0.18, cloth, s * 0.34, 1, 0, body);
-      arm.rotation.z = s * 0.13;
-      mesh(
-        new T.IcosahedronGeometry(0.18, 0),
-        kind === "warrior" ? metal : cloth,
-        s * 0.32,
-        1.25,
-        0,
-        body,
-      );
-    }
-    if (kind === "warrior") {
-      box(0.12, 1, 0.07, metal, 0.43, 0.8, 0.16, body);
-      box(0.42, 0.07, 0.12, gold, 0.43, 0.47, 0.16, body);
-      const shield = cyl(0.31, 0.31, 0.1, metal, -0.43, 0.95, 0.12, body, 6);
-      shield.rotation.x = Math.PI / 2;
-    } else if (kind === "mage") {
-      beam(v(0.4, 0.05, 0), v(0.4, 1.95, 0), 0.035, wood, body);
-      mesh(
-        new T.IcosahedronGeometry(0.12),
-        mat("#abbed4", { emissive: "#64789c", emissiveIntensity: 0.8 }),
-        0.4,
-        1.95,
-        0,
-        body,
-      );
-    } else if (kind === "assassin") {
-      for (const side of [-1, 1]) {
-        box(0.08, 0.55, 0.06, metal, side * 0.4, 0.64, 0.16, body);
-        box(0.22, 0.05, 0.09, gold, side * 0.4, 0.43, 0.16, body);
-      }
-    } else {
-      const bow = mesh(
-        new T.TorusGeometry(0.43, 0.025, 4, 16, Math.PI),
-        wood,
-        0.43,
-        1,
-        0.1,
-        body,
-      );
-      bow.rotation.z = -Math.PI / 2;
-    }
-    const capeGeo = new T.PlaneGeometry(0.52, 0.85, 1, 1);
-    const cape = mesh(
-      capeGeo,
-      mat(color, { side: T.DoubleSide }),
-      0,
-      0.94,
-      -0.22,
-      body,
-    );
-    cape.rotation.x = 0.2;
-    g.userData = { body, legs, phase: rand() * 6, path: [], swing: 0 };
-    return g;
+  function person(x, z, color, kind = "warrior", identity = null) {
+    const name =
+      kind === "mage" ? "Eira" : kind === "ranger" ? "Ilyra" : "Bram";
+    const actor = createActor(identity || name);
+    actor.position.set(x, 0, z);
+    scene.add(actor);
+    return actor;
   }
-  const hero = person(0, 5, "#65777a");
+  const hero = createActor("hero");
+  hero.position.set(0, 0, 5);
+  hero.rotation.y = Math.PI;
+  scene.add(hero);
   const companions = Object.entries(COMPANIONS).map(([id, spec], i) => {
-    const actor = person((i - 1) * 1.8, 7, spec.color, spec.style);
+    const actor = createActor(id);
+    actor.position.set((i - 1) * 1.8, 0, 7);
     actor.userData.companionId = id;
     actor.visible = i < 3;
+    scene.add(actor);
     return actor;
   });
   const select = mesh(
@@ -777,7 +775,7 @@ export function createWorld(canvas) {
     { name: "Blood Moor", role: "THE EASTERN ROAD", point: v(18, 0, 0) },
   ];
   for (const n of npcs)
-    if (n.kind) n.model = person(n.point.x, n.point.z, n.color, n.kind);
+    if (n.kind) n.model = person(n.point.x, n.point.z, n.color, n.kind, n.name);
   person(15, 2.5, "#8b7564");
   person(15, -2.5, "#756e58", "ranger");
   const campObjects = scene.children.filter(
@@ -785,7 +783,7 @@ export function createWorld(canvas) {
       (!o.isLight || o.isPointLight) && o !== hero && !companions.includes(o),
   );
   const campObstacles = [...obstacles];
-  const wilderness = createWilderness(ground.material);
+  const wilderness = createWilderness(ground.material, oakTexture);
   scene.add(wilderness.root);
   const enemyModels = new Map(),
     lootModels = new Map();
@@ -910,6 +908,8 @@ export function createWorld(canvas) {
     0,
   );
   marker.rotation.x = -Math.PI / 2;
+  const cameraFocus = new T.Vector3(0, 0, 5);
+  const cameraOffset = new T.Vector3(30, 36, 42);
   const api = {
     scene,
     renderer,
@@ -924,6 +924,15 @@ export function createWorld(canvas) {
     combat: null,
     enemyModels,
     blocked,
+    updateCamera(dt) {
+      cameraFocus.lerp(hero.position, Math.min(1, dt * 7));
+      camera.position.copy(cameraFocus).add(cameraOffset);
+      camera.lookAt(cameraFocus.x, 0.6, cameraFocus.z);
+      camera.updateMatrixWorld();
+    },
+    setEquipment(equipment) {
+      setActorWeapon(hero, equipment.weapon?.itemId || "worn_sword");
+    },
     setZone(zone) {
       api.zone = zone;
       campObjects.forEach((o) => (o.visible = zone === "camp"));
@@ -935,10 +944,11 @@ export function createWorld(canvas) {
         obstacles.length,
         ...(zone === "camp" ? campObstacles : wilderness.obstacles),
       );
-      scene.background.set(zone === "camp" ? "#283b3e" : "#333e36");
+      scene.background.set(zone === "camp" ? "#1e2223" : "#282e28");
       scene.fog.color.copy(scene.background);
       api.stop();
       hero.position.set(zone === "camp" ? 0 : -14, 0, zone === "camp" ? 5 : 10);
+      hero.rotation.y = zone === "camp" ? Math.PI : 2.3;
       companions.forEach((c, i) => {
         c.position
           .copy(hero.position)
@@ -953,6 +963,8 @@ export function createWorld(canvas) {
           );
         c.userData.path = [];
       });
+      cameraFocus.copy(hero.position);
+      api.updateCamera(1);
       repath = 0;
     },
     setCombat(combat) {
@@ -965,22 +977,20 @@ export function createWorld(canvas) {
       for (const obj of enemyModels.values()) {
         obj.traverse((o) => {
           if (o.isMesh) o.geometry.dispose();
+          if (o.isSprite) {
+            o.material.map?.dispose();
+            o.material.dispose();
+          }
         });
         obj.removeFromParent();
       }
       enemyModels.clear();
       for (const enemy of combat.enemies) {
-        const obj = person(
-          enemy.x,
-          enemy.z,
-          enemy.elite
-            ? "#8f664b"
-            : enemy.name === "Fallen"
-              ? "#9a4d3f"
-              : "#87917e",
-        );
+        const obj = createMonster(enemy);
+        obj.position.set(enemy.x, 0, enemy.z);
+        scene.add(obj);
         obj.userData.enemyId = enemy.id;
-        if (enemy.elite) obj.scale.setScalar(1.5);
+        if (enemy.elite) obj.scale.setScalar(1.25);
         obj.visible = api.zone === "moor" && enemy.hp > 0;
         enemyModels.set(enemy.id, obj);
       }
@@ -1116,9 +1126,13 @@ export function createWorld(canvas) {
       (l, i) =>
         (l.rotation.x = moving ? Math.sin(data.phase + i * Math.PI) * 0.5 : 0),
     );
+    data.arms?.forEach((arm, i) => {
+      arm.rotation.x = moving ? Math.sin(data.phase + i * Math.PI) * 0.3 : 0;
+    });
     if (data.swing > 0) {
       data.swing -= dt;
       data.body.rotation.y = Math.sin(data.swing * 12) * 0.7;
+      if (data.arms) data.arms[1].rotation.x = -Math.sin(data.swing * 7) * 1.7;
     } else data.body.rotation.y = 0;
   }
   let repath = 0;
@@ -1135,13 +1149,11 @@ export function createWorld(canvas) {
       }
     }
     flames.forEach((f, i) => {
-      f.scale.y = 0.6 + Math.sin(time * 9 + i) * 0.15 + (i % 3) * 0.2;
-      f.rotation.y = time + i;
+      f.scale.y = 2.8 + Math.sin(time * 9 + i) * 0.12;
+      f.scale.x = 2.6 + Math.sin(time * 5) * 0.09;
     });
-    firelight.intensity = 25 + Math.sin(time * 11) * 3;
-    torches.forEach(
-      (f, i) => (f.scale.y = 1.6 + Math.sin(time * 8 + i) * 0.25),
-    );
+    firelight.intensity = 55 + Math.sin(time * 11) * 5;
+    torches.forEach((f, i) => (f.scale.y = 0.8 + Math.sin(time * 8 + i) * 0.1));
     for (let i = 0; i < 150; i++) {
       sparkPos[i * 3 + 1] += dt * (0.5 + (i % 4) * 0.2);
       sparkPos[i * 3] += Math.sin(time + i) * dt * 0.1;
