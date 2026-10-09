@@ -1,18 +1,26 @@
 {
-  "name": "emberfall-camp",
+  "name": "d2-clone-emberfall",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "vite": "^7.1.7",
-    "@playwright/test": "^1.55.1"
+    "@playwright/test": "^1.55.1",
+    "prettier": "3.6.2",
+    "vite": "^7.1.7"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

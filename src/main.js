@@ -503,15 +503,16 @@ function frame(now) {
 }
 update();
 requestAnimationFrame(frame);
-window.__camp = {
-  getState: () => JSON.parse(JSON.stringify(state)),
-  getHero: () => hero.position.toArray(),
-  getCompanions: () =>
-    companions.map((c) => ({
-      visible: c.visible,
-      position: c.position.toArray(),
-    })),
-  moveTo: (x, z) => game.moveTo(new THREE.Vector3(x, 0, z)),
-  interact,
-  game,
-};
+if (import.meta.env.DEV)
+  window.__camp = {
+    getState: () => JSON.parse(JSON.stringify(state)),
+    getHero: () => hero.position.toArray(),
+    getCompanions: () =>
+      companions.map((c) => ({
+        visible: c.visible,
+        position: c.position.toArray(),
+      })),
+    moveTo: (x, z) => game.moveTo(new THREE.Vector3(x, 0, z)),
+    interact,
+    game,
+  };
