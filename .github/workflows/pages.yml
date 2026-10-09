@@ -26,6 +26,13 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm test
       - run: npm run build
+      - run: node scripts/package-playtest.mjs
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: playtest-download
+          path: artifacts/emberfall-playtest.html
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -56,3 +63,30 @@ jobs:
           enablement: true
       - id: deployment
         uses: actions/deploy-pages@v4
+  release:
+    name: Publish versioned download
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: playtest-download
+          path: artifacts
+      - name: Publish new package version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; preserving its assets."
+          else
+            gh release create "$tag" artifacts/emberfall-playtest.html \
+              --target "$GITHUB_SHA" --prerelease \
+              --title "$tag — Emberfall playtest" --notes-file CHANGELOG.md
+          fi
