@@ -7,7 +7,30 @@ import {
   normalizeSave,
   SAVE_KEY,
   claimReward,
+  newExpedition,
 } from "./game/save.js";
+
+import { COMPANIONS, recruit, dismiss } from "./game/companions.js";
+import {
+  LEVEL_CAP,
+  levelOf,
+  skillPoints,
+  TALENTS,
+  talentLock,
+  trainTalent,
+  respec,
+  xpProgress,
+} from "./game/progression.js";
+import {
+  ITEMS,
+  VENDOR_STOCK,
+  BAG_LIMIT,
+  heroStats,
+  itemStats,
+  equipItem,
+  sellItem,
+  buyItem,
+} from "./game/items.js";
 
 let state = freshState();
 try {
@@ -28,10 +51,10 @@ app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to mo
 <aside class="party" id="party" aria-label="Your party"></aside><aside class="quest"><div class="eyebrow">Quest journal</div><h2 id="quest-title">A light in the darkness</h2><p id="quest-text">Speak to Akara.<br>Find your footing in camp.</p><button id="journal-link">OPEN JOURNAL &nbsp; [J]</button></aside>
 <div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div></div>
 <div class="controls">CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP</div><div class="chapter"><strong>ACT I · THE SIGHTLESS EYE</strong><span id="save-note">PROGRESS SAVED ON THIS DEVICE</span></div>
-<footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="level-bar"><i></i></div><div class="slots"><button class="slot" data-action="attack" title="Cleave [1] · 8 mana"><kbd>1</kbd>⚔</button><button class="slot" data-action="guard" title="Guard [2] · 10 mana"><kbd>2</kbd>⛨</button><button class="slot" data-action="rally" title="Regroup party [3]"><kbd>3</kbd>⚑</button><button class="slot" data-action="heal" title="Healing potion [4]"><kbd>4</kbd>♜<small id="potions">3</small></button><button class="slot" data-action="hold" title="Hold / follow [5]"><kbd>5</kbd>✥</button><button class="slot" data-action="portal" title="Return to campfire [6]"><kbd>6</kbd>◉</button></div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">×</button><div id="dialog-content"></div></dialog>`;
+<footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="xp-caption" id="xp-caption"></div><div class="level-bar"><i></i></div><div class="slots"><button class="slot" data-action="attack" title="Cleave [1] · 8 mana"><kbd>1</kbd>⚔</button><button class="slot" data-action="guard" title="Guard [2] · 10 mana"><kbd>2</kbd>⛨</button><button class="slot" data-action="rally" title="Regroup party [3]"><kbd>3</kbd>⚑</button><button class="slot" data-action="heal" title="Healing potion [4]"><kbd>4</kbd>♜<small id="potions">3</small></button><button class="slot" data-action="hold" title="Hold / follow [5]"><kbd>5</kbd>✥</button><button class="slot" data-action="portal" title="Return to campfire [6]"><kbd>6</kbd>◉</button></div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">×</button><div id="dialog-content"></div></dialog>`;
 const dialog = document.querySelector("dialog"),
   content = document.querySelector("#dialog-content");
-let toastTimer;
+let toastTimer, levelTimer;
 function toast(message) {
   const el = document.querySelector("#toast");
   el.textContent = message;
@@ -40,6 +63,7 @@ function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove("visible"), 3500);
 }
 function modal(title, body, actions = [], eyebrow = "Rogue Encampment") {
+  dialog.classList.remove("wide");
   content.innerHTML = `<div class="eyebrow">${eyebrow}</div><h2 id="dialog-title">${title}</h2>${body}<div id="actions"></div>`;
   for (const a of actions) {
     let b = document.createElement("button");
@@ -79,7 +103,7 @@ const damageNumbers = [];
 function combatEvent(event) {
   if (event.type === "swing") {
     game.animateAttack(event.id);
-    if (event.target && (event.id === "Ilyra" || event.id === "Eira"))
+    if (event.target && ["Ilyra", "Eira", "Soren"].includes(event.id))
       game.projectile(event.id, event.target);
     if (event.cleave) game.pulse(0xe4d6a6);
   }
@@ -90,17 +114,39 @@ function combatEvent(event) {
     document.querySelector("#damage-numbers").append(el);
     damageNumbers.push({ el, x: event.x, z: event.z, life: 0.9 });
   }
+  if (event.type === "level") {
+    const banner = document.querySelector("#level-up");
+    banner.textContent = `Level ${event.level} · 2 talent points gained [K]`;
+    banner.hidden = false;
+    clearTimeout(levelTimer);
+    levelTimer = setTimeout(() => (banner.hidden = true), 4500);
+    update();
+    game.pulse(0xe4d897);
+    toast(`Level ${event.level}! Two talent points gained. Train in camp [K].`);
+  }
+  if (event.type === "special") {
+    const ally = combat.allies.find((a) => a.id === event.id);
+    if (ally) {
+      const el = document.createElement("span");
+      el.className = "damage-number special";
+      el.textContent = event.name;
+      document.querySelector("#damage-numbers").append(el);
+      damageNumbers.push({ el, x: ally.x, z: ally.z, life: 1.2 });
+    }
+  }
   if (event.type === "kill") {
     update();
     if (event.complete)
-      toast("The Blood Moor is clear. Return to Akara for your reward.");
+      toast(
+        state.rewardClaimed
+          ? "Hunt cleared. Collect the drops, then start a fresh hunt at the eastern gate."
+          : "The Blood Moor is clear. Return to Akara for your reward.",
+      );
   }
   if (event.type === "loot") {
     update();
     toast(
-      event.charm
-        ? "Ashen charm acquired · +3 attack damage"
-        : `Picked up ${event.gold} gold.`,
+      `${event.item}${event.sold ? " sold automatically (bag full)" : ""} · ${event.gold} gold`,
     );
   }
   if (event.type === "heal") {
@@ -168,35 +214,52 @@ function returnToCamp() {
     "CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP";
   update();
 }
+function beginNewExpedition() {
+  if (game.zone !== "camp" || !newExpedition(state)) return false;
+  combat = createCombat(state, combatEvent, game.blocked);
+  game.setCombat(combat);
+  refreshEnemyLabels();
+  update();
+  return true;
+}
 function expeditionModal() {
+  const clear = state.defeated.length === ENCOUNTERS.length,
+    allLoot = state.lootTaken.length === ENCOUNTERS.length;
+  const actions = [{ label: "Enter the Blood Moor", run: enterMoor }];
+  if (clear)
+    actions.unshift({
+      label: allLoot
+        ? "Start fresh hunt"
+        : "Collect remaining drops before a fresh hunt",
+      disabled: !allLoot,
+      run: () => {
+        if (beginNewExpedition()) enterMoor();
+      },
+    });
+  actions.push({ label: "Stay in camp", run: () => dialog.close() });
   modal(
     "Beyond the palisade",
-    `<p>Fallen and restless dead stalk the old road. Lead your company into the Blood Moor, defeat its 12 enemies, and bring word back to Akara.</p><p class="muted">Click an enemy to approach and attack. Use Cleave [1], Guard [2], and potions [4]. Collect glowing drops by walking near them.</p>`,
-    [
-      { label: "Enter the Blood Moor", run: enterMoor },
-      { label: "Stay in camp", run: () => dialog.close() },
-    ],
-    "Chapter I · First expedition",
+    `<p>Hunt ${state.run + 1} · ${state.defeated.length}/12 enemies defeated. Every foe drops gold and equipment. Collect all drops, then start a fresh hunt to keep leveling.</p><p>Earn levels 1–${LEVEL_CAP}, try talents in camp [K], and equip new items [I]. Your three companions share your level.</p><p class="muted">Cleave [1] · Guard [2] · Rally [3] · Potion [4] · Retreat [6]. Later hunts are slightly stronger, capped at hunt 4.</p>`,
+    actions,
+    "Blood Moor · Repeatable first area",
   );
 }
+
 refreshEnemyLabels();
 document.querySelector("#return-camp").onclick = () => {
   returnToCamp();
   toast("The company returns to camp and recovers.");
 };
-const roster = {
-  Ilyra: { role: "Rogue scout", symbol: "♜", color: "#9cad79" },
-  Bram: { role: "Shield mercenary", symbol: "⛨", color: "#c1a37f" },
-  Eira: { role: "Traveling adept", symbol: "✧", color: "#b1a1cf" },
-};
+const roster = COMPANIONS;
 function update() {
   document.querySelector("#potions").textContent = state.potions;
   document.querySelector("#party").innerHTML =
-    `<button class="party-card" data-name="hero"><div class="portrait" data-level="1">⚔</div><div><div class="member-name">The Wanderer</div><div class="health-line"><i style="width:100%"></i></div><div class="member-role">WARRIOR · YOU</div></div></button>` +
+    `<button class="party-card" data-name="hero"><div class="portrait" data-level="${levelOf(state)}">⚔</div><div><div class="member-name">The Wanderer</div><div class="health-line"><i style="width:100%"></i></div><div class="member-role">WARRIOR · YOU</div></div></button>` +
     Object.entries(roster)
+      .filter(([name]) => state.roster.includes(name))
       .map(
         ([name, r]) =>
-          `<button class="party-card" data-name="${name}" style="opacity:${state.roster.includes(name) ? 1 : 0.4}"><div class="portrait" data-level="1">${r.symbol}</div><div><div class="member-name">${name}</div><div class="health-line"><i style="width:${state.roster.includes(name) ? 100 : 0}%"></i></div><div class="member-role">${state.roster.includes(name) ? r.role.toUpperCase() : "IN RESERVE"}</div></div></button>`,
+          `<button class="party-card" data-name="${name}" style="opacity:${state.roster.includes(name) ? 1 : 0.4}"><div class="portrait" data-level="${levelOf(state)}">${r.symbol}</div><div><div class="member-name">${name}</div><div class="health-line"><i style="width:${state.roster.includes(name) ? 100 : 0}%"></i></div><div class="member-role">${state.roster.includes(name) ? r.role.toUpperCase() : "IN RESERVE"}</div></div></button>`,
       )
       .join("");
   document
@@ -210,24 +273,28 @@ function update() {
     (c, i) => (c.visible = state.roster.includes(Object.keys(roster)[i])),
   );
   const inMoor = game.zone === "moor";
-  document.querySelector("#quest-title").textContent = state.rewardClaimed
-    ? "The road is clear"
-    : state.defeated.length === ENCOUNTERS.length
+  const complete = state.defeated.length === ENCOUNTERS.length;
+  document.querySelector("#quest-title").textContent = inMoor
+    ? `Blood Moor · Hunt ${state.run + 1}`
+    : complete && !state.rewardClaimed
       ? "Return to Akara"
-      : inMoor
-        ? "Clear the Blood Moor"
+      : state.rewardClaimed
+        ? "Ready for another hunt?"
         : state.quest
           ? "Prepare for the wilderness"
           : "A light in the darkness";
   document.querySelector("#quest-text").innerHTML = inMoor
-    ? `${state.defeated.length} / ${ENCOUNTERS.length} enemies defeated.<br>${state.defeated.length === ENCOUNTERS.length ? "Return to camp to claim your reward." : "Collect glowing drops. Stay together."}`
-    : state.rewardClaimed
-      ? "Expedition complete.<br>The Den of Evil is next."
-      : state.defeated.length === ENCOUNTERS.length
-        ? "The company has prevailed.<br>Speak to Akara for your reward."
+    ? `${state.defeated.length} / 12 enemies defeated.<br>${complete ? "Gather remaining drops and return to camp." : "Every foe drops equipment and gold."}`
+    : complete && !state.rewardClaimed
+      ? "Speak to Akara for your reward."
+      : state.rewardClaimed
+        ? "Start a fresh hunt at the eastern gate.<br>Train talents [K] and equip loot [I]."
         : state.quest
-          ? `${state.visited.length}/3 camp services visited.<br>${state.visited.length === 3 ? "Enter the eastern gate when ready." : "Meet Charsi, Kashya, and the stash."}`
+          ? `${state.visited.length}/3 camp services visited.<br>Enter the eastern gate when ready.`
           : "Speak to Akara.<br>Find your footing in camp.";
+  document
+    .querySelector("#skills-menu")
+    .classList.toggle("points-ready", skillPoints(state) > 0);
   save();
 }
 function visited(id) {
@@ -237,22 +304,146 @@ function visited(id) {
   }
 }
 function showCharacter() {
+  const stats = heroStats(state),
+    xp = xpProgress(state);
   modal(
     "The Wanderer",
-    `<p>A traveler on the western road. A sword, a few coins, and three souls willing to stand beside you.</p><div class="item-row"><span>Class</span><strong>Warrior · Level 1</strong></div><div class="item-row"><span>Life / Mana</span><strong>120 / 60</strong></div><div class="item-row"><span>Weapon</span><strong>${state.weapon ? "Tempered longsword" : "Worn longsword"}</strong></div><div class="item-row"><span>Attack damage</span><strong>${state.weapon ? "12–18" : "6–10"}${state.charm ? " + 3" : ""}</strong></div><div class="item-row"><span>Experience earned</span><strong>${state.xp}</strong></div><p class="muted">Cleave hits nearby enemies. Guard reduces incoming damage for three seconds.</p>`,
+    `<p>Warrior · Level ${stats.level} / ${LEVEL_CAP}</p><div class="item-row"><span>Life / Mana</span><strong>${stats.life} / ${stats.mana}</strong></div><div class="item-row"><span>Attack damage</span><strong>${stats.damage}</strong></div><div class="item-row"><span>Equipment protection</span><strong>${stats.armor}%</strong></div><div class="item-row"><span>Mana regeneration</span><strong>${stats.regen} / second</strong></div><div class="item-row"><span>Next level</span><strong>${xp.needed ? `${xp.current} / ${xp.needed} XP` : "Playtest level cap reached"}</strong></div><p>Unspent talent points: ${skillPoints(state)}. Your companions share your level and gain life and damage.</p>`,
+    [
+      { label: "Open skill trees", run: showSkills },
+      { label: "Manage equipment", run: showInventory },
+    ],
   );
+}
+function showSkills() {
+  const camp = game.zone === "camp";
+  modal(
+    "Warrior skill trees",
+    `<p>Level ${levelOf(state)} / ${LEVEL_CAP} · <strong>${skillPoints(state)} unspent points</strong>. Gain two points per level. ${camp ? "Training and respecs are free in camp." : "Return to camp to train or respec."}</p><div class="skill-trees">${[
+      "Vanguard",
+      "Slayer",
+      "Tactician",
+    ]
+      .map(
+        (branch) =>
+          `<section class="skill-branch"><h3>${branch}</h3>${Object.entries(
+            TALENTS,
+          )
+            .filter(([, t]) => t.branch === branch)
+            .map(([key, t]) => {
+              const rank = state.skills[key] || 0,
+                lock = talentLock(state, key);
+              return `<article class="talent ${rank ? "learned" : ""}"><div class="talent-name">${t.name}<span>${rank}/${t.max}</span></div><p>${t.description}</p><small>Level ${t.level}${t.requires ? ` · ${TALENTS[t.requires].name} rank 1` : ""}</small><button class="action" data-talent="${key}" ${!camp || lock ? "disabled" : ""}>${rank === t.max ? "Mastered" : `Learn ${t.name}`}</button><small>${lock || "Costs 1 point"}</small></article>`;
+            })
+            .join("")}</section>`,
+      )
+      .join("")}</div>`,
+    [
+      {
+        label: "Reset talents · Free in camp",
+        disabled: !camp || !Object.keys(state.skills).length,
+        run: () => {
+          respec(state);
+          combat.refreshStats(true);
+          update();
+          showSkills();
+        },
+      },
+    ],
+    "Three paths · Mix branches or specialize",
+  );
+  dialog.classList.add("wide");
+  content.querySelectorAll("[data-talent]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (game.zone === "camp" && trainTalent(state, b.dataset.talent)) {
+          combat.refreshStats(true);
+          update();
+          showSkills();
+        }
+      }),
+  );
+}
+function itemCard(item, equipped = false) {
+  const def = ITEMS[item.itemId],
+    current = ITEMS[state.equipment[def.slot]?.itemId];
+  const diff = current
+    ? ["damage", "life", "mana", "armor"]
+        .filter((k) => (def[k] || 0) !== (current[k] || 0))
+        .map((k) => {
+          const d = (def[k] || 0) - (current[k] || 0);
+          return `<span class="${d > 0 ? "stat-up" : "stat-down"}">${d > 0 ? "+" : ""}${d}${k === "armor" ? "%" : ""} ${k}</span>`;
+        })
+        .join(" · ")
+    : "";
+  return `<article class="item-card ${def.rarity}"><div class="item-heading"><strong>${def.name}</strong><small>${def.rarity} · ${def.slot} · Lv ${def.level}</small></div><p>${itemStats(def)}</p>${!equipped && diff ? `<div class="item-compare">vs equipped: ${diff}</div>` : ""}${equipped ? '<span class="equipped-tag">Equipped</span>' : `<div class="item-actions"><button data-equip="${item.uid}" ${game.zone !== "camp" || def.level > levelOf(state) ? "disabled" : ""}>${def.level > levelOf(state) ? `Requires level ${def.level}` : "Equip"}</button><button data-sell="${item.uid}" ${game.zone !== "camp" ? "disabled" : ""}>Sell · ${def.value} gold</button></div>`}</article>`;
 }
 function showInventory() {
   modal(
     "Your belongings",
-    `<div class="item-row"><span>${state.weapon ? "Tempered" : "Worn"} longsword</span><span>Equipped</span></div><div class="item-row"><span>Traveler’s armor</span><span>Equipped</span></div><div class="item-row"><span>Healing potions</span><span>× ${state.potions}</span></div><div class="item-row"><span>Town portal stone</span><span>Reusable</span></div>${state.charm ? '<div class="item-row"><span>Ashen charm</span><span>Equipped · +3 damage</span></div>' : ""}<p class="gold">◈ ${state.gold} gold carried · ${state.stash} in stash</p>`,
+    `<div class="inventory-summary"><span>◈ ${state.gold} gold · ${state.stash} stashed</span><span>${state.potions} potions · ${state.inventory.length}/${BAG_LIMIT} bag slots</span></div><p class="muted">${game.zone === "camp" ? "Equip and sell items in camp. Compare bonuses before swapping." : "Return to camp to change equipment or sell. Potions work in the field [4]."} Every enemy drops an item. Excess drops are sold if the bag is full.</p><h3 class="section-label">Equipped</h3><div class="equipment-grid">${Object.entries(
+      state.equipment,
+    )
+      .map(([slot, item]) =>
+        item
+          ? itemCard(item, true)
+          : `<article class="item-card empty"><strong>${slot}</strong><p>Empty slot</p></article>`,
+      )
+      .join(
+        "",
+      )}</div><h3 class="section-label">Backpack</h3><div class="bag-grid">${state.inventory.length ? state.inventory.map((i) => itemCard(i)).join("") : '<p class="muted">Your bag is empty. Find equipment in the Blood Moor or browse Charsi’s stock.</p>'}</div>`,
+    [],
+    "Equipment · Four hero slots",
+  );
+  dialog.classList.add("wide");
+  content.querySelectorAll("[data-equip]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (game.zone === "camp" && equipItem(state, b.dataset.equip)) {
+          combat.refreshStats(true);
+          update();
+          showInventory();
+        }
+      }),
+  );
+  content.querySelectorAll("[data-sell]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (game.zone === "camp" && sellItem(state, b.dataset.sell)) {
+          update();
+          showInventory();
+        }
+      }),
+  );
+}
+function showShop() {
+  modal(
+    "Charsi’s stock",
+    `<p>◈ ${state.gold} gold · Purchased items go to your backpack [I]. Level requirements apply when equipping.</p><div class="bag-grid">${VENDOR_STOCK.map(
+      (id) => {
+        const d = ITEMS[id];
+        return `<article class="item-card ${d.rarity}"><strong>${d.name}</strong><small>${d.slot} · Level ${d.level}</small><p>${itemStats(d)}</p><button class="action" data-buy="${id}" ${state.gold < d.value * 3 || state.inventory.length >= BAG_LIMIT ? "disabled" : ""}>Buy ${d.name} · ${d.value * 3} gold</button></article>`;
+      },
+    ).join("")}</div>`,
+    [],
+    "Blacksmith · Equipment",
+  );
+  dialog.classList.add("wide");
+  content.querySelectorAll("[data-buy]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (game.zone === "camp" && buyItem(state, b.dataset.buy)) {
+          update();
+          showShop();
+        }
+      }),
   );
 }
 function showJournal() {
   if (game.zone === "moor" || state.defeated.length) {
     modal(
       "The old road",
-      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${state.defeated.length} / ${ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "Reward claimed. The Den of Evil is the next development milestone." : state.defeated.length === ENCOUNTERS.length ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>`,
+      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${state.defeated.length} / ${ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "First bounty claimed. Collect every drop, then start another hunt at the eastern gate to keep leveling and finding gear." : state.defeated.length === ENCOUNTERS.length ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>`,
       [],
       "Act I · First expedition",
     );
@@ -268,34 +459,35 @@ function showJournal() {
   );
 }
 function showParty() {
-  if (game.zone === "moor") {
-    modal(
-      "Your company",
-      "<p>Return to Kashya in camp to recruit or dismiss companions. Downed allies recover when you return to safety.</p>",
-      [],
-      "Party management",
-    );
-    return;
-  }
+  const camp = game.zone === "camp";
   modal(
     "Your company",
-    `<p>One hero. Three companions. Your company follows you through the camp.</p>`,
-    Object.entries(roster).map(([name, r]) => ({
-      label: `${state.roster.includes(name) ? "Dismiss" : "Recruit"} ${name} · ${r.role}${state.roster.includes(name) ? "" : " · Free"}`,
-      run: () => {
-        if (state.roster.includes(name))
-          state.roster = state.roster.filter((n) => n !== name);
-        else {
-          state.roster.push(name);
+    `<p>${state.roster.length}/3 companion slots filled · Shared level ${levelOf(state)}. ${camp ? "Dismiss a companion to make room for another. Recruitment is free for the playtest." : "Return to Kashya in camp to change the party."}</p><div class="companion-grid">${Object.entries(
+      roster,
+    )
+      .map(([name, r]) => {
+        const active = state.roster.includes(name);
+        return `<article class="companion-card ${active ? "in-party" : ""}"><div class="companion-title"><span style="color:${r.color}">${r.symbol}</span><div><h3>${name}</h3><small>${r.role} · ${active ? "In your party" : "At camp"}</small></div></div><p>${r.description}</p><div class="muted">${r.special} · ${r.hp + (levelOf(state) - 1) * 12} life</div><button class="action" data-companion="${name}" ${!camp || (!active && state.roster.length >= 3) ? "disabled" : ""}>${active ? "Dismiss" : "Recruit"} ${name} · ${r.role}</button></article>`;
+      })
+      .join("")}</div>`,
+    [],
+    "Kashya · Six specialists",
+  );
+  dialog.classList.add("wide");
+  content.querySelectorAll("[data-companion]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (game.zone !== "camp") return;
+        const name = b.dataset.companion;
+        if (state.roster.includes(name)) dismiss(state, name);
+        else if (recruit(state, name))
           companions[Object.keys(roster).indexOf(name)].position
             .copy(hero.position)
             .add(new THREE.Vector3(1, 0, 1));
-        }
+        combat.refreshStats(true);
         update();
         showParty();
-      },
-    })),
-    "Kashya · Recruitment",
+      }),
   );
 }
 function interact(id) {
@@ -363,21 +555,35 @@ function interact(id) {
     visited(id);
     modal(
       "Charsi",
-      `<p>“A good blade is a promise. Let me make sure yours keeps it.”</p><div class="item-row"><span>Tempered longsword</span><span>12–18 damage</span></div><p class="gold">◈ ${state.gold} gold</p>`,
+      `<p>“A good blade is a promise. Let me make sure yours keeps it.”</p><div class="item-row"><span>Tempered longsword</span><span>15 damage</span></div><p class="gold">◈ ${state.gold} gold</p>`,
       [
         {
           label: state.weapon
-            ? "Tempered longsword equipped"
+            ? state.equipment.weapon?.itemId === "tempered_sword"
+              ? "Tempered longsword equipped"
+              : "Tempered longsword purchased"
             : "Buy & equip longsword · 100 gold",
-          disabled: state.weapon || state.gold < 100,
+          disabled:
+            state.weapon ||
+            state.gold < 100 ||
+            state.inventory.length >= BAG_LIMIT,
           run: () => {
             state.gold -= 100;
             state.weapon = true;
+            if (state.inventory.length < BAG_LIMIT)
+              state.inventory.push(state.equipment.weapon);
+            state.equipment.weapon = {
+              uid: "vendor-tempered",
+              itemId: "tempered_sword",
+            };
+            combat.refreshStats(true);
             update();
             interact(id);
             toast("Tempered longsword equipped.");
           },
         },
+        { label: "Browse equipment stock", run: showShop },
+        { label: "Sell or equip items", run: showInventory },
       ],
       "Blacksmith",
     );
@@ -456,7 +662,11 @@ function action(name) {
     game.hold = false;
     game.regroup();
     combat.rally();
-    toast("Your company gathers around you.");
+    toast(
+      state.skills.battleCry
+        ? "Your company regroups. Battle Cry heals when ready."
+        : "Your company gathers around you.",
+    );
   }
   if (name === "hold") {
     game.hold = !game.hold;
@@ -484,7 +694,9 @@ function action(name) {
     if (game.zone === "moor") {
       if (combat.defend()) {
         game.pulse(0xd5bd78);
-        toast("Guard raised · damage reduced for 3 seconds.");
+        toast(
+          `Guard raised · damage reduced for ${3 + (state.skills.bulwark || 0)} seconds.`,
+        );
       } else toast("Guard needs 10 mana and an 8-second cooldown.");
       return;
     }
@@ -510,10 +722,11 @@ document.querySelector("#inventory").onclick = showInventory;
 document.querySelector("#journal").onclick = showJournal;
 document.querySelector("#journal-link").onclick = showJournal;
 document.querySelector("#party-menu").onclick = showParty;
+document.querySelector("#skills-menu").onclick = showSkills;
 const help = () =>
   modal(
     "The road begins here",
-    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. Click an enemy to attack, 1 to cleave, 2 to guard, and 4 to heal. Press 6 to retreat. The Den of Evil comes next.</p>',
+    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. Click an enemy to attack, 1 to cleave, 2 to guard, and 4 to heal. Press 6 to retreat. K opens skill trees. Train and respec in camp. Each cleared hunt can be refreshed at the eastern gate after collecting all drops.</p>',
   );
 document.querySelector("#help").onclick = help;
 document.querySelector("#settings").onclick = () =>
@@ -616,6 +829,7 @@ window.addEventListener("keydown", (e) => {
   if (k === "j") showJournal();
   if (k === "c") showCharacter();
   if (k === "p") showParty();
+  if (k === "k") showSkills();
   if (e.code === "Space") action("rally");
   if (/^[1-6]$/.test(k))
     action(
@@ -707,6 +921,7 @@ function frame(now) {
     enemy.label.querySelector("b").style.width =
       `${(enemy.hp / enemy.maxHp) * 100}%`;
     enemy.label.classList.toggle("winding", enemy.windup > 0);
+    enemy.label.classList.toggle("chilled", enemy.slow > 0);
   }
   const focused = combat.enemies.find(
     (e) => e.id === combat.target && e.hp > 0,
@@ -716,13 +931,16 @@ function frame(now) {
   if (focused)
     targetInfo.textContent = `${focused.name} · ${Math.ceil(focused.hp)} / ${focused.maxHp}`;
   document.querySelector(".orb.red").textContent =
-    `${Math.ceil(combat.allies[0].hp)} / 120`;
+    `${Math.ceil(combat.allies[0].hp)} / ${combat.allies[0].maxHp}`;
   document.querySelector(".orb.blue").textContent =
-    `${Math.floor(combat.mana)} / 60`;
+    `${Math.floor(combat.mana)} / ${combat.stats.mana}`;
   document.querySelector(".orb.red").style.filter =
     combat.allies[0].hp < 40 ? "brightness(1.35)" : "none";
   document.querySelector(".level-bar i").style.width =
-    `${Math.min(100, (state.xp / 320) * 100)}%`;
+    `${xpProgress(state).percent}%`;
+  const progress = xpProgress(state);
+  document.querySelector("#xp-caption").textContent =
+    `LEVEL ${progress.level} · ${progress.needed ? `${progress.current} / ${progress.needed} XP` : "LEVEL CAP"} · ${skillPoints(state)} TALENT POINT${skillPoints(state) === 1 ? "" : "S"}`;
   for (const ally of combat.allies) {
     const bar = document.querySelector(
       `.party-card[data-name="${ally.id}"] .health-line i`,
@@ -760,6 +978,10 @@ if (import.meta.env.DEV)
     action,
     enterMoor,
     returnToCamp,
+    beginNewExpedition,
+    showSkills,
+    showInventory,
+    showParty,
     getCombat: () => combat,
     game,
   };

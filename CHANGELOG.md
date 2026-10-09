@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — First-area progression
+
+- Made the Blood Moor repeatable after clearing enemies and collecting drops; each hunt retains the hero’s progression.
+- Added levels 1–6, level-up recovery, shared companion levels and unspent talent points.
+- Added three warrior talent branches with nine functional talents, prerequisites, ranks and free camp respecs.
+- Added 27 equipment types, guaranteed equipment drops, four equipped slots, comparisons, vendor stock and selling.
+- Expanded recruitment to six distinct roles: tank, healer, archer, mage, paladin and assassin. Enforced a maximum of three companions.
+- Added taunts, healing priority, volleys, frost slows, protective auras and flanking backstabs.
+- Migrated older camp saves without losing purchases, experience or quest progress.
+- Added repeat-hunt, progression, talent, equipment and companion-role regression tests.
+
 ## 0.2.0 — First expedition
 
 - Connected the eastern camp gate to an authored Blood Moor encounter.

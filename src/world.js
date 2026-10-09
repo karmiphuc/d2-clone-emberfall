@@ -1,4 +1,5 @@
 import * as T from "three";
+import { COMPANIONS } from "./game/companions.js";
 import { createWilderness } from "./wilderness.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
@@ -699,6 +700,11 @@ export function createWorld(canvas) {
         0,
         body,
       );
+    } else if (kind === "assassin") {
+      for (const side of [-1, 1]) {
+        box(0.08, 0.55, 0.06, metal, side * 0.4, 0.64, 0.16, body);
+        box(0.22, 0.05, 0.09, gold, side * 0.4, 0.43, 0.16, body);
+      }
     } else {
       const bow = mesh(
         new T.TorusGeometry(0.43, 0.025, 4, 16, Math.PI),
@@ -724,11 +730,12 @@ export function createWorld(canvas) {
     return g;
   }
   const hero = person(0, 5, "#65777a");
-  const companions = [
-    person(-1.8, 6.8, "#697658", "ranger"),
-    person(0.2, 7.4, "#8d745a"),
-    person(2, 6.7, "#83728d", "mage"),
-  ];
+  const companions = Object.entries(COMPANIONS).map(([id, spec], i) => {
+    const actor = person((i - 1) * 1.8, 7, spec.color, spec.style);
+    actor.userData.companionId = id;
+    actor.visible = i < 3;
+    return actor;
+  });
   const select = mesh(
     new T.RingGeometry(0.55, 0.61, 32),
     new T.MeshBasicMaterial({
@@ -783,7 +790,7 @@ export function createWorld(canvas) {
   const enemyModels = new Map(),
     lootModels = new Map();
   const projectiles = [];
-  const actorNames = ["hero", "Ilyra", "Bram", "Eira"];
+  const actorNames = ["hero", ...Object.keys(COMPANIONS)];
   // Grid A* for every commanded move. A clearance margin prevents clipping tents and props.
   const STEP = 0.65,
     MIN = -18.2,
@@ -933,7 +940,17 @@ export function createWorld(canvas) {
       api.stop();
       hero.position.set(zone === "camp" ? 0 : -14, 0, zone === "camp" ? 5 : 10);
       companions.forEach((c, i) => {
-        c.position.copy(hero.position).add(v((i - 1) * 1.1, 0, 1.4));
+        c.position
+          .copy(hero.position)
+          .add(
+            v(
+              (Math.max(0, companions.filter((a) => a.visible).indexOf(c)) -
+                1) *
+                1.1,
+              0,
+              1.4,
+            ),
+          );
         c.userData.path = [];
       });
       repath = 0;
@@ -977,7 +994,7 @@ export function createWorld(canvas) {
       const line = new T.Line(
         new T.BufferGeometry().setFromPoints([a, b]),
         new T.LineBasicMaterial({
-          color: sourceId === "Eira" ? 0x9fcce1 : 0xd3bd85,
+          color: sourceId === "Ilyra" ? 0xd3bd85 : 0x9fcce1,
           transparent: true,
           opacity: 0.8,
         }),
@@ -1007,7 +1024,12 @@ export function createWorld(canvas) {
       hero.position.set(0, 0, 5);
       hero.userData.path = [];
       companions.forEach((c, i) => {
-        c.position.set((i - 1) * 1.8, 0, 7);
+        c.position.set(
+          (Math.max(0, companions.filter((a) => a.visible).indexOf(c)) - 1) *
+            1.8,
+          0,
+          7,
+        );
         c.userData.path = [];
       });
       api.hold = false;
@@ -1255,13 +1277,16 @@ export function createWorld(canvas) {
             (e) =>
               e.hp > 0 &&
               Math.hypot(e.x - comp.position.x, e.z - comp.position.z) <
-                (i === 1 ? 2 : 7),
+                COMPANIONS[actorNames[i + 1]].range,
           )
         ) {
           comp.userData.path = [];
           return;
         }
-        const offset = v((i - 1) * 1.65, 0, 2).applyAxisAngle(
+        const formationIndex = companions
+          .filter((c) => c.visible)
+          .indexOf(comp);
+        const offset = v((formationIndex - 1) * 1.65, 0, 2).applyAxisAngle(
           v(0, 1, 0),
           hero.rotation.y - Math.PI,
         );
@@ -1273,7 +1298,8 @@ export function createWorld(canvas) {
     companions.forEach((c, i) => {
       const down = api.zone === "moor" && api.combat?.allies[i + 1].hp === 0;
       c.userData.body.rotation.z = down ? Math.PI / 2 : 0;
-      if (c.visible && !api.hold && !down) walk(c, dt, 4.2);
+      if (c.visible && !api.hold && !down)
+        walk(c, dt, c.userData.companionId === "Nyx" ? 5.4 : 4.2);
     });
   };
   return api;

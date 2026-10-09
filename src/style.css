@@ -799,3 +799,282 @@ dialog p {
     font-size: 7px;
   }
 }
+dialog {
+  max-height: 86vh;
+  overflow-y: auto;
+}
+dialog.wide {
+  width: min(940px, 94vw);
+}
+dialog h3 {
+  font-family: Cinzel, Georgia, serif;
+  font-weight: 500;
+  color: #d8bf8f;
+}
+.xp-caption {
+  text-align: center;
+  color: #c4b788;
+  font-size: 9px;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+.points-ready {
+  color: #f0ce86 !important;
+}
+.skill-trees {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.skill-branch h3 {
+  border-bottom: 1px solid #897451;
+  padding-bottom: 12px;
+}
+.talent {
+  padding: 15px;
+  border: 1px solid #586051;
+  background: #111d20;
+  margin: 12px 0;
+  position: relative;
+}
+.talent:not(:last-child):after {
+  content: "│";
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  color: #8d7950;
+}
+.talent.learned {
+  border-color: #b7995a;
+  background: #283126;
+}
+.talent-name {
+  font-family: Cinzel, Georgia, serif;
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #ead7b1;
+}
+.talent p {
+  font-size: 13px;
+  min-height: 62px;
+  margin: 10px 0;
+  line-height: 1.65;
+}
+.talent small {
+  font-size: 11px;
+  display: block;
+  color: #a6b4a8;
+}
+.talent .action {
+  font-size: 12px;
+  padding: 10px;
+}
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.bag-grid,
+.companion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.inventory-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  color: #dac38f;
+  font-size: 13px;
+}
+.item-card {
+  border: 1px solid #66716355;
+  background: #142024;
+  padding: 14px;
+}
+.item-card strong {
+  font-family: Cinzel, Georgia, serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+.item-card.magic strong {
+  color: #9ebdda;
+}
+.item-card.rare strong {
+  color: #e4c27e;
+}
+.item-card small {
+  display: block;
+  color: #91a296;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-top: 7px;
+}
+.item-card p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.item-compare {
+  font-size: 10px;
+  line-height: 1.8;
+  margin: 6px 0;
+}
+.stat-up {
+  color: #a5c58f;
+}
+.stat-down {
+  color: #e59880;
+}
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+.item-actions button {
+  background: #283831;
+  border: 1px solid #84754f;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.item-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.equipped-tag {
+  color: #a8b58e;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.section-label {
+  margin-top: 24px;
+  font-size: 16px;
+}
+.companion-card {
+  border: 1px solid #68735955;
+  padding: 17px;
+  background: #121f23;
+}
+.companion-card.in-party {
+  border-color: #b3995d;
+  background: #263129;
+}
+.companion-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.companion-title > span {
+  font-size: 32px;
+}
+.companion-title h3 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+.companion-title small {
+  color: #a4b3a5;
+  font-size: 11px;
+}
+.companion-card p {
+  font-size: 13px;
+  min-height: 85px;
+}
+.companion-card .action {
+  font-size: 12px;
+  margin-top: 15px;
+}
+.damage-number.special {
+  font-family: Inter, Arial, sans-serif;
+  font-size: 11px;
+  color: #b8ddeb;
+  letter-spacing: 0.5px;
+}
+@media (max-width: 800px) {
+  .equipment-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bag-grid,
+  .companion-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .skill-trees {
+    gap: 8px;
+  }
+  .talent {
+    padding: 10px;
+  }
+  .talent-name {
+    font-size: 12px;
+  }
+  .xp-caption {
+    font-size: 7px;
+    letter-spacing: 0.5px;
+  }
+}
+@media (max-width: 540px) {
+  .skill-trees,
+  .bag-grid,
+  .companion-grid {
+    grid-template-columns: 1fr;
+  }
+  .talent p,
+  .companion-card p {
+    min-height: 0;
+  }
+  .talent-name {
+    font-size: 15px;
+  }
+  .bar-menu {
+    gap: 7px;
+  }
+  .bar-menu button {
+    font-size: 7px;
+  }
+  .bar-menu kbd {
+    margin-left: 2px;
+  }
+  dialog {
+    padding: 23px 18px;
+  }
+  .item-card {
+    padding: 10px;
+  }
+  .item-card strong {
+    font-size: 12px;
+  }
+  .inventory-summary {
+    font-size: 12px;
+  }
+}
+.enemy-label.chilled {
+  box-shadow: inset 0 0 0 1px #89bfd2;
+}
+.level-up {
+  position: absolute;
+  bottom: 190px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1b2622eb;
+  border: 1px solid #cbb57b;
+  color: #f1db9e;
+  font-family: Cinzel, Georgia, serif;
+  letter-spacing: 1px;
+  padding: 16px 24px;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 0 35px #c5a85222;
+}
+@media (max-width: 540px) {
+  .level-up {
+    font-size: 11px;
+    bottom: 165px;
+    padding: 12px;
+  }
+}

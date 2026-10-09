@@ -60,7 +60,12 @@ test("potions are consumed only when restoring life", () => {
 test("downed allies do not act and recovering restores the whole party", () => {
   const c = createCombat(freshState());
   c.allies[1].hp = 0;
-  c.tick(0.1, [...positions(), { id: "Ilyra", x: -8, z: 3, active: true }]);
+  c.tick(
+    0.1,
+    positions().map((p) =>
+      p.id === "Ilyra" ? { ...p, x: -8, z: 3, active: true } : p,
+    ),
+  );
   assert.equal(c.allies[1].order, null);
   c.restore();
   assert.ok(c.allies.every((a) => a.hp === a.maxHp));
