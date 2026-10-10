@@ -29,19 +29,26 @@ const icons = {
   heal: 12,
   hold: 14,
   portal: 11,
-  vitality: 9,
-  ironSkin: 8,
-  lastStand: 14,
-  mastery: 1,
-  wideArc: 13,
-  executioner: 5,
-  flow: 4,
-  bulwark: 14,
-  battleCry: 15,
 };
 export function itemIcon(id, slot = "", extra = "") {
   const index =
     icons[id] ??
     (slot === "ring" ? 10 : slot === "charm" ? 11 : slot === "armor" ? 8 : 0);
   return `<span class="item-art ${extra}" style="--ix:${((index % 4) * 100) / 3}%;--iy:${(Math.floor(index / 4) * 100) / 3}%" aria-hidden="true"></span>`;
+}
+
+const talentOrder = [
+  "vitality",
+  "ironSkin",
+  "lastStand",
+  "mastery",
+  "wideArc",
+  "executioner",
+  "flow",
+  "bulwark",
+  "battleCry",
+];
+export function talentIcon(id) {
+  const index = Math.max(0, talentOrder.indexOf(id));
+  return `<span class="talent-art" style="--tx:${(index % 3) * 50}%;--ty:${Math.floor(index / 3) * 50}%" aria-hidden="true"></span>`;
 }

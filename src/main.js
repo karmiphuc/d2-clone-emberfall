@@ -1,6 +1,8 @@
+import { skillTreeMarkup } from "./skill-tree.js";
 import { createCombatAudio } from "./combat-audio.js";
 import * as THREE from "three";
 import "./style.css";
+import "./skill-tree.css";
 import { portrait, itemIcon } from "./art.js";
 import { createCharacterPreview } from "./characters.js";
 import { createWorld } from "./world.js";
@@ -19,7 +21,6 @@ import {
   levelOf,
   skillPoints,
   TALENTS,
-  talentLock,
   trainTalent,
   respec,
   xpProgress,
@@ -366,29 +367,12 @@ function showCharacter() {
     ],
   );
 }
+let selectedTalent = "mastery";
 function showSkills() {
   const camp = game.zone === "camp";
   modal(
     "Warrior skill trees",
-    `<p>Level ${levelOf(state)} / ${LEVEL_CAP} · <strong>${skillPoints(state)} unspent points</strong>. Gain two points per level. ${camp ? "Training and respecs are free in camp." : "Return to camp to train or respec."}</p><div class="skill-trees">${[
-      "Vanguard",
-      "Slayer",
-      "Tactician",
-    ]
-      .map(
-        (branch) =>
-          `<section class="skill-branch"><h3>${{ Vanguard: "Combat masteries", Slayer: "Combat skills", Tactician: "War cries" }[branch]}</h3>${Object.entries(
-            TALENTS,
-          )
-            .filter(([, t]) => t.branch === branch)
-            .map(([key, t]) => {
-              const rank = state.skills[key] || 0,
-                lock = talentLock(state, key);
-              return `<article class="talent ${rank ? "learned" : ""} ${lock ? "locked" : "available"}">${itemIcon(key, "", "talent-icon")}<div class="talent-name">${t.name}<span>${rank}/${t.max}</span></div><p>${t.description}</p><small>Level ${t.level}${t.requires ? ` · ${TALENTS[t.requires].name} rank 1` : ""}</small><button class="action" data-talent="${key}" ${!camp || lock ? "disabled" : ""}>${rank === t.max ? "Mastered" : `Learn ${t.name}`}</button><small>${lock || "Costs 1 point"}</small></article>`;
-            })
-            .join("")}</section>`,
-      )
-      .join("")}</div>`,
+    `<div class="skill-summary"><span>Level ${levelOf(state)} / ${LEVEL_CAP}</span><strong>${skillPoints(state)} unspent point${skillPoints(state) === 1 ? "" : "s"}</strong><span>Two points per level</span></div>${skillTreeMarkup(state, camp, selectedTalent)}`,
     [
       {
         label: "Reset talents · Free in camp",
@@ -404,16 +388,64 @@ function showSkills() {
     "Three paths · Mix branches or specialize",
   );
   dialog.classList.add("wide", "skills-dialog");
-  content.querySelectorAll("[data-talent]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        if (game.zone === "camp" && trainTalent(state, b.dataset.talent)) {
+  const select = (key, focus = false) => {
+    const scroll = dialog.scrollTop;
+    selectedTalent = key;
+    showSkills();
+    if (focus)
+      content
+        .querySelector(`[data-inspect-talent="${key}"]`)
+        .focus({ preventScroll: true });
+    dialog.scrollTop = scroll;
+  };
+  content.querySelectorAll("[data-inspect-talent]").forEach((button) => {
+    button.onclick = () => select(button.dataset.inspectTalent, true);
+    button.onkeydown = (event) => {
+      const keys = Object.keys(TALENTS),
+        index = keys.indexOf(button.dataset.inspectTalent);
+      const compact = window.matchMedia("(max-width: 700px)").matches;
+      const offset = {
+        ArrowDown: compact ? 3 : 1,
+        ArrowUp: compact ? -3 : -1,
+        ArrowRight: compact ? 1 : 3,
+        ArrowLeft: compact ? -1 : -3,
+      }[event.key];
+      if (!offset) return;
+      const next = index + offset;
+      if (
+        next < 0 ||
+        next >= keys.length ||
+        (Math.abs(offset) === 1 &&
+          Math.floor(next / 3) !== Math.floor(index / 3))
+      )
+        return;
+      event.preventDefault();
+      select(keys[next], true);
+    };
+  });
+  content.querySelectorAll("[data-skill-branch]").forEach((button) => {
+    button.onclick = () => {
+      const branch = button.dataset.skillBranch;
+      select(
+        Object.keys(TALENTS).find((key) => TALENTS[key].branch === branch),
+      );
+      content
+        .querySelector(`[data-skill-branch="${branch}"]`)
+        .focus({ preventScroll: true });
+    };
+  });
+  content
+    .querySelectorAll("[data-talent], [data-train-selected]")
+    .forEach((button) => {
+      button.onclick = () => {
+        const key = button.dataset.talent || button.dataset.trainSelected;
+        if (game.zone === "camp" && trainTalent(state, key)) {
           combat.refreshStats(true);
           update();
-          showSkills();
+          select(key, true);
         }
-      }),
-  );
+      };
+    });
 }
 function itemCard(item, equipped = false) {
   const def = ITEMS[item.itemId],
@@ -430,6 +462,19 @@ function itemCard(item, equipped = false) {
   return `<article class="item-card ${def.rarity}">${itemIcon(item.itemId, def.slot)}<div class="item-heading"><strong>${def.name}</strong><small>${def.rarity} · ${def.slot} · Lv ${def.level}</small></div><p>${itemStats(def)}</p>${!equipped && diff ? `<div class="item-compare">vs equipped: ${diff}</div>` : ""}${equipped ? '<span class="equipped-tag">Equipped</span>' : `<div class="item-actions"><button data-equip="${item.uid}" ${game.zone !== "camp" || def.level > levelOf(state) ? "disabled" : ""}>${def.level > levelOf(state) ? `Requires level ${def.level}` : "Equip"}</button><button data-sell="${item.uid}" ${game.zone !== "camp" ? "disabled" : ""}>Sell · ${def.value} gold</button></div>`}</article>`;
 }
 let selectedItem;
+let inventoryFilter = "all",
+  inventorySort = "newest";
+const bagFilters = {
+  all: "All",
+  weapon: "Weapons",
+  armor: "Armor",
+  trinkets: "Trinkets",
+};
+const matchesBagFilter = (item, filter) =>
+  filter === "all" ||
+  (filter === "trinkets"
+    ? ["ring", "charm"].includes(ITEMS[item.itemId].slot)
+    : ITEMS[item.itemId].slot === filter);
 let inspectModel = false;
 let previewMotion = "idle";
 const weaponArtwork = {
@@ -442,12 +487,19 @@ const weaponArtwork = {
   dawnsteel: 6,
 };
 function showInventory() {
+  const bag = state.inventory
+    .filter((item) => matchesBagFilter(item, inventoryFilter))
+    .reverse();
+  if (inventorySort !== "newest")
+    bag.sort(
+      (a, b) => ITEMS[b.itemId][inventorySort] - ITEMS[a.itemId][inventorySort],
+    );
   const selected =
     selectedItem === "equipped"
       ? null
-      : state.inventory.find((i) => i.uid === selectedItem) ||
-        state.inventory.find((i) => ITEMS[i.itemId].level <= levelOf(state)) ||
-        state.inventory[0];
+      : bag.find((i) => i.uid === selectedItem) ||
+        bag.find((i) => ITEMS[i.itemId].level <= levelOf(state)) ||
+        bag[0];
   if (selectedItem !== "equipped") selectedItem = selected?.uid;
   const def = selected ? ITEMS[selected.itemId] : null;
   const current = def ? state.equipment[def.slot] : null;
@@ -490,14 +542,35 @@ function showInventory() {
           `<div class="equipped-slot"><span class="slot-name">${slot}</span>${item ? `${itemIcon(item.itemId, slot)}<strong>${ITEMS[item.itemId].name}</strong>` : '<span class="empty-slot">Empty</span>'}</div>`,
       )
       .join("")}</div></div>
-    ${selected ? `<section class="item-detail ${def.rarity}"><div class="compare-head"><div><small>Equipped</small><strong>${currentDef?.name || "Empty slot"}</strong></div><div><small>Selected · ${def.rarity}</small><strong>${def.name}</strong></div></div>${compare}<p class="requirement">${canEquip ? "Ready to equip" : game.zone !== "camp" ? "Return to camp to change equipment" : `Requires level ${def.level}`}</p><div class="item-actions"><button class="primary" data-equip="${selected.uid}" ${canEquip ? "" : "disabled"}>Equip ${def.slot}</button><button data-sell="${selected.uid}" ${game.zone === "camp" ? "" : "disabled"}>Sell · ${def.value} gold</button></div></section>` : `<p class="empty-bag">${state.inventory.length ? "Equipment updated. Select another item below to compare." : "Your backpack is empty. Find equipment in the Blood Moor or visit Charsi at the forge."}</p>`}
+    ${selected ? `<section class="item-detail ${def.rarity}"><div class="compare-head"><div><small>Equipped</small><strong>${currentDef?.name || "Empty slot"}</strong></div><div><small>Selected · ${def.rarity}</small><strong>${def.name}</strong></div></div>${compare}<p class="requirement">${canEquip ? "Ready to equip" : game.zone !== "camp" ? "Return to camp to change equipment" : `Requires level ${def.level}`}</p><div class="item-actions"><button class="primary" data-equip="${selected.uid}" ${canEquip ? "" : "disabled"}>Equip ${def.slot}</button><button data-sell="${selected.uid}" ${game.zone === "camp" ? "" : "disabled"}>Sell · ${def.value} gold</button></div></section>` : `<p class="empty-bag">${state.inventory.length ? (selectedItem === "equipped" ? "Equipment updated. Select another item below to compare." : "Choose another category to compare your equipment.") : "Your backpack is empty. Find equipment in the Blood Moor or visit Charsi at the forge."}</p>`}
     <div class="bag-heading"><h3>Backpack</h3><span>${state.potions} healing potions · [4]</span></div>
-    <div class="inventory-bag" role="group" aria-label="Backpack">${state.inventory
+    <div class="bag-tools"><div class="bag-filters" role="group" aria-label="Filter backpack">${Object.entries(
+      bagFilters,
+    )
+      .map(
+        ([key, label]) =>
+          `<button data-bag-filter="${key}" aria-pressed="${inventoryFilter === key}" aria-label="${key === "all" ? "Show all items" : "Show " + label.toLowerCase()}">${label} <small>${state.inventory.filter((item) => matchesBagFilter(item, key)).length}</small></button>`,
+      )
+      .join(
+        "",
+      )}</div><label class="bag-sort">Sort <select aria-label="Sort backpack" id="bag-sort">${[
+      ["newest", "Newest"],
+      ["level", "Highest level"],
+      ["value", "Highest value"],
+    ]
+      .map(
+        ([key, label]) =>
+          `<option value="${key}" ${inventorySort === key ? "selected" : ""}>${label}</option>`,
+      )
+      .join("")}</select></label></div>
+    <div class="inventory-bag" role="group" aria-label="Backpack">${bag
       .map((i) => {
         const d = ITEMS[i.itemId];
-        return `<button class="bag-item ${d.rarity} ${i.uid === selectedItem ? "selected" : ""}" data-select-item="${i.uid}" aria-label="${d.name}, ${d.rarity}, level ${d.level}" aria-pressed="${i.uid === selectedItem}" title="${d.name} · ${itemStats(d)}">${itemIcon(i.itemId, d.slot)}<span>${d.name}</span></button>`;
+        return `<button class="bag-item ${d.rarity} ${i.uid === selectedItem ? "selected" : ""}" data-select-item="${i.uid}" aria-label="${d.name}, ${d.rarity}, level ${d.level}" aria-pressed="${i.uid === selectedItem}" title="${d.name} · ${itemStats(d)}">${itemIcon(i.itemId, d.slot)}<small class="bag-level">Lv${d.level}</small><span>${d.name}</span></button>`;
       })
-      .join("")}</div>
+      .join(
+        "",
+      )}${!bag.length ? `<p class="bag-empty">${state.inventory.length ? "No items in this category. Choose another filter." : "Your next find belongs here."}</p>` : ""}</div>
     <p class="inventory-help">Select an item to compare. Equip and sell in camp. Progress saves automatically.</p>`,
     [],
     "The Wanderer · Equipment",
@@ -522,6 +595,23 @@ function showInventory() {
   document.querySelector("#preview-toggle").onclick = () => {
     inspectModel = !inspectModel;
     showInventory();
+  };
+  const refreshBag = (selector) => {
+    const scroll = dialog.scrollTop;
+    showInventory();
+    content.querySelector(selector)?.focus({ preventScroll: true });
+    dialog.scrollTop = scroll;
+  };
+  content.querySelectorAll("[data-bag-filter]").forEach((button) => {
+    button.onclick = () => {
+      inventoryFilter = button.dataset.bagFilter;
+      selectedItem = null;
+      refreshBag(`[data-bag-filter="${inventoryFilter}"]`);
+    };
+  });
+  content.querySelector("#bag-sort").onchange = (event) => {
+    inventorySort = event.target.value;
+    refreshBag("#bag-sort");
   };
   content.querySelectorAll("[data-select-item]").forEach(
     (b) =>

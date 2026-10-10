@@ -52,3 +52,7 @@ companions-a-attacks.webp and companions-b-attacks.webp: 4x6 atlases,
 Eira, then Soren, Aldric, Nyx; four existing facing columns.
 projectiles.webp: 4x1 atlas, 512-pixel cells. Right-pointing arrow, frost
 lance, healing mote and divine bolt; runtime rotates along flight direction.
+
+talents.webp: 3x3 opaque 512-pixel icons, row-major Vitality, Iron Skin,
+Last Stand, Weapon Mastery, Wide Arc, Executioner, Battle Flow, Bulwark,
+Battle Cry. Original bronze-framed painted emblems on dark stone.

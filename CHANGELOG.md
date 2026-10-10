@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 — Readable talent paths and loot browsing
+
+- Rebuilt the skill tree around compact connected talent nodes, nine original icons and a selected-talent inspector with current/next-rank effects.
+- Added mobile branch navigation and keyboard node navigation; inspection never spends points and training/respec retain existing rules.
+- Added backpack category filters, counts, level badges, newest/level/value sorting and filtered empty states.
+- Preserved item comparison, immediate weapon appearance changes, selling and saved equipment.
+- Extracted talent presentation into its own module and stylesheet, removing obsolete tree styles.
+- Added browser checks for inspection/training, mobile branches, filtering/sorting and equipment persistence.
+
 ## 0.9.0 — Companion strikes and aimed spellwork
 
 - Added original four-direction strike/release and recovery frames for all six companion roles.

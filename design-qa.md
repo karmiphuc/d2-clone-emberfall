@@ -1,42 +1,41 @@
-# v0.9 companion combat review
+# v0.10 talent and backpack review
 
-Scope: readable companion attacks and ranged spellwork in the existing camp/Blood Moor slice. The [v0.8 review](docs/qa-v0.8.md) records the preceding atmosphere and targeting pass. This is an incremental release; full Act I and complete Diablo II fidelity remain unfinished.
+Scope: clearer build planning and loot browsing within the existing playable camp/Blood Moor slice. The [v0.9 review](docs/qa-v0.9.md) records the preceding companion combat pass. Full Act I and complete Diablo II fidelity remain unfinished.
 
 ## Visual target and evidence
 
-The established Wrought Iron direction and existing companion idle/walk atlases are the visual references. New original attack artwork preserves each character's costume, palette, four facings and ground baseline. Both attack atlases and the projectile atlas were opened and inspected before review.
+The established Wrought Iron direction, existing stone inventory panel and pre-change skill screen are the references. The new original `public/art/talents.webp` atlas was opened and inspected: nine distinct bronze-framed painted emblems, with no labels embedded in the image.
 
-- [Matching before/after pose comparison](docs/screenshots/companion-comparison-v0.9.webp), two 1440 × 900 captures with identical camera, actor positions and strike state. This deliberately stages all six companions together for art inspection; the playable party remains one hero plus three companions.
-- [Final companion poses](docs/screenshots/companion-poses-v0.9.webp).
-- [Archer, tank and healer combat](docs/screenshots/combat-a-v0.9.webp), [mage, paladin and assassin combat](docs/screenshots/combat-b-v0.9.webp), and [phone combat](docs/screenshots/combat-mobile-v0.9.webp).
+- [Desktop skill comparison](docs/screenshots/skills-comparison-v0.10.webp): matching fresh level-1 state and 1440 × 900 viewport, before/after opening Skills.
+- [Phone skill comparison](docs/screenshots/skills-mobile-comparison-v0.10.webp): matching state at 390 × 844. The new default Combat skills branch shows all three tiers with a readable inspector.
+- [Final desktop tree](docs/screenshots/skills-v0.10.webp) and [phone tree](docs/screenshots/skills-mobile-v0.10.webp).
+- [Populated backpack](docs/screenshots/inventory-loot-v0.10.webp), [filtered/sorted weapons](docs/screenshots/inventory-filtered-v0.10.webp), and [phone backpack](docs/screenshots/inventory-mobile-v0.10.webp). These use a clearly staged level-3 save containing 14 existing item definitions to inspect a representative loot collection.
 
-The combat captures stage positions and advance a real simulation attack, then pause through the inventory for inspection. The second party is recruited through the ordinary party controls. These are development inspection captures, not claims of an unstaged playthrough. The separate production check uses the camp gate, enters Blood Moor and queues a right-click skill without development hooks. Local Playwright/Chromium provides browser verification; the cloud browser connector remains unavailable.
+Both combined comparisons and final captures were opened and inspected. Local Playwright/Chromium supplies browser verification; the cloud browser connector remains unavailable. Production verification is separate from the development fixture captures.
 
 ## Findings and resolutions
 
-1. **P2, resolved — companions lean instead of performing their roles.** Added 48 original directional frames: release/strike and recovery for each role. Bow, mace, staff, sword and paired daggers now create distinct silhouettes. Pair-specific scale adjustments preserve body size and foot alignment. Removed the generic attack wobble.
-2. **P2, resolved — ranged attacks read as generic sparks.** Arrows, frost lances, divine bolts and healing motes use a dedicated illustrated atlas and rotate tip-first along their camera-space travel direction. The existing 64-effect cap and retreat cleanup remain.
-3. **P2, resolved — a healing gesture can immediately face an enemy.** Eira previously healed and attacked in the same simulation action. Healing now consumes her action cooldown, keeps her facing the wounded ally and produces a visible cast plus recipient effect. A simulation test checks this priority.
-4. **P2, resolved — stationary enemies can anticipate in the wrong direction.** Windup events now identify the intended victim and turn the enemy before its strike. Stable authored poses replace the shaking idle treatment.
-5. **P3 — cycles remain brief.** Each companion attack has two authored poses. Ilyra's release reads as an immediate loose/aim moment rather than a long follow-through. Longer cycles and eight facings remain future work.
+1. **P2, resolved — skill descriptions crowd every node.** Replaced nine repeated text panels with compact connected nodes and one selected-talent inspector. Current and next-rank effects, prerequisites, point cost and camp restrictions remain explicit. Inspecting a talent does not spend points.
+2. **P2, resolved — mobile tree requires tiny text and hides its final tier.** Branch buttons show one complete three-tier path at a time on narrow screens. Desktop retains all three paths. The inspector uses readable text; the close and respec controls remain reachable.
+3. **P2, resolved — reused equipment icons weaken skill identity.** Added original heart, gauntlet, battered shield, crossed blades, sweeping sword, executioner's axe, mana chalice, fortress shield and war-horn emblems. Learned/locked/selected states remain distinguishable through ranks, borders and action availability.
+4. **P2, resolved — initial new controls use browser-white styling.** The first capture exposed missing button backgrounds on branch and quick-learn controls. Applied the existing dark bronze palette and recaptured desktop and phone layouts.
+5. **P2, resolved — larger backpacks lack browsing controls.** Added category counts/filters, newest/level/value sorting and visible level badges. Sorting retains the selected item; category changes select a matching item. Empty categories give a recovery instruction. The existing comparison, equip/sell actions and dynamic weapon preview remain functional.
+6. **P3 — short labels remain compact.** Level/rank badges and quick-learn labels are smaller than inspector text. The larger inspect controls and detail panel carry the full explanation. Drag-and-drop inventory placement remains outside this slice.
 
 No unresolved P0/P1/P2 issues remain within this release's scope.
 
 ## Fidelity surfaces
 
-- **Typography and spacing:** established HUD and panel typography/layout are retained; attack art fits within its atlas cells and keeps the existing actor footprints.
-- **Colors and imagery:** moss/leather archer, iron tank, ivory healer, blue mage, gold paladin and burgundy assassin remain distinct. Frost, healing and holy effects use restrained matching colors. Complete weapons and transparent margins were inspected.
-- **Copy and interaction:** controls are unchanged. Companion actions correspond to actual simulation events; healing takes priority over Eira's basic attack. Projectiles are visual feedback for the existing immediate ranged damage model, not new collision-based missiles.
-- **Responsive behavior:** 1440 × 900 and 390 × 844 captures retain the established HUD. The short entry toast is visible in staged phone combat; final production checks include overflow detection.
+- **Typography:** classical tree/character headings with readable sans-serif effects and requirements. Mobile moves detail text out of narrow columns.
+- **Spacing/layout:** compact nodes and an adjacent desktop inspector; one complete branch plus inspector on phone. Backpack controls fit above the existing icon grid without horizontal overflow.
+- **Colors/tokens:** dark stone, bronze borders, gold selection and restrained green next-rank improvements match the established inventory/HUD palette.
+- **Image quality:** nine original framed icons replace semantically unrelated equipment icons. They remain legible at node and inspector sizes.
+- **Copy/content:** current/next rank, required level/talent, point cost, filtered empty states and camp-only changes are explicit. The work does not introduce new talents or alter progression formulas.
 
 ## Verification
 
-- 27 unit tests and all 12 browser tests passed: real attacks from all six companions, correct release/recovery maps, role projectile types, healing recipient/caster, held recovery, effect bounds/cleanup, targeting, equipment/save agreement, full expedition rewards, and four hunts to level 6 with talent changes.
-- Production build and standalone packaging passed. Production/standalone browser validation and deployment are recorded in the release verification below.
-- Original atlases are local assets, share cached image sources, and dispose cloned actor textures through the existing lifecycle. No save-schema change is introduced.
+Focused browser checks passed for inspecting without spending, real training and prerequisites, keyboard selection, mobile branches, free respec, camp restrictions, filters/sorting, comparison, selling, equipped weapon appearance and reload persistence. Superseded skill styles were removed; talent presentation now has its own module and stylesheet.
 
-## Release verification
-
-The final production browser flow reached Blood Moor through the camp gate and queued right-click Cleave. [Desktop](docs/screenshots/target-release-v0.9.webp) and [phone](docs/screenshots/mobile-release-v0.9.webp) captures were opened and inspected. Production and standalone runs reported zero page errors, missing assets or horizontal overflow; standalone made zero external image requests. Production exposes no development hook. Build, packaging, formatting and diff checks passed. GitHub deployment is checked separately after pushing this review.
+Full regression passed: 27 unit tests and 14 browser tests (41 total), including repeated expeditions through level six. Production desktop/mobile checks trained Weapon Mastery, inspected mobile branches, purchased and equipped gear through Charsi, filtered/sorted the backpack and confirmed equipment after reload. No page errors, missing assets or horizontal overflow were observed; the development hook is absent. The standalone package trained the same talent with no external image requests. Production screenshots were opened and inspected. Formatting and build/package checks passed. GitHub deployment is verified separately after publishing.
 
 final result: passed

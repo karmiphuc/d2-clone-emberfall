@@ -96,6 +96,9 @@ test("illustrated UI stays usable on a narrow screen and camera follows the hero
   await page
     .getByRole("button", { name: "Learn Weapon Mastery", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Show Combat masteries", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Learn Vitality", exact: true }),
   ).toBeDisabled();

@@ -821,56 +821,6 @@ dialog h3 {
 .points-ready {
   color: #f0ce86 !important;
 }
-.skill-trees {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-.skill-branch h3 {
-  border-bottom: 1px solid #897451;
-  padding-bottom: 12px;
-}
-.talent {
-  padding: 15px;
-  border: 1px solid #586051;
-  background: #111d20;
-  margin: 12px 0;
-  position: relative;
-}
-.talent:not(:last-child):after {
-  content: "│";
-  position: absolute;
-  bottom: -14px;
-  left: 50%;
-  color: #8d7950;
-}
-.talent.learned {
-  border-color: #b7995a;
-  background: #283126;
-}
-.talent-name {
-  font-family: Cinzel, Georgia, serif;
-  font-size: 15px;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: #ead7b1;
-}
-.talent p {
-  font-size: 13px;
-  min-height: 62px;
-  margin: 10px 0;
-  line-height: 1.65;
-}
-.talent small {
-  font-size: 11px;
-  display: block;
-  color: #a6b4a8;
-}
-.talent .action {
-  font-size: 12px;
-  padding: 10px;
-}
 .equipment-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1003,32 +953,18 @@ dialog h3 {
   .companion-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .skill-trees {
-    gap: 8px;
-  }
-  .talent {
-    padding: 10px;
-  }
-  .talent-name {
-    font-size: 12px;
-  }
   .xp-caption {
     font-size: 7px;
     letter-spacing: 0.5px;
   }
 }
 @media (max-width: 540px) {
-  .skill-trees,
   .bag-grid,
   .companion-grid {
     grid-template-columns: 1fr;
   }
-  .talent p,
   .companion-card p {
     min-height: 0;
-  }
-  .talent-name {
-    font-size: 15px;
   }
   .bar-menu {
     gap: 7px;
@@ -1626,84 +1562,6 @@ dialog.inventory-dialog {
   font-size: 12px !important;
   color: #baae92 !important;
 }
-dialog.skills-dialog {
-  width: min(860px, 96vw);
-}
-.skills-dialog > div > p {
-  margin: 6px 0 15px;
-  font-size: 13px;
-}
-.skill-trees {
-  gap: 24px;
-}
-.skill-branch h3 {
-  font-size: 15px;
-  text-align: center;
-  margin: 0 0 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid #8b7347;
-}
-.talent {
-  background: #17140ecc;
-  border: 1px solid #574932;
-  padding: 10px;
-  margin: 16px 0;
-  min-height: 148px;
-}
-.talent.learned {
-  background: #292419;
-  border-color: #c2a365;
-}
-.talent.available {
-  border-color: #9d834e;
-}
-.talent.locked:not(.learned) .talent-icon {
-  filter: saturate(0.3);
-  opacity: 0.65;
-}
-.talent:not(:last-child):after {
-  content: "";
-  height: 17px;
-  width: 1px;
-  background: #917b50;
-  bottom: -18px;
-}
-.talent-icon {
-  float: left;
-  width: 42px;
-  height: 42px;
-  border: 1px solid #8f7849;
-  margin: 0 8px 4px 0;
-}
-.talent-name {
-  font-size: 12px;
-  display: block;
-  min-height: 42px;
-  padding-top: 2px;
-}
-.talent-name span {
-  display: block;
-  font: 11px Inter;
-  color: #dbc48e;
-  margin-top: 4px;
-}
-.talent p {
-  clear: both;
-  font-size: 11px;
-  min-height: 30px;
-  line-height: 1.4;
-  margin: 6px 0;
-}
-.talent small {
-  font-size: 10px;
-  color: #c1b395;
-}
-.talent .action {
-  padding: 6px;
-  margin: 6px 0;
-  font-size: 11px;
-  text-align: center;
-}
 .skills-dialog #actions .action {
   width: auto;
   min-width: 240px;
@@ -1766,23 +1624,6 @@ dialog.skills-dialog {
   }
   .equipped-slot strong {
     font-size: 9px;
-  }
-  .talent {
-    min-height: 132px;
-    margin: 10px 0;
-  }
-  .talent p {
-    min-height: 26px;
-  }
-  .talent:not(:last-child):after {
-    height: 11px;
-    bottom: -12px;
-  }
-  .skills-dialog > div > p {
-    margin-bottom: 8px;
-  }
-  dialog.skills-dialog {
-    padding: 18px 24px;
   }
   .inventory-bag {
     max-height: 128px;
@@ -1893,15 +1734,6 @@ dialog.skills-dialog {
   .return-camp {
     top: 244px;
   }
-  .talent-name {
-    font-size: 11px;
-  }
-  .skill-trees {
-    gap: 10px;
-  }
-  .talent p {
-    font-size: 11px;
-  }
   .company-portrait {
     width: 48px;
     height: 58px;
@@ -2009,49 +1841,6 @@ dialog.skills-dialog {
   .compare-head strong {
     font-size: 12px;
   }
-  .skill-trees {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 7px;
-  }
-  .talent {
-    padding: 6px;
-    min-height: 200px;
-  }
-  .talent-icon {
-    float: none;
-    width: 42px;
-    height: 42px;
-    margin: 0 auto 6px;
-  }
-  .talent-name {
-    font-size: 10px;
-    min-height: 39px;
-    text-align: center;
-  }
-  .talent-name span {
-    font-size: 10px;
-  }
-  .talent p {
-    font-size: 10px;
-    min-height: 55px;
-  }
-  .talent small {
-    font-size: 9px;
-  }
-  .talent .action {
-    font-size: 9px;
-    padding: 7px 2px;
-  }
-  .skill-branch h3 {
-    font-size: 10px;
-    min-height: 40px;
-  }
-  .skills-dialog {
-    padding: 14px 9px;
-  }
-  .skills-dialog > div > p {
-    font-size: 12px;
-  }
   .companion-grid {
     grid-template-columns: 1fr;
   }
@@ -2080,50 +1869,6 @@ dialog {
 }
 .orb {
   border-radius: 50%;
-}
-.talent,
-.talent.learned,
-.talent.available {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid #6c593a;
-  padding: 10px 5px;
-}
-.talent-icon {
-  width: 48px;
-  height: 48px;
-  border: 2px ridge #a28b56;
-}
-.talent.learned .talent-icon {
-  border-color: #e5c679;
-  box-shadow: 0 0 10px #a68b3b40;
-}
-.talent-name {
-  font-size: 13px;
-  min-height: 48px;
-}
-.talent p {
-  font-size: 12px;
-  min-height: 34px;
-}
-.talent:not(:last-child):after {
-  left: 29px;
-}
-@media (max-width: 540px) {
-  .talent-name {
-    font-size: 10px;
-  }
-  .talent-icon {
-    width: 42px;
-    height: 42px;
-  }
-  .talent p {
-    font-size: 10px;
-    min-height: 55px;
-  }
-  .talent:not(:last-child):after {
-    left: 50%;
-  }
 }
 .loot-label {
   position: absolute;
@@ -2315,4 +2060,84 @@ dialog {
     top: 110px;
     max-width: calc(100vw - 174px);
   }
+}
+
+.talent-node-footer button,
+.skill-branch-nav button,
+.bag-filters button,
+.bag-sort select {
+  color: #d7c59b;
+  background: #211d14;
+  border: 1px solid #74613e;
+  border-radius: 0;
+  font-family: Inter, sans-serif;
+}
+.talent-node-footer button:disabled {
+  background: #171611;
+  color: #8b826e;
+  border-color: #3b3528;
+  cursor: default;
+}
+.talent-node-footer button:not(:disabled):hover,
+.bag-filters button:hover {
+  background: #382f1e;
+  border-color: #bc9d63;
+}
+.bag-tools {
+  margin: 0 0 10px;
+}
+.bag-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.bag-filters button {
+  min-height: 34px;
+  padding: 5px;
+  font-size: 11px;
+}
+.bag-filters small {
+  color: #9f9277;
+  margin-left: 3px;
+  font-size: 10px;
+}
+.bag-filters button[aria-pressed="true"] {
+  color: #ffe2a5;
+  background: #362d1c;
+  border-color: #c8a661;
+}
+.bag-sort {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 8px;
+  color: #b6a886;
+  font-size: 11px;
+}
+.bag-sort select {
+  padding: 4px 8px;
+  min-height: 30px;
+  font-size: 11px;
+}
+.bag-level {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  padding: 1px 4px;
+  background: #0b0b09e8;
+  color: #cbb788;
+  font:
+    10px/1.2 Inter,
+    sans-serif;
+  pointer-events: none;
+}
+.bag-empty {
+  grid-column: 1 / -1;
+  padding: 16px 8px;
+  margin: 0;
+  border: 1px solid #413825;
+  color: #aa9c7e;
+  font-size: 12px;
+  text-align: center;
 }

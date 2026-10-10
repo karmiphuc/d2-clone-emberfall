@@ -54,3 +54,9 @@ Camp terrain composites the original stony albedo with existing path placement a
 `src/sprite-picking.js` tests the current atlas frame's transformed UV against a cached 8-bit alpha mask, with its longest dimension capped at 512 pixels. Enemy raycasts exclude dead actors and shadow meshes. Hover and selected state drive the cursor, labels, subtle sprite highlighting and a ground ring.
 
 Right-click skill targeting can retain an explicit enemy ID while approaching. The simulation rechecks life, range and mana before execution; it clears the intent on cancellation, normal retargeting, restoration or target death. Untargeted keyboard/action-bar Cleave retains its nearby-enemy behavior. No new save fields are required.
+
+## Talent and backpack presentation
+
+`src/skill-tree.js` renders the existing nine talents as compact connected paths and a selected-talent inspector. `src/skill-tree.css` owns this layout. Mobile shows one branch at a time, with all three tiers visible; desktop shows every branch. Node selection is separate from learning, supports arrow-key navigation and retains focus across training. Rank previews describe the existing simulation formulas; progression and camp-only training/respec rules remain in `src/game/progression.js` and the modal handlers.
+
+Backpack filters and sort order are transient presentation state. They operate on a copied inventory array and never reorder the saved inventory. Changing category chooses a matching item; sorting retains the current selection. Equipping and selling still use the shared item functions and refresh world equipment through the existing update path. No new save fields are added.
