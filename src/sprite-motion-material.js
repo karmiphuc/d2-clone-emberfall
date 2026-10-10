@@ -1,20 +1,27 @@
 import * as T from "three";
+
+// Blend complete fractional poses during clip/facing transitions. Holding a
+// floor(row) destination for the fade makes a fast attack skip then snap ahead.
 export function createMotionMaterial(map) {
   const material = new T.SpriteMaterial({
     map,
     transparent: true,
-    alphaTest: 0.1,
-    depthWrite: true,
+    alphaTest: 0.01,
+    depthWrite: false,
     toneMapped: false,
   });
   const uniforms = {
-    poseA: { value: map },
-    poseB: { value: map },
-    rectA: { value: new T.Vector4() },
-    rectB: { value: new T.Vector4() },
-    poseMix: { value: 0 },
-    scaleA: { value: 1 },
-    scaleB: { value: 1 },
+    poseAtlas: { value: map },
+    previousAtlas: { value: map },
+    rectCurrent: { value: new T.Vector4() },
+    rectNext: { value: new T.Vector4() },
+    rectPrevious: { value: new T.Vector4() },
+    rectPreviousNext: { value: new T.Vector4() },
+    frameMix: { value: 0 },
+    previousMix: { value: 0 },
+    transitionMix: { value: 1 },
+    frameScale: { value: 1 },
+    previousScale: { value: 1 },
   };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
@@ -25,35 +32,48 @@ export function createMotionMaterial(map) {
       .replace(
         "#include <common>",
         `#include <common>
-      varying vec2 motionUv;
-      uniform sampler2D poseA, poseB;
-      uniform vec4 rectA, rectB;
-      uniform float poseMix, scaleA, scaleB;
-      vec4 samplePose(sampler2D image,vec4 rect,vec2 p) {
-        if(p.x<0.0||p.y<0.0||p.x>1.0||p.y>1.0)return vec4(0.0);
-        return texture2D(image,rect.xy+clamp(p,0.002,0.998)*rect.zw);
-      }
-    `,
+        varying vec2 motionUv;
+        uniform sampler2D poseAtlas, previousAtlas;
+        uniform vec4 rectCurrent, rectNext, rectPrevious, rectPreviousNext;
+        uniform float frameMix, previousMix, transitionMix, frameScale, previousScale;
+        vec4 samplePose(sampler2D image, vec4 rect, vec2 p) {
+          if(p.x<0.0||p.y<0.0||p.x>1.0||p.y>1.0)return vec4(0.0);
+          vec4 c=texture2D(image,rect.xy+clamp(p,0.002,0.998)*rect.zw);
+          return vec4(c.rgb*c.a,c.a);
+        }
+        vec4 fractionalPose(sampler2D image,vec4 a,vec4 b,vec2 p,float t) {
+          vec4 pose=samplePose(image,a,p);
+          if(t>0.001)pose=mix(pose,samplePose(image,b,p),t);
+          return pose;
+        }
+      `,
       )
       .replace(
         "#include <map_fragment>",
         `
-      vec2 originA=(motionUv-vec2(0.5,0.06))*scaleA+vec2(0.5,0.06);
-      vec2 originB=(motionUv-vec2(0.5,0.06))*scaleB+vec2(0.5,0.06);
-      vec4 a=samplePose(poseA,rectA,originA);
-      vec4 blended=a;
-      if(poseMix>0.001) {
-        vec4 b=samplePose(poseB,rectB,originB);
-        blended=mix(vec4(a.rgb*a.a,a.a),vec4(b.rgb*b.a,b.a),poseMix);
+        vec2 currentUv=(motionUv-vec2(0.5,0.06))*frameScale+vec2(0.5,0.06);
+        vec4 blended=fractionalPose(poseAtlas,rectCurrent,rectNext,currentUv,frameMix);
+        if(transitionMix<0.999) {
+          vec2 previousUv=(motionUv-vec2(0.5,0.06))*previousScale+vec2(0.5,0.06);
+          vec4 from=fractionalPose(previousAtlas,rectPrevious,rectPreviousNext,previousUv,previousMix);
+          blended=mix(from,blended,transitionMix);
+        }
         blended.rgb/=max(blended.a,0.0001);
-      }
-      diffuseColor*=blended;
-    `,
+        diffuseColor*=blended;
+      `,
       );
   };
-  material.customProgramCacheKey = () => "emberfall-sequence-v3";
+  material.customProgramCacheKey = () => "emberfall-sequence-v4";
   let previous = null,
     transition = null;
+  function rect(target, frame, row) {
+    target.set(
+      frame.column / frame.columns,
+      1 - (row + 1) / frame.count,
+      1 / frame.columns,
+      1 / frame.count,
+    );
+  }
   return {
     material,
     sample({
@@ -69,7 +89,18 @@ export function createMotionMaterial(map) {
       factor = 1,
       dt = 1 / 60,
     }) {
-      const frame = { map, key, row, column, columns, count, clip, factor };
+      const frame = {
+        map,
+        key,
+        row,
+        next,
+        mix,
+        column,
+        columns,
+        count,
+        clip,
+        factor,
+      };
       if (
         previous &&
         (previous.key !== key ||
@@ -78,35 +109,26 @@ export function createMotionMaterial(map) {
       )
         transition = { from: previous, elapsed: 0 };
       previous = frame;
-      let a = frame,
-        b = { ...frame, row: next },
-        blend = mix;
+      let weight = 1;
       if (transition) {
         transition.elapsed += dt;
-        const t = Math.min(1, transition.elapsed / 0.065);
-        a = transition.from;
-        b = frame;
-        blend = t * t * (3 - 2 * t);
-        if (t >= 1) transition = null;
+        const t = Math.min(1, transition.elapsed / 0.09);
+        weight = t * t * (3 - 2 * t);
       }
-      uniforms.poseA.value = a.map;
-      uniforms.poseB.value = b.map;
-      uniforms.rectA.value.set(
-        a.column / a.columns,
-        1 - (a.row + 1) / a.count,
-        1 / a.columns,
-        1 / a.count,
-      );
-      uniforms.rectB.value.set(
-        b.column / b.columns,
-        1 - (b.row + 1) / b.count,
-        1 / b.columns,
-        1 / b.count,
-      );
-      uniforms.poseMix.value = blend;
-      uniforms.scaleA.value = 1.4 / a.factor;
-      uniforms.scaleB.value = 1.4 / b.factor;
-      return { mix: blend, sequence: key !== "idle" };
+      const from = transition?.from || frame;
+      uniforms.poseAtlas.value = frame.map;
+      uniforms.previousAtlas.value = from.map;
+      rect(uniforms.rectCurrent.value, frame, frame.row);
+      rect(uniforms.rectNext.value, frame, frame.next);
+      rect(uniforms.rectPrevious.value, from, from.row);
+      rect(uniforms.rectPreviousNext.value, from, from.next);
+      uniforms.frameMix.value = frame.mix;
+      uniforms.previousMix.value = from.mix;
+      uniforms.transitionMix.value = weight;
+      uniforms.frameScale.value = 1.4 / frame.factor;
+      uniforms.previousScale.value = 1.4 / from.factor;
+      if (weight >= 1) transition = null;
+      return { mix, transitionMix: weight, sequence: key !== "idle" };
     },
   };
 }

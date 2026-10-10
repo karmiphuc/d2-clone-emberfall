@@ -60,3 +60,17 @@ test("walk variants are stable within a stride and only change at start or loop 
   advanceMotion(data, 0.01, false, true);
   assert.equal(data.walkVariant, next);
 });
+
+test("display interpolation retains the outgoing walk bank until its seam", async () => {
+  const { renderedActionVariant } = await import(
+    "../../src/action-variants.js"
+  );
+  const data = {
+    gaitFrames: 16,
+    walkVariant: 2,
+    previousWalkVariant: 1,
+    walkVariantCycle: 1,
+  };
+  assert.equal(renderedActionVariant(data, "walk", 15.9), 1);
+  assert.equal(renderedActionVariant(data, "walk", 16), 2);
+});

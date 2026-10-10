@@ -97,6 +97,8 @@ export function createCharacterPreview(canvas, id, weapon) {
       if (mode === "attack" && time >= nextAttack) {
         beginAttackVariant(actor.userData);
         actor.userData.swing = 0.55;
+        actor.userData.previousSwing = 0.55;
+        actor.userData.renderSwing = undefined;
         actor.userData.attackDuration = 0.55;
         actor.userData.attackWindup = 0.16;
         nextAttack = time + 1.1;

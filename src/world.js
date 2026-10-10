@@ -1,3 +1,4 @@
+import { stepWaypoints } from "./waypoint-motion.js";
 import { beginAttackVariant } from "./action-variants.js";
 import { createRenderBudget } from "./render-budget.js";
 import { createDungeon } from "./dungeon.js";
@@ -1020,6 +1021,8 @@ export function createWorld(canvas) {
       if (actor) {
         beginAttackVariant(actor.userData, duration === 0);
         actor.userData.swing = duration;
+        actor.userData.previousSwing = duration;
+        actor.userData.renderSwing = undefined;
         actor.userData.attackDuration = duration;
         actor.userData.attackWindup = windup;
         const target =
@@ -1165,17 +1168,9 @@ export function createWorld(canvas) {
     const data = person.userData;
     let moving = !!person.userData.manualMoving;
     if (data.path.length) {
-      const target = data.path[0],
-        d = target.clone().sub(person.position);
-      d.y = 0;
-      if (d.length() < speed * dt) {
-        person.position.copy(target);
-        data.path.shift();
-      } else {
-        person.position.addScaledVector(d.normalize(), speed * dt);
-        person.rotation.y = Math.atan2(d.x, d.z);
-        moving = true;
-      }
+      const step = stepWaypoints(person.position, data.path, speed * dt);
+      moving = moving || step.moving;
+      if (step.heading !== null) person.rotation.y = step.heading;
     }
     data.moving = moving;
   }

@@ -1,3 +1,4 @@
+import { renderedActionVariant } from "./action-variants.js";
 import * as T from "three";
 import sequences from "./animation-sequence-data.json";
 import {
@@ -260,8 +261,13 @@ export function createSpriteActor(name, weapon) {
       y = facing.dot(up);
     const column = facingColumn(x, y, actor.userData.spriteFrame);
     const data = actor.userData;
+    const renderData = {
+      ...data,
+      phase: data.renderPhase ?? data.phase,
+      swing: data.renderSwing ?? data.swing,
+    };
     const pose = motionPose(
-      data,
+      renderData,
       name === "hero" || sheet === "monsters" || companion,
     );
     const companionAttack = companion && pose.clip === "attack";
@@ -285,11 +291,7 @@ export function createSpriteActor(name, weapon) {
         : row * 2 + pose.row - (sheet === "monsters" || companionAttack ? 2 : 0)
       : data.spriteRow;
     const sample = sequenceFrames(
-      {
-        ...data,
-        phase: data.renderPhase ?? data.phase,
-        swing: data.renderSwing ?? data.swing,
-      },
+      renderData,
       name === "hero" || sheet === "monsters" || companion,
     );
     const sequenceCount =
@@ -305,7 +307,9 @@ export function createSpriteActor(name, weapon) {
         : row * sequenceCount + sample.next
       : data.spriteRow;
     if (material.map !== map) material.map = map;
-    const variant = animated ? data[`${pose.clip}Variant`] || 0 : 0;
+    const variant = animated
+      ? renderedActionVariant(data, pose.clip, renderData.phase)
+      : 0;
     const columns = animated ? 4 * sequences.variants : 4;
     const atlasColumn = column + variant * 4;
     map.offset.set(atlasColumn / columns, 1 - (displayRow + 1) / count);
@@ -332,6 +336,7 @@ export function createSpriteActor(name, weapon) {
       dt: data.renderDt,
     });
     data.blendMix = blended.mix;
+    data.transitionMix = blended.transitionMix;
     data.displayVariant = variant;
     data.sequenceFrame = sample.row;
     data.sequenceLength = sequenceCount;

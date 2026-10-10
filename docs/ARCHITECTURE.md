@@ -92,3 +92,9 @@ Run `RIFE_MODEL=/path/to/model.onnx python scripts/build-action-variants.py` aft
 `action-variants.js` keeps independent shuffled bags per actor/action. A complete attack set is chosen at preparation, held through release/contact/recovery, and cannot change on duplicate combat notifications. Enemy windup and release share a selection. Walk sets change on starting movement or completing a stride. Randomness never enters damage, AI, cooldowns, loot or saved progression. Runtime atlas sampling and alpha-aware picking use the selected bank; both world and equipment previews share this implementation.
 
 Use `python scripts/check-animation-atlases.py` to validate the shipped WebP dimensions, brightness range, opaque interiors and common bank seam poses. It requires the offline image dependencies but no model. The checker reads decoded assets rather than intermediate generator output.
+
+## Runtime motion continuity (v0.16)
+
+`waypoint-motion.js` consumes the entire fixed-tick travel budget across path nodes, retaining piecewise route geometry. An arrival tick with actual travel remains moving; the next stationary tick becomes idle. `actor-sprites.js` uses the same interpolated data for both atlas/clip selection and row sampling. Attack entry initializes both swing clocks, gait restarts reset both phase clocks, and walk bank changes wait until the displayed stride crosses the seam.
+
+`createMotionMaterial` blends two fractional poses during a 90 ms transition. It retains the outgoing row, next row and mix while the destination continues advancing. Colors are blended with premultiplied alpha and unpremultiplied once. Transparent sprites retain depth testing but disable depth writes, so partially transparent silhouettes do not cut holes in other actors.

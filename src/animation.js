@@ -2,11 +2,16 @@ import { updateWalkVariant } from "./action-variants.js";
 // Movement is distance-driven in the world; previews use the same stride at
 // a nominal speed. Impact holds affect presentation only, never the simulation.
 export function advanceMotion(data, dt, moving = false, down = false) {
-  const wasMoving = data.moving,
-    previousPhase = data.phase;
+  const wasMoving = data.motionWasMoving ?? data.moving;
+  let previousPhase = data.phase;
   data.moving = moving && !down;
   data.down = down;
   data.idleTime = (data.idleTime || 0) + dt;
+  if (data.moving && !wasMoving && !data.swing && data.gaitFrames) {
+    // Restart at the common contact pose, never interpolate backwards from the
+    // stopped stride's old phase when movement begins again.
+    data.phase = data.previousPhase = previousPhase = 0;
+  }
   if (data.moving) {
     const distance = data.travelDistance ?? dt * 4;
     data.phase =
@@ -16,6 +21,8 @@ export function advanceMotion(data, dt, moving = false, down = false) {
         : dt * 6);
   }
   updateWalkVariant(data, wasMoving, previousPhase);
+  data.motionWasMoving =
+    data.moving && !data.swing && !(data.windup > 0) && !down;
   const hold = Math.min(dt, data.impactHold || 0);
   data.impactHold = Math.max(0, (data.impactHold || 0) - dt);
   data.swing = down ? 0 : Math.max(0, (data.swing || 0) - (dt - hold));

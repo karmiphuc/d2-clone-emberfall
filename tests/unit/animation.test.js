@@ -156,3 +156,21 @@ test("a complete hero swing progresses monotonically through 33 sprite frames an
   const end = sequenceFrames({ ...base, swing: 0.001 }, true);
   assert.equal(end.next, 32);
 });
+
+test("resuming a stopped gait begins forward at its contact pose rather than rewinding a whole stride", () => {
+  const data = {
+    gaitFrames: 16,
+    phase: 11,
+    previousPhase: 11,
+    moving: false,
+    motionWasMoving: false,
+    swing: 0,
+    travelDistance: 0.1,
+  };
+  advanceMotion(data, 1 / 30, true);
+  assert.equal(data.previousPhase, 0);
+  assert.ok(data.phase > 0 && data.phase < 1);
+  const before = data.phase;
+  advanceMotion(data, 1 / 30, true);
+  assert.ok(data.phase > before);
+});

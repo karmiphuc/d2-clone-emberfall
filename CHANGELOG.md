@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 — Continuous movement and attack transitions
+
+- Removed idle flashes at waypoints and consumed the full movement budget across short path segments.
+- Selected attack/walk atlases and frame rows from one interpolated render clock, preventing invalid recovery samples.
+- Blended complete fractional poses throughout clip, facing and bank transitions; kept soft sprite edges from writing depth.
+- Synchronized attack starts, gait restarts and stride variant seams with presentation clocks.
+- Added runtime boundary, waypoint and shader transition regression coverage.
+
 ## 0.15.0 — Stable lighting and varied action sets
 
 - Normalized sprite diffuse exposure and opaque surface mattes across authored and interpolated movement/attack frames, with consistent soft silhouette edges.
