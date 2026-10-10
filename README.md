@@ -84,7 +84,7 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 
 ## Next milestone
 
-Prioritize character motion and combat presentation: longer, consistently alternating hero/companion gaits, eight-facing movement and authored death animation. The remaining Act I route, deeper skills and companion tactics remain on the roadmap.
+Prioritize character motion and combat presentation: longer, consistently alternating hero/companion gaits, eight-facing movement and authored death animation. Blood Moor now spans 84×68 units, with ten outer regions and 72 enemies. The twelve old-road enemies remain the early hunt objective; outer packs offer additional loot and patrol around graveyards, ruins, abandoned camps and a lost caravan. Press M or MAP to enlarge the area map, then click to issue a walking route. Refreshing a completed road hunt resets the whole Moor. The remaining Act I route, deeper skills and companion tactics remain on the roadmap.
 
 ## Development
 

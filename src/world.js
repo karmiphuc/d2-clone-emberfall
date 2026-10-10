@@ -1,3 +1,5 @@
+import { gridRoute } from "./grid-route.js";
+import { MOOR_BOUNDS, LOCAL_BOUNDS } from "./game/moor.js";
 import { stepWaypoints } from "./waypoint-motion.js";
 import { beginAttackVariant } from "./action-variants.js";
 import { createRenderBudget } from "./render-budget.js";
@@ -609,6 +611,50 @@ export function createWorld(canvas) {
     if (n.kind) n.model = person(n.point.x, n.point.z, n.color, n.kind, n.name);
   person(15, 2.5, "#8b7564");
   person(15, -2.5, "#756e58", "ranger");
+  const residents = [
+    {
+      actor: person(-4, 9, "#8b7564", "ranger"),
+      stops: [
+        [-4, 9],
+        [4, 9],
+      ],
+    },
+    {
+      actor: person(11, 4, "#8b7564", "warrior"),
+      stops: [
+        [11, 4],
+        [13, -4],
+      ],
+    },
+    {
+      actor: person(-13, 2, "#8b7564", "ranger"),
+      stops: [
+        [-13, 2],
+        [-13, -4],
+      ],
+    },
+    {
+      actor: person(2, -8, "#8b7564", "mage"),
+      stops: [
+        [2, -8],
+        [6, -8],
+      ],
+    },
+    {
+      actor: person(14, -6, "#8b7564", "ranger"),
+      stops: [
+        [14, -6],
+        [14, 5],
+      ],
+    },
+    {
+      actor: person(-2, 11, "#8b7564", "warrior"),
+      stops: [
+        [-2, 11],
+        [7, 11],
+      ],
+    },
+  ].map((r, i) => ({ ...r, next: 1, wait: i * 0.6 }));
   const campObjects = scene.children.filter(
     (o) =>
       (!o.isLight || o.isPointLight) && o !== hero && !companions.includes(o),
@@ -639,17 +685,17 @@ export function createWorld(canvas) {
     [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
   const actorNames = ["hero", ...Object.keys(COMPANIONS)];
   // Grid A* for every commanded move. A clearance margin prevents clipping tents and props.
-  const STEP = 0.65,
-    MIN = -18.2,
-    MAX = 18.2,
-    COUNT = Math.floor((MAX - MIN) / STEP) + 1;
+  function bounds() {
+    return api.zone === "moor" ? MOOR_BOUNDS : LOCAL_BOUNDS;
+  }
   function blocked(x, z) {
+    const b = bounds();
     return (
       (api.zone === "den" && !denWalkable(x, z, 0.3)) ||
-      x < MIN ||
-      x > MAX ||
-      z < -14 ||
-      z > 14 ||
+      x < b.minX ||
+      x > b.maxX ||
+      z < b.minZ ||
+      z > b.maxZ ||
       obstacles.some(
         (o) =>
           Math.abs(x - o.x) < o.w / 2 + 0.35 &&
@@ -657,93 +703,8 @@ export function createWorld(canvas) {
       )
     );
   }
-  function cell(p) {
-    return [
-      Math.max(0, Math.min(COUNT - 1, Math.round((p.x - MIN) / STEP))),
-      Math.max(0, Math.min(COUNT - 1, Math.round((p.z - MIN) / STEP))),
-    ];
-  }
-  function point(x, z) {
-    return v(MIN + x * STEP, 0, MIN + z * STEP);
-  }
   function route(start, end) {
-    const [sx, sz] = cell(start);
-    let [ex, ez] = cell(end);
-    if (blocked(...[point(ex, ez).x, point(ex, ez).z])) {
-      let best = Infinity;
-      for (let x = 0; x < COUNT; x++)
-        for (let z = 0; z < COUNT; z++) {
-          const p = point(x, z),
-            d = p.distanceToSquared(end);
-          if (d < best && !blocked(p.x, p.z)) {
-            best = d;
-            ex = x;
-            ez = z;
-          }
-        }
-    }
-    const key = (x, z) => x + z * COUNT,
-      startKey = key(sx, sz),
-      endKey = key(ex, ez),
-      open = [startKey],
-      parents = new Map(),
-      scores = new Map([[startKey, 0]]),
-      closed = new Set();
-    let rounds = 0;
-    while (open.length && rounds++ < 4000) {
-      open.sort((a, b) => score(a) - score(b));
-      const k = open.shift();
-      if (k === endKey) {
-        const out = [];
-        let q = k;
-        while (q !== startKey) {
-          out.push(point(q % COUNT, Math.floor(q / COUNT)));
-          q = parents.get(q);
-          if (q === undefined) break;
-        }
-        return out.reverse();
-      }
-      closed.add(k);
-      const x = k % COUNT,
-        z = Math.floor(k / COUNT);
-      for (const [dx, dz] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-        [1, 1],
-        [-1, 1],
-        [1, -1],
-        [-1, -1],
-      ]) {
-        let nx = x + dx,
-          nz = z + dz;
-        if (nx < 0 || nz < 0 || nx >= COUNT || nz >= COUNT) continue;
-        const p = point(nx, nz),
-          nk = key(nx, nz);
-        if (closed.has(nk) || blocked(p.x, p.z)) continue;
-        if (
-          dx &&
-          dz &&
-          (blocked(point(nx, z).x, point(nx, z).z) ||
-            blocked(point(x, nz).x, point(x, nz).z))
-        )
-          continue;
-        const g = scores.get(k) + (dx && dz ? 1.414 : 1);
-        if (g < (scores.get(nk) ?? Infinity)) {
-          parents.set(nk, k);
-          scores.set(nk, g);
-          if (!open.includes(nk)) open.push(nk);
-        }
-      }
-    }
-    return [];
-    function score(k) {
-      return (
-        (scores.get(k) ?? Infinity) +
-        Math.hypot((k % COUNT) - ex, Math.floor(k / COUNT) - ez)
-      );
-    }
+    return gridRoute(start, end, bounds(), blocked).map((p) => v(p.x, 0, p.z));
   }
   const marker = mesh(
     new T.RingGeometry(0.3, 0.36, 32),
@@ -767,6 +728,7 @@ export function createWorld(canvas) {
     hero,
     companions,
     npcs,
+    residents,
     obstacles,
     hold: false,
     hoveredEnemy: null,
@@ -775,6 +737,7 @@ export function createWorld(canvas) {
     combat: null,
     enemyModels,
     blocked,
+    bounds,
     route: (a, b) => route(v(a.x, 0, a.z), v(b.x, 0, b.z)),
     resetRenderBudget() {
       renderer.setPixelRatio(
@@ -1177,7 +1140,12 @@ export function createWorld(canvas) {
   let repath = 0;
   api.update = (dt, time, paused) => {
     if (!paused)
-      for (const actor of [hero, ...companions, ...enemyModels.values()])
+      for (const actor of [
+        hero,
+        ...companions,
+        ...residents.map((r) => r.actor),
+        ...enemyModels.values(),
+      ])
         actor.userData.simulationPosition.copy(actor.position);
     updateSceneryVisibility(sceneryProps, hero, camera, dt);
     if (api.zone === "den") dungeon.update(time);
@@ -1233,6 +1201,19 @@ export function createWorld(canvas) {
       keys.clear();
       return;
     }
+    if (api.zone === "camp") {
+      for (const r of residents) {
+        r.wait = Math.max(0, r.wait - dt);
+        if (!r.actor.userData.path.length && !r.wait) {
+          const [x, z] = r.stops[r.next];
+          r.next = (r.next + 1) % r.stops.length;
+          r.actor.userData.path = route(r.actor.position, v(x, 0, z));
+          r.wait = 2.5;
+        }
+        walk(r.actor, dt, 1.3);
+        updateActorMotion(r.actor, dt, r.actor.userData.moving);
+      }
+    }
     if (api.practiceWindup > 0) {
       api.practiceWindup = Math.max(0, api.practiceWindup - dt);
       if (!api.practiceWindup) api.onPracticeStrike?.();
@@ -1278,7 +1259,15 @@ export function createWorld(canvas) {
       for (const enemy of api.combat.enemies) {
         const model = enemyModels.get(enemy.id);
         const dying = enemy.hp <= 0 && (model.userData.deathTime || 0) > 0;
-        model.visible = enemy.hp > 0 || dying;
+        model.visible =
+          (enemy.hp > 0 || dying) &&
+          model.position.distanceToSquared(hero.position) <
+            Math.max(
+              36,
+              camera.right - camera.left,
+              (camera.top - camera.bottom) * 1.75,
+            ) **
+              2;
         if (dying)
           model.userData.deathTime = Math.max(0, model.userData.deathTime - dt);
         const prev = model.position.clone();
@@ -1386,7 +1375,12 @@ export function createWorld(canvas) {
     });
   };
   api.present = (alpha, dt) => {
-    for (const actor of [hero, ...companions, ...enemyModels.values()])
+    for (const actor of [
+      hero,
+      ...companions,
+      ...residents.map((r) => r.actor),
+      ...enemyModels.values(),
+    ])
       if (actor.visible) presentActor(actor, alpha, dt);
     const h = hero.userData;
     select.position.set(h.shadow.position.x, 0.035, h.shadow.position.z);

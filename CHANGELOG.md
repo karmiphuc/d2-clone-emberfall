@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.0 — A larger, populated Blood Moor
+
+- Expanded the playable Moor to 84×68 units, over five times its previous area.
+- Added ten outer regions with sixty additional enemies, local patrols, four elite packs, roads and distinct ruins, graveyards, camps and caravan landmarks.
+- Added six walking camp residents, dense instanced grass/shrubs, merged ground clutter and distant-actor rendering limits.
+- Added an enlarged area map with click-to-walk routes and landmark labels.
+- Preserved the twelve-enemy old-road objective, rewards and repeat hunts; outer loot and defeated enemies persist through reload, and refreshing resets the whole Moor.
+- Replaced frontier sorting with heap-based A\* for longer routes and updated navigation, minimap and save bounds together.
+
 ## 0.16.0 — Continuous movement and attack transitions
 
 - Removed idle flashes at waypoints and consumed the full movement budget across short path segments.

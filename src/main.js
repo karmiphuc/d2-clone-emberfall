@@ -1,4 +1,10 @@
 import {
+  MOOR_BOUNDS,
+  MOOR_REGIONS,
+  huntCount,
+  huntComplete,
+} from "./game/moor.js";
+import {
   DEN_ENCOUNTERS,
   DEN_GATE,
   DEN_EXIT,
@@ -63,7 +69,7 @@ const app = document.querySelector("#app");
 app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to move, or use WASD. Press E near a towns-person to interact."></canvas><div id="vignette"></div><div class="labels" id="labels"></div>
 <header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle sound" aria-label="Toggle sound">Sound</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">Help</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">Settings</button></div></header>
 <aside class="party" id="party" aria-label="Your party"></aside><aside class="quest"><div class="eyebrow">Quest journal</div><h2 id="quest-title">A light in the darkness</h2><p id="quest-text">Speak to Akara.<br>Find your footing in camp.</p><button id="journal-link">OPEN JOURNAL &nbsp; [J]</button></aside>
-<div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div></div>
+<div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div><div class="map-regions" aria-label="Wilderness destinations">${MOOR_REGIONS.map((r, i) => `<button data-map-region="${r.id}">${i + 1}. ${r.name}</button>`).join("")}</div></div>
 <div class="controls">CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP</div><div class="chapter"><strong>ACT I · THE SIGHTLESS EYE</strong><span id="save-note">PROGRESS SAVED ON THIS DEVICE</span></div>
 <footer class="bottom"><div class="orb-wrap"><div class="orb red">120 / 120</div><div class="orb-label">LIFE</div></div><div class="hotbar"><div class="xp-caption" id="xp-caption"></div><div class="level-bar"><i></i></div><div class="slots">${[
   ["attack", "Cleave", "8 mana"],
@@ -79,7 +85,7 @@ app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to mo
   )
   .join(
     "",
-  )}</div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="combat-status" aria-label="Combat status" hidden></div><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="loot-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">Close <kbd>Esc</kbd></button><div id="dialog-content"></div></dialog>`;
+  )}</div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button><button id="map-menu" aria-label="Area map" aria-expanded="false">MAP <kbd>M</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="combat-status" aria-label="Combat status" hidden></div><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="loot-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">Close <kbd>Esc</kbd></button><div id="dialog-content"></div></dialog>`;
 const dialog = document.querySelector("dialog"),
   content = document.querySelector("#dialog-content");
 let toastTimer, levelTimer, preview;
@@ -136,7 +142,7 @@ try {
   throw e;
 }
 const { hero, companions, npcs, camera, renderer } = game;
-let combat = createCombat(state, combatEvent, game.blocked);
+let combat = createCombat(state, combatEvent, game.blocked, game.route);
 let combatArea = "moor";
 game.setCombat(combat);
 const damageNumbers = [];
@@ -201,8 +207,8 @@ function combatEvent(event) {
         game.zone === "den"
           ? "The Den is clear. Gather the spoils and return to Akara."
           : state.rewardClaimed
-            ? "Hunt cleared. Collect the drops, then start a fresh hunt at the eastern gate."
-            : "The Blood Moor is clear. Return to Akara for your reward.",
+            ? "Road hunt cleared. Collect the road drops, then start a fresh hunt at the eastern gate."
+            : "The old road is clear. Return to Akara or explore the outer regions.",
       );
   }
   if (event.type === "loot") {
@@ -261,7 +267,7 @@ function installArea(zone) {
   combat.setArea(
     zone === "den" ? DEN_ENCOUNTERS : ENCOUNTERS,
     zone === "den" ? state.den : state,
-    zone === "den" ? game.route : null,
+    game.route,
   );
   combatArea = zone;
   game.setCombat(combat);
@@ -325,7 +331,7 @@ function returnToCamp() {
 }
 function beginNewExpedition() {
   if (game.zone !== "camp" || !newExpedition(state)) return false;
-  combat = createCombat(state, combatEvent, game.blocked);
+  combat = createCombat(state, combatEvent, game.blocked, game.route);
   combatArea = "moor";
   game.setCombat(combat);
   refreshEnemyLabels();
@@ -333,8 +339,8 @@ function beginNewExpedition() {
   return true;
 }
 function expeditionModal() {
-  const clear = state.defeated.length === ENCOUNTERS.length,
-    allLoot = state.lootTaken.length === ENCOUNTERS.length;
+  const clear = huntComplete(state.defeated),
+    allLoot = huntComplete(state.lootTaken);
   const actions = [{ label: "Enter the Blood Moor", run: () => enterMoor() }];
   if (clear)
     actions.unshift({
@@ -349,7 +355,7 @@ function expeditionModal() {
   actions.push({ label: "Stay in camp", run: () => dialog.close() });
   modal(
     "Beyond the palisade",
-    `<p>Hunt ${state.run + 1} · ${state.defeated.length}/12 enemies defeated. Every foe drops gold and equipment. Collect all drops, then start a fresh hunt to keep leveling.</p><p>The Den of Evil lies beyond the northeastern ruins (recommended level 3). Earn levels 1–${LEVEL_CAP}, try talents in camp [K], and equip new items [I]. Your three companions share your level.</p><p class="muted">Cleave [1] · Guard [2] · Rally [3] · Potion [4] · Retreat [6]. Later hunts are slightly stronger, capped at hunt 4.</p>`,
+    `<p>Hunt ${state.run + 1} · ${huntCount(state.defeated)}/12 enemies defeated. Clear the twelve foes on the old road to finish the hunt. Ten outer regions hold sixty additional foes and more loot. Collect the road drops before refreshing; a fresh hunt resets the entire Moor, including uncollected outer spoils.</p><p>The Den of Evil lies beyond the northeastern ruins (recommended level 3). Earn levels 1–${LEVEL_CAP}, try talents in camp [K], and equip new items [I]. Your three companions share your level.</p><p class="muted">Cleave [1] · Guard [2] · Rally [3] · Potion [4] · Retreat [6]. Later hunts are slightly stronger, capped at hunt 4.</p>`,
     actions,
     "Blood Moor · Repeatable first area",
   );
@@ -386,7 +392,7 @@ function update() {
     (c, i) => (c.visible = state.roster.includes(Object.keys(roster)[i])),
   );
   const inMoor = game.zone === "moor";
-  const complete = state.defeated.length === ENCOUNTERS.length;
+  const complete = huntComplete(state.defeated);
   const denClear = state.den.defeated.length === DEN_ENCOUNTERS.length;
   const denQuest =
     game.zone === "den" || (denClear && !state.den.rewardClaimed);
@@ -406,7 +412,7 @@ function update() {
   document.querySelector("#quest-text").innerHTML = denQuest
     ? `${state.den.defeated.length} / ${DEN_ENCOUNTERS.length} creatures defeated.<br>${denClear ? (state.den.rewardClaimed ? "Bounty claimed. Gather any remaining spoils." : "Return to Akara for your reward.") : "Clear every chamber and defeat the Gravewarden."}`
     : inMoor
-      ? `${state.defeated.length} / 12 enemies defeated.<br>${complete ? "Gather remaining drops and return to camp." : "Every foe drops equipment and gold."}`
+      ? `${huntCount(state.defeated)} / 12 enemies defeated.<br>${complete ? "Road cleared. Explore the outer regions or return to camp." : "Explore the old road and ten outer regions."}`
       : complete && !state.rewardClaimed
         ? "Speak to Akara for your reward."
         : state.rewardClaimed
@@ -793,7 +799,7 @@ function showJournal() {
     const clear = state.den.defeated.length === DEN_ENCOUNTERS.length;
     modal(
       "Den of Evil",
-      `<p>Cleanse the three chambers beneath the Blood Moor. Defeat every creature, including the Gravewarden, then return to Akara.</p><div class="item-row"><span>Creatures defeated</span><span>${state.den.defeated.length} / ${DEN_ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>175 gold · 3 potions</span></div><p>${state.den.rewardClaimed ? "Bounty claimed. The Den remains clear; uncollected loot stays in the dungeon." : clear ? "The Den is cleansed. Speak to Akara in camp." : "Enter through the northeastern cleft in the Blood Moor. Recommended level 3. Retreating preserves defeated enemies and uncollected loot."}</p><h3>The old road</h3><p>Blood Moor: ${state.defeated.length} / ${ENCOUNTERS.length} defeated · ${state.rewardClaimed ? "First bounty claimed" : "100 gold and 2 potions from Akara after clearing"}.</p>`,
+      `<p>Cleanse the three chambers beneath the Blood Moor. Defeat every creature, including the Gravewarden, then return to Akara.</p><div class="item-row"><span>Creatures defeated</span><span>${state.den.defeated.length} / ${DEN_ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>175 gold · 3 potions</span></div><p>${state.den.rewardClaimed ? "Bounty claimed. The Den remains clear; uncollected loot stays in the dungeon." : clear ? "The Den is cleansed. Speak to Akara in camp." : "Enter through the northeastern cleft in the Blood Moor. Recommended level 3. Retreating preserves defeated enemies and uncollected loot."}</p><h3>The old road</h3><p>Blood Moor: ${huntCount(state.defeated)} / 12 road foes · ${state.defeated.length} / ${ENCOUNTERS.length} total foes defeated · ${state.rewardClaimed ? "First bounty claimed" : "100 gold and 2 potions from Akara after clearing"}.</p>`,
       [],
       "Act I · Beneath the Moor",
     );
@@ -802,7 +808,7 @@ function showJournal() {
   if (game.zone !== "camp" || state.defeated.length) {
     modal(
       "The old road",
-      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${state.defeated.length} / ${ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "First bounty claimed. Collect every drop, then start another hunt at the eastern gate to keep leveling and finding gear." : state.defeated.length === ENCOUNTERS.length ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>`,
+      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${huntCount(state.defeated)} / 12 road foes</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "First bounty claimed. Collect the old-road drops, then start another hunt at the eastern gate to keep leveling and finding gear." : huntComplete(state.defeated) ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>`,
       [],
       "Act I · First expedition",
     );
@@ -900,7 +906,7 @@ function interact(id) {
       );
       return;
     }
-    if (state.defeated.length === ENCOUNTERS.length && !state.rewardClaimed) {
+    if (huntComplete(state.defeated) && !state.rewardClaimed) {
       modal(
         "The road is clear",
         "<p>“You have given us a little breathing room, traveler. Take these supplies. There will be darker paths ahead.”</p>",
@@ -1206,7 +1212,12 @@ document.querySelector("#settings").onclick = () =>
                 label: "Reset this playtest",
                 run: () => {
                   state = freshState();
-                  combat = createCombat(state, combatEvent, game.blocked);
+                  combat = createCombat(
+                    state,
+                    combatEvent,
+                    game.blocked,
+                    game.route,
+                  );
                   game.setCombat(combat);
                   refreshEnemyLabels();
                   update();
@@ -1289,6 +1300,8 @@ window.addEventListener("keydown", (e) => {
     if (npc.point.distanceTo(hero.position) < 4) interact(npc.name);
     else toast("Move closer to a towns-person or click their name.");
   }
+  if (k === "m") toggleMap();
+  if (k === "escape") toggleMap(false);
   if (k === "i") showInventory();
   if (k === "j") showJournal();
   if (k === "c") showCharacter();
@@ -1302,14 +1315,61 @@ window.addEventListener("keydown", (e) => {
 });
 const map = document.querySelector("#map"),
   ctx = map.getContext("2d");
-const pos = (p) => [137 + p.x * 5.3, 108 + p.z * 5.3];
+const mapScale = () =>
+  game.zone === "moor"
+    ? Math.min(
+        244 / (MOOR_BOUNDS.maxX - MOOR_BOUNDS.minX),
+        184 / (MOOR_BOUNDS.maxZ - MOOR_BOUNDS.minZ),
+      )
+    : 5.3;
+const pos = (p) => [137 + p.x * mapScale(), 108 + p.z * mapScale()];
+function toggleMap(force) {
+  document.querySelector(".minimap").dataset.zone = game.zone;
+  const classes = document.querySelector(".minimap").classList;
+  const open =
+    force === undefined
+      ? classes.toggle("map-open")
+      : classes.toggle("map-open", force);
+  document
+    .querySelector("#map-menu")
+    .setAttribute("aria-expanded", String(open));
+}
+document.querySelector("#map-menu").onclick = () => toggleMap();
+document.querySelectorAll("[data-map-region]").forEach((button) => {
+  button.onclick = () => {
+    const r = MOOR_REGIONS.find((r) => r.id === button.dataset.mapRegion);
+    game.moveTo(new THREE.Vector3(r.x, 0, r.z));
+    combat.cancel();
+    toggleMap(false);
+  };
+});
+map.setAttribute(
+  "aria-label",
+  "Area map. Click to walk to a location. M enlarges the map.",
+);
+map.onclick = (event) => {
+  if (dialog.open) return;
+  const r = map.getBoundingClientRect(),
+    scale = mapScale();
+  const x = (((event.clientX - r.left) / r.width) * 274 - 137) / scale;
+  const z = (((event.clientY - r.top) / r.height) * 216 - 108) / scale;
+  game.moveTo(new THREE.Vector3(x, 0, z));
+  combat.cancel();
+  if (document.querySelector(".minimap").classList.contains("map-open"))
+    toggleMap(false);
+};
 function drawMap() {
   ctx.clearRect(0, 0, 274, 216);
   if (game.zone === "den") {
     ctx.fillStyle = "#8f856743";
     for (const r of DEN_ROOMS) {
       const [x, z] = pos(r);
-      ctx.fillRect(x - r.w * 2.65, z - r.d * 2.65, r.w * 5.3, r.d * 5.3);
+      ctx.fillRect(
+        x - (r.w * mapScale()) / 2,
+        z - (r.d * mapScale()) / 2,
+        r.w * mapScale(),
+        r.d * mapScale(),
+      );
     }
   }
   if (game.zone !== "camp") {
@@ -1319,11 +1379,34 @@ function drawMap() {
   }
   ctx.strokeStyle = "#8f90604d";
   ctx.lineWidth = 1;
-  ctx.strokeRect(33, 24, 208, 170);
+  if (game.zone === "moor") {
+    const scale = mapScale();
+    ctx.strokeRect(
+      137 + MOOR_BOUNDS.minX * scale,
+      108 + MOOR_BOUNDS.minZ * scale,
+      84 * scale,
+      68 * scale,
+    );
+    ctx.fillStyle = "#a89b75";
+    for (const region of MOOR_REGIONS) {
+      const [x, z] = pos(region);
+      ctx.strokeRect(x - 3, z - 3, 6, 6);
+      if (document.querySelector(".minimap").classList.contains("map-open")) {
+        ctx.font = "bold 10px Georgia";
+        ctx.textAlign = "center";
+        ctx.fillText(String(MOOR_REGIONS.indexOf(region) + 1), x, z - 6);
+      }
+    }
+  } else ctx.strokeRect(33, 24, 208, 170);
   ctx.fillStyle = "#726d5055";
   for (const o of game.obstacles) {
     let [x, z] = pos(o);
-    ctx.fillRect(x - o.w * 2.65, z - o.d * 2.65, o.w * 5.3, o.d * 5.3);
+    ctx.fillRect(
+      x - (o.w * mapScale()) / 2,
+      z - (o.d * mapScale()) / 2,
+      o.w * mapScale(),
+      o.d * mapScale(),
+    );
   }
   ctx.strokeStyle = "#90886b44";
   ctx.beginPath();
@@ -1452,6 +1535,16 @@ function frame(now) {
     if (next.enter) next.enter();
     else interact(next.name);
   }
+  if (game.zone === "moor") {
+    const region = MOOR_REGIONS.find(
+      (r) => Math.hypot(hero.position.x - r.x, hero.position.z - r.z) < 10,
+    );
+    const label = region
+      ? region.name.toUpperCase()
+      : "THE OLD ROAD · HOSTILE TERRITORY";
+    const safe = document.querySelector(".safe");
+    if (safe.textContent !== label) safe.textContent = label;
+  }
   const passagePoint = game.zone === "den" ? DEN_EXIT : DEN_GATE;
   const passageScreen = new THREE.Vector3(
     passagePoint.x,
@@ -1486,7 +1579,12 @@ function frame(now) {
       rendered?.z ?? enemy.z,
     ).project(camera);
     enemy.label.hidden =
-      game.zone === "camp" || enemy.hp <= 0 || v.z > 1 || Math.abs(v.x) > 1;
+      game.zone === "camp" ||
+      enemy.hp <= 0 ||
+      v.z > 1 ||
+      Math.abs(v.x) > 1 ||
+      (-v.y * 0.5 + 0.5) * innerHeight < 86 ||
+      (-v.y * 0.5 + 0.5) * innerHeight > innerHeight - 150;
     const edge = enemy.elite ? 64 : 42;
     enemy.label.style.left = `${Math.max(edge, Math.min(innerWidth - edge, (v.x * 0.5 + 0.5) * innerWidth))}px`;
     enemy.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;

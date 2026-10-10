@@ -1,0 +1,16 @@
+{
+  "errors": [],
+  "overflow": false,
+  "stats": {
+    "calls": 116,
+    "triangles": 31624,
+    "models": 72,
+    "visible": 35,
+    "bounds": {
+      "minX": -42,
+      "maxX": 42,
+      "minZ": -34,
+      "maxZ": 34
+    }
+  }
+}

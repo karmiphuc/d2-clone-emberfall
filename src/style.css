@@ -2194,3 +2194,54 @@ dialog {
   border-color: #c2a66b;
   background: #353323;
 }
+
+.map-frame canvas {
+  cursor: crosshair;
+}
+.minimap.map-open {
+  display: block;
+  position: fixed;
+  z-index: 30;
+  width: min(76vw, 580px);
+  right: 50%;
+  bottom: 50%;
+  transform: translate(50%, 50%);
+  background: #0d1411f5;
+  padding: 15px;
+  border: 1px solid #a38b59;
+  box-shadow: 0 12px 50px #000b;
+}
+.minimap.map-open .map-frame canvas {
+  width: 100%;
+  height: auto;
+}
+.minimap.map-open .map-caption::after {
+  content: " · CLICK TO WALK · M TO CLOSE";
+  letter-spacing: 1px;
+}
+
+.map-regions {
+  display: none;
+}
+.minimap.map-open[data-zone="moor"] .map-regions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px;
+  margin-top: 12px;
+}
+.map-regions button {
+  min-height: 30px;
+  padding: 5px 7px;
+  font:
+    11px Georgia,
+    serif;
+  text-align: left;
+  color: #d5c59e;
+  background: #302c2070;
+  border: 1px solid #a38b5944;
+}
+.map-regions button:hover,
+.map-regions button:focus-visible {
+  background: #51442a;
+  border-color: #d2ba7b;
+}

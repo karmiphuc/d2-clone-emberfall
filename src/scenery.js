@@ -77,7 +77,13 @@ export function updateSceneryVisibility(props, hero, camera, dt) {
   const viewW = camera.right - camera.left,
     viewH = camera.top - camera.bottom;
   for (const sprite of props) {
-    if (!sprite.userData.occluder) continue;
+    if (!sprite.userData.occluder || !sprite.visible || !sprite.parent.visible)
+      continue;
+    if (sprite.position.distanceToSquared(hero.position) > 32 * 32) {
+      sprite.material.opacity = 1;
+      sprite.material.depthWrite = true;
+      continue;
+    }
     sprite.getWorldPosition(position);
     const depth = cameraSpace
       .copy(position)
@@ -101,7 +107,13 @@ export function updateSceneryVisibility(props, hero, camera, dt) {
 
 // The camera keeps a fixed isometric angle, so these textured grass billboards
 // can be instanced in one draw call instead of hundreds of individual sprites.
-export function scatterGrass(parent, count, random, camp = false) {
+export function scatterGrass(
+  parent,
+  count,
+  random,
+  camp = false,
+  extent = { width: 45, depth: 34 },
+) {
   const geometry = new T.PlaneGeometry(1.5, 0.9);
   geometry.translate(0, 0.36, 0);
   const material = new T.MeshBasicMaterial({
@@ -122,8 +134,8 @@ export function scatterGrass(parent, count, random, camp = false) {
     ),
   );
   for (let i = 0; i < count; i++) {
-    let x = (random() - 0.5) * 45,
-      z = (random() - 0.5) * 34;
+    let x = (random() - 0.5) * extent.width,
+      z = (random() - 0.5) * extent.depth;
     if (
       camp &&
       ((Math.abs(x) < 15 && Math.abs(z) < 10 && random() < 0.9) ||
@@ -137,4 +149,34 @@ export function scatterGrass(parent, count, random, camp = false) {
   }
   parent.add(grass);
   return grass;
+}
+
+// Low shrubs share one atlas cell and one draw call across the expanded wilderness.
+export function scatterShrubs(parent, placements) {
+  const geometry = new T.PlaneGeometry(1, 1);
+  geometry.translate(0, 0.4, 0);
+  const material = new T.MeshBasicMaterial({
+    map: cellTexture("moor", 3),
+    color: "#87998b",
+    transparent: true,
+    alphaTest: 0.25,
+    toneMapped: false,
+  });
+  const mesh = new T.InstancedMesh(geometry, material, placements.length),
+    dummy = new T.Object3D();
+  dummy.quaternion.setFromRotationMatrix(
+    new T.Matrix4().lookAt(
+      new T.Vector3(30, 36, 42),
+      new T.Vector3(),
+      T.Object3D.DEFAULT_UP,
+    ),
+  );
+  placements.forEach((p, i) => {
+    dummy.position.set(p.x, 0.02, p.z);
+    dummy.scale.set(p.size * 1.4, p.size, 1);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  });
+  parent.add(mesh);
+  return mesh;
 }

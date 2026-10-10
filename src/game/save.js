@@ -1,3 +1,4 @@
+import { MOOR_BOUNDS, huntComplete } from "./moor.js";
 import { DEN_ENCOUNTERS, freshDen, denWalkable } from "./den.js";
 import { ENCOUNTERS } from "./combat.js";
 import { COMPANIONS } from "./companions.js";
@@ -117,8 +118,10 @@ export function normalizeSave(raw) {
       p &&
       Number.isFinite(p.x) &&
       Number.isFinite(p.z) &&
-      Math.abs(p.x) <= 20 &&
-      Math.abs(p.z) <= 16 &&
+      p.x >= MOOR_BOUNDS.minX &&
+      p.x <= MOOR_BOUNDS.maxX &&
+      p.z >= MOOR_BOUNDS.minZ &&
+      p.z <= MOOR_BOUNDS.maxZ &&
       !result.lootTaken.includes(id)
     )
       result.dropLocations[id] = { x: p.x, z: p.z };
@@ -180,18 +183,14 @@ export function normalizeSave(raw) {
   return result;
 }
 export function claimReward(state) {
-  if (state.rewardClaimed || state.defeated.length !== ENCOUNTERS.length)
-    return false;
+  if (state.rewardClaimed || !huntComplete(state.defeated)) return false;
   state.rewardClaimed = true;
   state.gold += 100;
   state.potions += 2;
   return true;
 }
 export function newExpedition(state) {
-  if (
-    state.defeated.length !== ENCOUNTERS.length ||
-    state.lootTaken.length !== ENCOUNTERS.length
-  )
+  if (!huntComplete(state.defeated) || !huntComplete(state.lootTaken))
     return false;
   state.run++;
   state.defeated = [];

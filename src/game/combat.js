@@ -1,3 +1,8 @@
+import {
+  MOOR_EXTRA_ENCOUNTERS,
+  MOOR_OBJECTIVE_IDS,
+  huntComplete,
+} from "./moor.js";
 import { COMPANIONS } from "./companions.js";
 import {
   heroStats,
@@ -8,7 +13,7 @@ import {
 } from "./items.js";
 import { levelOf, LEVEL_XP } from "./progression.js";
 // Rendering-independent rules for the first authored wilderness encounter.
-export const ENCOUNTERS = [
+export const CORE_ENCOUNTERS = [
   {
     id: "fallen-1",
     name: "Fallen",
@@ -131,6 +136,7 @@ export const ENCOUNTERS = [
     elite: true,
   },
 ];
+export const ENCOUNTERS = [...CORE_ENCOUNTERS, ...MOOR_EXTRA_ENCOUNTERS];
 export const MAX_HP = {
   hero: 120,
   ...Object.fromEntries(
@@ -138,7 +144,12 @@ export const MAX_HP = {
   ),
 };
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-export function createCombat(state, emit = () => {}, blocked = () => false) {
+export function createCombat(
+  state,
+  emit = () => {},
+  blocked = () => false,
+  navigate = null,
+) {
   const allies = Object.entries(MAX_HP).map(([id, hp]) => ({
     id,
     hp,
@@ -196,7 +207,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
   let automaticTarget = false,
     autoSuppressed = 0,
     movingHero = false;
-  let enemyRoute = null;
+  let enemyRoute = navigate;
   const clearLine = (a, b) => {
     if (!enemyRoute) return true;
     const steps = Math.ceil(distance(a, b) / 0.3);
@@ -260,7 +271,11 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         emit({
           type: "kill",
           id: enemy.id,
-          complete: progress.defeated.length === encounters.length,
+          complete:
+            progress === state
+              ? MOOR_OBJECTIVE_IDS.includes(enemy.id) &&
+                huntComplete(progress.defeated)
+              : progress.defeated.length === encounters.length,
         });
       }
       if (target === enemy.id) target = null;
@@ -814,7 +829,27 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             .sort((a, b) => distance(a, enemy) - distance(b, enemy))[0];
         if (!victim) continue;
         const dist = distance(enemy, victim);
-        if (!enemy.engaged && (dist > 8 || !clearLine(enemy, victim))) continue;
+        if (!enemy.engaged && (dist > 8 || !clearLine(enemy, victim))) {
+          // Optional packs patrol locally instead of standing in identical frozen poses.
+          if (enemy.patrol) {
+            const home = encounters.find((e) => e.id === enemy.id);
+            enemy.roamTime = (enemy.roamTime || 0) + dt;
+            const a = enemy.roamTime * 0.18 + encounters.indexOf(home);
+            const tx = home.x + Math.cos(a) * 1.1,
+              tz = home.z + Math.sin(a) * 1.1;
+            const d = Math.hypot(tx - enemy.x, tz - enemy.z);
+            if (d > 0.12) {
+              const travel = Math.min(d, dt * 0.45);
+              const x = enemy.x + ((tx - enemy.x) / d) * travel;
+              const z = enemy.z + ((tz - enemy.z) / d) * travel;
+              if (!blocked(x, z)) {
+                enemy.x = x;
+                enemy.z = z;
+              }
+            }
+          }
+          continue;
+        }
         enemy.engaged = true;
         if (dist > 1.45 || !clearLine(enemy, victim)) {
           let destination = victim;

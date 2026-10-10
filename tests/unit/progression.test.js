@@ -92,7 +92,10 @@ test("repeat hunts require collecting drops, retain builds and create fresh loot
   assert.equal(s.inventory.length, 1);
   const second = lootItem(s, "fallen-1", 0);
   assert.notEqual(second.uid, first.uid);
-  assert.equal(createCombat(s).enemies.filter((e) => e.hp > 0).length, 12);
+  assert.equal(
+    createCombat(s).enemies.filter((e) => e.hp > 0).length,
+    ENCOUNTERS.length,
+  );
 });
 test("recruitment enforces three active companions and supports all six specialists", () => {
   const s = freshState();

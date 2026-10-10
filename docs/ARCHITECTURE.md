@@ -1,100 +1,91 @@
-# Architecture
+# Emberfall
 
-Emberfall is a static Vite application deployed to GitHub Pages. Three.js handles rendering; DOM elements handle accessible controls and dialogs. There is no backend, authentication, analytics or multiplayer service.
+[![Verify and deploy](https://github.com/karmiphuc/d2-clone-emberfall/actions/workflows/pages.yml/badge.svg)](https://github.com/karmiphuc/d2-clone-emberfall/actions/workflows/pages.yml)
 
-- `src/main.js`: UI, service interactions, application state and local persistence.
-- `src/world.js`: procedural camp, rendering, character models and navigation.
-- `src/game/combat.js`: pure battle simulation, encounter definitions and combat events.
-- `src/game/save.js`: versioned save normalization, migration, one-time rewards and repeat-hunt resets.
-- `src/game/items.js`: item catalog, deterministic drop rolls, equipment statistics and inventory transactions.
-- `src/game/progression.js`: level cap, XP thresholds and prerequisite-aware talent allocation.
-- `src/game/companions.js`: shared role definitions for simulation, models and recruitment.
-- `src/wilderness.js`: authored Blood Moor scenery.
+**[Play the latest build](https://karmiphuc.github.io/d2-clone-emberfall/)** · [Report a playtest bug](https://github.com/karmiphuc/d2-clone-emberfall/issues/new/choose)
+
+A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment, a complete first Blood Moor expedition, and a connected Den of Evil dungeon: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–6, usable skill trees, and six companion specialties.
+
+![Emberfall v0.8 camp at dusk](docs/screenshots/camp-v0.8.webp)
+
+## Downloadable playtest
+
+Run `npm run package:playtest` to produce a single HTML file in `artifacts/`. Downloaded release builds can be opened directly in a modern browser with WebGL enabled; no Node installation is needed to play. Fonts fall back to system fonts offline. Browser storage keeps progress on that device.
+
+## Play locally
+
+Requires Node.js 22+.
+
+```sh
+npm ci
+npm run dev
+```
+
+Open the URL printed by Vite. For a production build, run `npm run build` and `npm run preview`.
+
+## Controls
+
+- Click the ground or use WASD / arrow keys to move.
+- Click a town label to approach and interact; E interacts with a nearby service.
+- Space or 3 regroups the party. 5 toggles hold/follow.
+- Mouse wheel zooms. I opens inventory; J journal; P party; C character; K or T opens skill trees.
+- The hero automatically attacks nearby enemies when stationary. Left-click enemies to approach and focus them; movement takes priority over automatic attacks. Right-click an enemy or its label to approach and use Cleave. 1 cleaves (8 mana), queuing once behind an ongoing basic attack; moving cancels the queue. 2 guards for 3 seconds (10 mana, 8-second cooldown); 4 heals; 6 retreats and restores the company.
+- Click a mercenary portrait or use Inventory → Equip for to select the hero or any merc. Equip weapons, armor, rings and charms from the shared backpack in camp; Remove returns merc gear to the bag. Gear persists through dismissal and recruitment.
+- Click a nearby loot label or walk over a drop to collect it. Downed companions recover in camp.
+- Escape closes dialogs. Wind and combat sound are opt-in from the Sound button. Settings can soften combat effects; the system reduced-motion preference is honored.
+
+## Classic presentation
+
+Scene pixel resolution adapts gradually to sustained slow frames while UI text stays sharp. The camp and Blood Moor use distinct terrain and dusk lighting, soft character contact shadows, a closer hero-following isometric camera, original illustrated tents, town services, foliage and fire, textured ground and detailed directional character sprites. Hero sword/axe attacks use 33 playback frames across preparation, coil, downstroke, contact, follow-through, recovery and guard. Damage, sound and Cleave mana cost occur on contact; movement cancels anticipation. Waypoint traversal preserves walking through short nodes, and clip/atlas sampling shares the interpolated render clock. Fractional poses blend continuously across action transitions. Render interpolation smooths movement between simulation ticks, while longer baked sprite sequences provide the intermediate silhouettes without runtime optical-flow deformation. Distance-driven footstep timing removes idle-frame interruptions from the hero and companion walks. Projectiles and effects use the same fractional render clock; static scenery shadows are cached. Characters and creatures use 16-frame movement loops; new hero passing steps separate the foot-contact poses. All six companions have role-specific 17-frame strike and recovery sequences. Every actor has three complete movement and attack sets, selected from independent shuffled bags at action boundaries. Hero sword/axe attacks include original low-side and high-diagonal alternate poses; companion and creature alternatives use anchored weight, lean and recovery variations. Sprite mattes and diffuse exposure are normalized to prevent opacity/lighting pulses. Monsters face their victim during windup and visibly strike. Cleave, frost, healing, holy and shadow attacks use original painted effects; hits produce a restrained directional recoil and a short target recoil; defeated enemies settle and fade. Arrows, frost lances and healing motes travel tip-first toward their targets. Guard stays around the hero for its active duration, and Eira prioritizes casting toward the wounded ally. The classic stone HUD has illustrated portraits, life/mana globes and labelled actions. The action bar shows queued Cleave, Guard duration/cooldown, Battle Cry cooldown, low mana, potion availability and party hold state. Inventory is a side panel with a painted equipment portrait and a directional character preview with Stand, Walk and Attack controls, illustrated slots and side-by-side item comparisons. Sword and axe world sprites switch immediately when equipped and survive reload; elemental weapons add a light accent. All seven weapons have individual inventory illustrations. Enemy hover/selection highlights and silhouette-aware picking make targets clearer; transparent sprite margins remain ground. Nearby drops have clickable name labels. The skill tree uses nine distinct illustrated talent icons, connected ranks, current/next-rank details and free camp respecs. On phones, branch buttons keep all three tiers readable. Backpack filters and sorting help compare larger loot collections.
+
+This is a stylized, original-asset interpretation of the classic game, not a pixel-perfect recreation of Diablo II or Resurrected.
+
+## Included
+
+- Isometric camp with illustrated tents, forge, stash, waypoint, forest, animated fire, sparks and lighting.
+- Click-to-move A\* paths with obstacle clearance and companion following.
+- Akara's introduction, camp preparation quest, rest, and potion purchases.
+- Charsi's weapon purchase and equipment change.
+- Recruitment, direct companion swaps and dismissal through Kashya, shared gold stash, and a camp waypoint.
+- Local browser save, reset option, performance mode, and a live minimap.
+
+Enter the eastern gate to fight 12 enemies, including the Ashen Brute. Clear the encounter, collect the Ashen charm, and claim 100 gold and two potions from Akara. Retreat at any time; slain enemies and uncollected drops persist. Reloading starts the party safely in camp.
+
+After collecting all 12 drops, return to the eastern gate and choose **Start fresh hunt**. Progress, equipment, talents and recruitment choices carry over. Four clears reach the level-6 playtest cap; enemy scaling stops after hunt 4. Each enemy guarantees an equipment drop. The 60-slot bag automatically sells overflow drops. Change equipment and talents in camp.
+
+The northeastern cleft in the Moor leads to the **Den of Evil** (recommended level 3): three connected chambers, 11 creatures including the Gravewarden, and a one-time 175 gold / 3 potion bounty from Akara. The entrance label approaches and enters the cave; the exit returns to the Moor. Dungeon kills and loot survive retreats/reloads independently of repeat Moor hunts. Living dungeon enemies reset when changing areas. The Den stays clear once completed.
+
+All six mercenaries can equip armor, rings and charms. Ilyra uses bows, Bram maces, Eira/Soren staves, Aldric swords or maces, and Nyx paired daggers. Charsi sells eight original mercenary weapons, also available as loot. Gear changes damage, life, armor, casting speed and Eira’s healing; class weapon silhouettes remain fixed, with enchanted equipment adding a light accent.
+
+Bram taunts and absorbs damage; Eira heals injured allies; Ilyra fires volleys; Soren slows groups with frost; Aldric protects nearby allies; Nyx flanks and backstabs. Companions share your level and grow in life and damage.
+
+This is an early vertical slice, not a completed Act I. The remaining Act I campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites, with 16-frame movement and 33/17-frame action playback. Intermediate frames are generated from a smaller set of authored poses; dense authored companion gaits, eight-direction turning and authored death sequences remain unfinished. No Diablo assets are bundled.
+
+## GitHub Pages
+
+The included `.github/workflows/pages.yml` builds and deploys on pushes to `main`. The repository owner must enable Pages once: Settings → Pages → Source → **GitHub Actions**. The workflow attempts enablement where permissions allow. Vite uses relative asset paths so repository subpaths work.
+
+## Structure
+
+- `src/world.js`: rendering, camp, characters, grid navigation and animation.
+- `src/wilderness.js`: authored wilderness scenery.
+- `src/dungeon.js` and `src/game/den.js`: cave presentation, connected footprint, encounters and bounty.
+- `src/actor-sprites.js` and `src/animation.js`: directional atlases and motion state.
+- `src/combat-effects.js` and `src/combat-audio.js`: pooled effect sprites and opt-in combat cues.
+- `src/scenery.js`: illustrated props, instanced grass and hero occlusion fading.
+- `src/sprite-picking.js`: compact alpha masks for visible-silhouette targeting.
+- `src/game/combat.js`: rendering-independent battle rules and encounter data.
+- `src/game/save.js`: save validation, migration, repeat hunts and reward transactions.
+- `src/game/items.js`: equipment definitions, drops and inventory transactions.
+- `src/game/progression.js`: level thresholds and talent requirements.
+- `src/game/companions.js`: role definitions and party-size enforcement.
+- `src/main.js`: UI, town interactions, party state, local saves.
 - `src/style.css`: responsive game interface.
-- `tests/e2e`: real-browser gameplay regression checks.
 
-Camp geometry is merged by material; grass is instanced. A clearance-aware A\* grid prevents walking through camp props. Party members follow individual paths. The development-only `window.__camp` hook enables deterministic navigation and state checks; Vite removes it from production.
+## Next milestone
 
-Save data is device-local. Maintain compatibility with the `emberfall-camp-v1` storage key when adding fields. The app needs to work when storage is unavailable. An old prototype save must not prevent loading the game.
+Prioritize character motion and combat presentation: longer, consistently alternating hero/companion gaits, eight-facing movement and authored death animation. Blood Moor now spans 84×68 units, with ten outer regions and 72 enemies. The twelve old-road enemies remain the early hunt objective; outer packs offer additional loot and patrol around graveyards, ruins, abandoned camps and a lost caravan. Press M or MAP to enlarge the area map, then click to issue a walking route. Refreshing a completed road hunt resets the whole Moor. The remaining Act I route, deeper skills and companion tactics remain on the roadmap.
 
-The frame loop advances gameplay in 1/30-second steps, capped to avoid large jumps when the tab resumes. Dialogs pause simulation. Combat receives plain actor positions and emits presentation events; no Three.js objects enter the save. Reload restores the party at camp while keeping defeated enemies, drop locations, purchases and rewards. Living enemies currently reset to full health on reload.
+## Development
 
-The current scene/navigation module still owns movement and presentation together. The same A\* route function now serves dungeon party movement and enemy pursuit around solid cave walls; further extraction from `world.js` remains a cleanup opportunity. Continuous performance tests on integrated GPUs and real mobile devices are still needed; software-rendered browser tests verify behavior, not a target frame rate.
-
-## Progression boundaries
-
-The first area is an authored repeatable encounter. Hunt resets require every drop to be collected, reset only encounter-local data, and retain player progression. Drop instances are stable within a hunt and unique between hunts. Uncollected item rolls and locations survive reloads. Inventory is capped at 60 slots; overflow converts to the item’s sale value.
-
-Save schema 2 retains the original storage key and upgrades schema-1 weapon/charm purchases into equipped items. Talent points are derived from XP and spent ranks rather than separately persisted. Save normalization enforces allowed IDs, ranks, prerequisites, level requirements and a maximum of three active companions. Level 6 is an explicit playtest cap, not the full campaign cap.
-
-## Presentation and equipment
-
-`src/actor-sprites.js` creates transparent directional figures on Three.js actor roots. Camera-relative facing selects one of four atlas columns. Sword and axe equipment select different hero rows; elemental weapons add a local light. Movement, combat and saves keep the same actor API. `src/characters.js` provides shared equipment definitions, monster selection and a disposable directional preview renderer. Inventory uses seven separate weapon illustrations. `src/animation.js` advances movement phase and swing recovery independently of path following, so held companions finish their attacks. Hero sword/axe walk atlases retain two poses; separate six-row strike atlases provide preparation, coil, contact, follow-through, recovery and guard across four facings. The simulation emits `prepare`, then `swing`/damage after 160 ms (basic) or 220 ms (Cleave); movement, lost targets and obstructed attacks cancel preparation without charging mana. Companion atlases provide two walk poses and separate release/strike–recovery pairs per role. Monster atlases hold the windup pose for the simulation telegraph and switch to strike on the `enemyAttack` event. Companion release poses begin on the actual attack/heal event and recover over 0.26 seconds; Fallen, Risen and Brutes use separate four-phase walk atlases. Gait phase advances by distance traveled, with camera-facing hysteresis to avoid quadrant chatter. Directional hit recoil and short visual impact holds do not pause simulation clocks. The inventory preview uses the same animation state and can loop Stand, Walk or Attack.
-
-Atlas textures share loaded image sources while retaining per-actor UV transforms. Actor and preview disposal release all cloned textures and materials. Animation does not change combat damage, collision roots or save data.
-
-`src/art.js` maps semantic item IDs and companion names to original illustrated atlases. All images are local; no asset CDN is needed. The standalone packager embeds CSS images and 3D material images as data URLs. Browser tests verify weapon sprite row/save agreement and narrow-screen controls.
-
-The camera follows the hero while preserving the isometric angle. `src/scenery.js` shares illustrated prop atlas images and renders grass in one instanced draw per area. Prop bases are shifted toward their ground footprint rather than sunk into the ground plane. Large props and trees fade when their projected bounds obscure the hero; faded sprites stop writing depth. Collision geometry and first-area encounter rules are preserved.
-
-## Combat feedback
-
-Combat events carry actor and target IDs. `world.combatVisual` resolves their world positions without changing simulation damage or cooldowns. `src/combat-effects.js` shares twelve atlas cells from impact and projectile artwork in a reusable pool capped at 64 sprites, with no per-effect lights. Effects age only while gameplay runs, release their slots on expiry, and clear on zone or encounter changes. Ranged arrows and spell bolts interpolate source-to-target positions and rotate tip-first in camera space; Guard follows its actor; healing resolves the wounded actor rather than the hero. Enemy death presentation lasts 0.55 seconds while the simulation treats the enemy as defeated immediately.
-
-The reduced-effects setting starts from `prefers-reduced-motion`, softens effect opacity and disables hit flashes, recoil and impact holds. It is session-local. `src/combat-audio.js` creates short filtered-noise and tonal cues only after the player enables Sound, reuses a noise buffer, limits trigger frequency and disconnects completed nodes. Neither system writes new save fields.
-
-## Action intent and HUD state
-
-Cleave can store one pending intent while the shared melee cooldown runs. The simulation resolves it before the next basic attack, checks current range and mana again, and charges only on execution. Repeated input does not stack intents. Manual movement/cancel, regroup and restore clear it. The intent is transient and never persisted. Read-only cooldown and queued-state getters drive compact action-bar feedback; the HUD does not advance timers or change combat rules.
-
-## Terrain and direct targeting
-
-Camp terrain composites the original stony albedo with existing path placement at higher resolution. The Moor uses its own repeating earth texture rather than copying the camp's paths. Zone changes select ambient/directional light colors and intensities while retaining the camp's local fire lights. Original shadow decals share a loaded image source; each actor owns its geometry/material and cloned texture, disposed with the actor or preview.
-
-`src/sprite-picking.js` tests the current atlas frame's transformed UV against a cached 8-bit alpha mask, with its longest dimension capped at 512 pixels. Enemy raycasts exclude dead actors and shadow meshes. Hover and selected state drive the cursor, labels, subtle sprite highlighting and a ground ring.
-
-Right-click skill targeting can retain an explicit enemy ID while approaching. The simulation rechecks life, range and mana before execution; it clears the intent on cancellation, normal retargeting, restoration or target death. Untargeted keyboard/action-bar Cleave retains its nearby-enemy behavior. No new save fields are required.
-
-## Talent and backpack presentation
-
-`src/skill-tree.js` renders the existing nine talents as compact connected paths and a selected-talent inspector. `src/skill-tree.css` owns this layout. Mobile shows one branch at a time, with all three tiers visible; desktop shows every branch. Node selection is separate from learning, supports arrow-key navigation and retains focus across training. Rank previews describe the existing simulation formulas; progression and camp-only training/respec rules remain in `src/game/progression.js` and the modal handlers.
-
-Backpack filters and sort order are transient presentation state. They operate on a copied inventory array and never reorder the saved inventory. Changing category chooses a matching item; sorting retains the current selection. Equipping and selling still use the shared item functions and refresh world equipment through the existing update path. No new save fields are added.
-
-## Connected dungeon areas
-
-`src/game/den.js` defines three chambers joined by two passages, enemy IDs and the one-time bounty. The shared footprint drives collision, cave scenery placement and the minimap. `src/dungeon.js` owns cave lighting and original wall/entrance/altar/stalagmite art. Geometry outside the footprint is instanced; large wall props reuse the existing hero-occlusion fading.
-
-`combat.setArea()` replaces area enemies/drops while retaining party life, mana and cooldowns. Main selects either the existing top-level Moor progress or `state.den`. Changing hostile areas resets living enemies, cancels attack intent and rebuilds actor/loot presentation; kills and rolled drops persist. Camp still restores the company. Dungeon attacks check line of sight, and engaged enemies use the shared route function when walls block direct pursuit. The Moor retains its original movement and combat behavior.
-
-The optional `den` object keeps save schema 2 and the existing key compatible. Normalization validates dungeon IDs, claimed rewards and item uniqueness across both areas. A Moor hunt reset never resets Den progress. The dungeon is a single authored clear, without a repeat/reset action yet.
-
-## Continuous presentation and mercenary ownership
-
-The simulation remains fixed at 30 Hz. `world.present(alpha, dt)` interpolates actor roots, posture and pose time for each rendered frame without changing gameplay positions or attack clocks. Camera and labels follow the rendered roots. Projectiles and effect animation use fractional age. Static sun shadows refresh on area changes or shadow-mode changes.
-
-`src/sprite-motion-material.js` samples adjacent painted frames through bidirectional UV motion fields in `public/art/motion-flow.bin`. Original raster art remains unchanged. `scripts/build-motion-flow.py` regenerates numerical fields using Pillow, numpy and OpenCV; then format `src/motion-flow-data.json`. The binary is committed and inlined by the standalone packager, so play/build/CI do not need Python dependencies. Clip/facing transitions are short blends; interpolation is approximate, especially where a weapon changes silhouette substantially.
-
-`companionEquipment` adds four optional slots for each of the six mercenaries to schema-2 saves. Hero equipment, mercenary equipment, backpack and uncollected drops share one UID validation set. Equip/remove transactions transfer exact item instances. Dismissal retains owned gear. `companionStats` supplies life, damage, armor, casting-speed multiplier and Eira healing to the combat rules. Weapon types constrain role compatibility; current character illustrations retain their class weapon shape.
-
-## Baked sprite playback (v0.14)
-
-This supersedes the v0.13 runtime flow material and removes its binary and metadata. Movement atlases contain 16 frames per character and facing. Hero actions contain 33 frames, with additional downstroke and follow-through artwork between the original poses; frame 12 shares the gameplay contact event. Recovery returns to the original idle art. Companion/monster actions contain 17 frames, preserving their existing combat event clocks. Adjacent images blend in a lightweight sprite shader; there is no flow inference or motion-vector fetch in the player. Root, effects and selection rings still interpolate independently of the 30 Hz simulation.
-
-`scripts/build-animation-sequences.py` bakes the sequences offline from the original painted poses. Requires Pillow, numpy, OpenCV and onnxruntime. It uses the separately downloaded RIFE 4.9 ONNX model from `https://huggingface.co/yuvraj108c/rife-onnx/resolve/main/rife49_ensemble_True_scale_1_sim.onnx`; set `RIFE_MODEL` to its local path, run the script, then format `src/animation-sequence-data.json`. The metadata records the model SHA-256 and frame counts. Hero cells are 160 pixels and party/monster cells 128; these limit texture memory while retaining detail at game scale. The script and optional model are development tools; neither Python nor the model is required for CI, builds or play. See `docs/licenses/rife.txt` for the upstream interpolation implementation license. Interpolated images are derived from the project's original illustrations and may soften around occluded weapons; they are not new authored anatomy in every frame.
-
-`render-budget.js` lowers scene pixel ratio only after sustained slow frames and restores detail more slowly after fast frames. It never changes simulation speed, movement, attack clocks or CSS sizing. The default cap is 1.25 and the lower bound 0.65; UI remains at native CSS/device resolution. Direct renderer overrides used by captures/tests are respected. Character previews cap pixel ratio at 1.25.
-
-## Stable sprite coverage and action variants (v0.15)
-
-Run `RIFE_MODEL=/path/to/model.onnx python scripts/build-action-variants.py` after the base sequence bake. It aligns the original alternate hero key poses, matches per-facing diffuse exposure, creates opaque painted interiors with narrow antialiased silhouette edges, and bakes three complete sets into 12-column atlases. Variant 0 uses the existing sequence; hero attack variants 1/2 use new low-side and high-diagonal artwork. Other variants use deterministic foot-anchored torso/weight/cape deformation and smooth gait timing curves. Every loop starts from the same seam pose and attacks return to the same guard. Cell sizes are 128px for heroes and 96px for other actors, avoiding oversized textures despite three banks. `sprite_consistency.py` handles offline coverage/exposure/deformation; model inference remains offline.
-
-`action-variants.js` keeps independent shuffled bags per actor/action. A complete attack set is chosen at preparation, held through release/contact/recovery, and cannot change on duplicate combat notifications. Enemy windup and release share a selection. Walk sets change on starting movement or completing a stride. Randomness never enters damage, AI, cooldowns, loot or saved progression. Runtime atlas sampling and alpha-aware picking use the selected bank; both world and equipment previews share this implementation.
-
-Use `python scripts/check-animation-atlases.py` to validate the shipped WebP dimensions, brightness range, opaque interiors and common bank seam poses. It requires the offline image dependencies but no model. The checker reads decoded assets rather than intermediate generator output.
-
-## Runtime motion continuity (v0.16)
-
-`waypoint-motion.js` consumes the entire fixed-tick travel budget across path nodes, retaining piecewise route geometry. An arrival tick with actual travel remains moving; the next stationary tick becomes idle. `actor-sprites.js` uses the same interpolated data for both atlas/clip selection and row sampling. Attack entry initializes both swing clocks, gait restarts reset both phase clocks, and walk bank changes wait until the displayed stride crosses the seam.
-
-`createMotionMaterial` blends two fractional poses during a 90 ms transition. It retains the outgoing row, next row and mix while the destination continues advancing. Colors are blended with premultiplied alpha and unpremultiplied once. Transparent sprites retain depth testing but disable depth writes, so partially transparent silhouettes do not cut holes in other actors.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/ARCHITECTURE.md) and the [chapter roadmap](PLAN.md). Browser tests run before every deployment. Development test hooks are excluded from production builds.
