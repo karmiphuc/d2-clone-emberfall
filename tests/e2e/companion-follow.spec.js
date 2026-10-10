@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("every mercenary follows through turns, settles, and respects Hold with distance-driven playback", async ({
+test("every mercenary follows through turns, settles, and respects Hold with steady looping playback", async ({
   page,
 }) => {
   await page.goto("/", { waitUntil: "networkidle" });
@@ -27,11 +27,13 @@ test("every mercenary follows through turns, settles, and respects Hold with dis
       let travel = 0,
         maxTurn = 0,
         falseIdle = 0,
-        movingTicks = 0;
+        movingTicks = 0,
+        maxCadenceError = 0;
       for (let tick = 0; tick < 900; tick++) {
         if (tick === 130) window.__camp.moveTo(-10, 4);
         const before = actor.position.clone(),
-          yaw = actor.rotation.y;
+          yaw = actor.rotation.y,
+          phase = actor.userData.phase;
         g.update(1 / 60, tick / 60, false);
         const distance = actor.position.distanceTo(before);
         travel += distance;
@@ -46,6 +48,10 @@ test("every mercenary follows through turns, settles, and respects Hold with dis
         );
         if (distance > 1e-7) {
           movingTicks++;
+          maxCadenceError = Math.max(
+            maxCadenceError,
+            Math.abs(actor.userData.phase - phase - 0.5),
+          );
           if (!actor.userData.moving) falseIdle++;
           g.present(0.5, 1 / 120);
         }
@@ -83,6 +89,10 @@ test("every mercenary follows through turns, settles, and respects Hold with dis
         gaitFrames: actor.userData.gaitFrames,
         atlasRow,
         sequenceLength,
+        maxCadenceError,
+        mix: d.blendMix,
+        transition: d.transitionMix,
+        bank: d.displayVariant,
       });
     }
     g.setZone("camp");
@@ -97,6 +107,10 @@ test("every mercenary follows through turns, settles, and respects Hold with dis
     expect(r.idle, r.id).toBe(true);
     expect(r.drift, r.id).toBeLessThan(0.001);
     expect(r.heldTravel, r.id).toBeLessThan(0.001);
+    expect(r.maxCadenceError, r.id).toBeLessThan(1e-8);
+    expect(r.mix, r.id).toBe(0);
+    expect(r.transition, r.id).toBe(1);
+    expect(r.bank, r.id).toBe(0);
     expect(r.gaitFrames, r.id).toBe(24);
     expect(r.sequenceLength, r.id).toBe(24);
     expect(r.atlasRow, r.id).toBe((index % 3) * 24 + 12);

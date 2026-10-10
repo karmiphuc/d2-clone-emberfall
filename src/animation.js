@@ -1,18 +1,28 @@
 import { updateWalkVariant } from "./action-variants.js";
-// Movement is distance-driven in the world; previews use the same stride at
-// a nominal speed. Impact holds affect presentation only, never the simulation.
+// Party walks repeat at a steady cadence. Legacy creature strides follow distance.
+// Impact holds affect presentation only, never the simulation.
 export function advanceMotion(data, dt, moving = false, down = false) {
   const wasMoving = data.motionWasMoving ?? data.moving;
   let previousPhase = data.phase;
   data.moving = moving && !down;
   data.down = down;
   data.idleTime = (data.idleTime || 0) + dt;
-  if (data.moving && !wasMoving && !data.swing && data.gaitFrames) {
+  if (
+    data.moving &&
+    !wasMoving &&
+    !data.swing &&
+    data.gaitFrames &&
+    !data.walkLoopSeconds
+  ) {
     // Restart at the common contact pose, never interpolate backwards from the
     // stopped stride's old phase when movement begins again.
     data.phase = data.previousPhase = previousPhase = 0;
   }
-  if (data.moving) {
+  if (data.moving && data.walkLoopSeconds) {
+    if (!data.swing && !(data.windup > 0))
+      data.phase =
+        (data.phase || 0) + (dt * data.gaitFrames) / data.walkLoopSeconds;
+  } else if (data.moving) {
     const distance = data.travelDistance ?? dt * 4;
     data.phase =
       (data.phase || 0) +
@@ -129,6 +139,6 @@ export function sequenceFrames(data, attackFrames = false) {
     row,
     next:
       pose.clip === "walk" ? (row + 1) % count : Math.min(count - 1, row + 1),
-    mix: position - row,
+    mix: pose.clip === "walk" && data.walkLoopSeconds ? 0 : position - row,
   };
 }

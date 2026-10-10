@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.19.0 — Simple party walk loops
+
+- Play a single repeating walk sequence for the hero and all six mercenaries at a fixed cadence, including equipment previews.
+- Remove walk-bank shuffling, distance-dependent animation pacing, restart resets, fractional sprite blending and turn/clip crossfades involving walking.
+- Keep ground movement interpolation and existing following, combat, equipment and attack variations.
+- Remove procedural walking bobbing on top of the painted gait.
+
 ## 0.18.0 — Mercenary movement
 
 - Rebuilt all six mercenary walks from original four-phase poses and separate step contacts, with 24-frame playback and three coherent variations.

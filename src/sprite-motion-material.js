@@ -88,6 +88,7 @@ export function createMotionMaterial(map) {
       clip,
       factor = 1,
       dt = 1 / 60,
+      directWalk = false,
     }) {
       const frame = {
         map,
@@ -101,7 +102,9 @@ export function createMotionMaterial(map) {
         clip,
         factor,
       };
-      if (
+      if (directWalk && (clip === "walk" || previous?.clip === "walk"))
+        transition = null;
+      else if (
         previous &&
         (previous.key !== key ||
           previous.column !== column ||

@@ -28,6 +28,10 @@ export function beginAttackVariant(data, winding = false) {
 }
 
 export function updateWalkVariant(data, wasMoving, previousPhase) {
+  if (data.walkLoopSeconds) {
+    data.walkVariant = 0;
+    return;
+  }
   if (!data.moving || data.swing > 0 || data.windup > 0 || data.down) return;
   const cycle = Math.floor((data.phase || 0) / (data.gaitFrames || 16));
   const before = Math.floor((previousPhase || 0) / (data.gaitFrames || 16));
@@ -41,6 +45,7 @@ export function updateWalkVariant(data, wasMoving, previousPhase) {
 // A physical tick may cross the seam while the display is still interpolating
 // the last part of the previous stride. Keep its original bank until display wrap.
 export function renderedActionVariant(data, clip, phase) {
+  if (clip === "walk" && data.walkLoopSeconds) return 0;
   if (
     clip === "walk" &&
     data.walkVariantCycle !== undefined &&

@@ -213,6 +213,7 @@ export function createSpriteActor(name, weapon) {
     walkVariant: 0,
     attackVariant: 0,
     gaitFrames: companion ? sequences[sheet] : 16,
+    walkLoopSeconds: name === "hero" ? 0.7 : companion ? 0.8 : 0,
     strideLength:
       { Ilyra: 2.65, Bram: 2.6, Eira: 2.4, Soren: 2.45, Aldric: 2.5, Nyx: 2.9 }[
         name
@@ -334,6 +335,7 @@ export function createSpriteActor(name, weapon) {
       columns,
       count,
       clip: data.activeClip,
+      directWalk: !!data.walkLoopSeconds,
       factor: animated ? factor : 1,
       dt: data.renderDt,
     });
@@ -385,8 +387,10 @@ export function updateActorMotion(actor, dt, moving = false, down = false) {
     down
       ? 0
       : moving
-        ? Math.abs(Math.sin(((d.phase || 0) / d.gaitFrames) * Math.PI * 2)) *
-          0.016
+        ? d.walkLoopSeconds
+          ? 0
+          : Math.abs(Math.sin(((d.phase || 0) / d.gaitFrames) * Math.PI * 2)) *
+            0.016
         : Math.sin(d.idleTime) * 0.008,
     lunge + (d.recoilZ || 0) * recoil,
   );

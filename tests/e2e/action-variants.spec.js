@@ -49,7 +49,7 @@ test("complete action sets vary between attacks, stay stable during playback and
           data.sprite.onBeforeRender(g.renderer, g.scene, g.camera);
           samples.push({
             action,
-            variant,
+            variant: action === "walk" && data.walkLoopSeconds ? 0 : variant,
             shown: data.displayVariant,
             clip: data.activeClip,
             column: data.sprite.material.map.offset.x,

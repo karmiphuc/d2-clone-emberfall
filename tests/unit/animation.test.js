@@ -174,3 +174,37 @@ test("resuming a stopped gait begins forward at its contact pose rather than rew
   advanceMotion(data, 1 / 30, true);
   assert.ok(data.phase > before);
 });
+
+test("party walk loops keep a fixed cadence, one bank and resume without phase resets", async () => {
+  const { sequenceFrames } = await import("../../src/animation.js");
+  const { renderedActionVariant } = await import(
+    "../../src/action-variants.js"
+  );
+  const slow = {
+    phase: 0,
+    gaitFrames: 24,
+    walkLoopSeconds: 0.8,
+    variantCount: 3,
+  };
+  const fast = { ...slow };
+  for (let i = 0; i < 96; i++) {
+    slow.travelDistance = i % 2 ? 0.001 : 0.03;
+    fast.travelDistance = 0.2;
+    advanceMotion(slow, 1 / 60, true);
+    advanceMotion(fast, 1 / 60, true);
+    assert.equal(slow.phase, fast.phase);
+    assert.equal(renderedActionVariant(slow, "walk", slow.phase), 0);
+    assert.equal(sequenceFrames(slow).mix, 0);
+    assert.equal(sequenceFrames(slow).row, Math.floor(slow.phase) % 24);
+  }
+  assert.equal(slow.phase, 48);
+  advanceMotion(slow, 0.1, false);
+  assert.equal(slow.phase, 48);
+  assert.equal(motionPose(slow).clip, "idle");
+  advanceMotion(slow, 1 / 60, true);
+  assert.equal(slow.phase, 48.5);
+  slow.swing = 0.26;
+  advanceMotion(slow, 0.02, true);
+  assert.equal(slow.phase, 48.5);
+  assert.equal(motionPose(slow, true).clip, "attack");
+});

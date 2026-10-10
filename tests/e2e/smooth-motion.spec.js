@@ -53,9 +53,7 @@ test("render interpolation moves figures between physics ticks and plays longer 
   expect(distances.every((d) => d > 0.001)).toBe(true);
   expect(Math.max(...distances)).toBeLessThan(0.06);
   expect(
-    result.phases.every(
-      (p) => p.sequence && p.count === 16 && p.mix > 0 && p.mix < 1,
-    ),
+    result.phases.every((p) => p.sequence && p.count === 16 && p.mix === 0),
   ).toBe(true);
   expect(new Set(result.phases.map((p) => p.frame)).size).toBe(3);
   expect(errors).toEqual([]);

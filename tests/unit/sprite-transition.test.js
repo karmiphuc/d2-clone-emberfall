@@ -57,3 +57,30 @@ test("crossfades keep both fractional poses, including the outgoing frame blend"
   assert.equal(shader.uniforms.frameMix.value, 0.2);
   assert.equal(m.material.depthWrite, false);
 });
+
+test("direct party walks never fade at entry, direction changes or exit", () => {
+  const map = new T.Texture(),
+    m = createMotionMaterial(map);
+  for (const [clip, column] of [
+    ["idle", 0],
+    ["walk", 0],
+    ["walk", 1],
+    ["walk", 3],
+    ["attack", 3],
+  ]) {
+    const sample = m.sample({
+      map,
+      key: clip,
+      row: 0,
+      next: 1,
+      mix: 0,
+      column,
+      count: 24,
+      clip,
+      directWalk: true,
+      dt: 1 / 120,
+    });
+    assert.equal(sample.transitionMix, 1);
+    assert.equal(sample.mix, 0);
+  }
+});

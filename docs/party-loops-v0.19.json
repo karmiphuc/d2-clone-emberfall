@@ -1,0 +1,50 @@
+[
+  {
+    "role": 0,
+    "id": "Ilyra",
+    "movingSamples": 94,
+    "uniqueBanks": [0],
+    "frameBlend": 0,
+    "transitionBlend": 1
+  },
+  {
+    "role": 1,
+    "id": "Bram",
+    "movingSamples": 84,
+    "uniqueBanks": [0],
+    "frameBlend": 0,
+    "transitionBlend": 1
+  },
+  {
+    "role": 2,
+    "id": "Eira",
+    "movingSamples": 84,
+    "uniqueBanks": [0],
+    "frameBlend": 0,
+    "transitionBlend": 1
+  },
+  {
+    "role": 3,
+    "id": "Soren",
+    "movingSamples": 94,
+    "uniqueBanks": [0],
+    "frameBlend": 0,
+    "transitionBlend": 1
+  },
+  {
+    "role": 4,
+    "id": "Aldric",
+    "movingSamples": 84,
+    "uniqueBanks": [0],
+    "frameBlend": 0,
+    "transitionBlend": 1
+  },
+  {
+    "role": 5,
+    "id": "Nyx",
+    "movingSamples": 80,
+    "uniqueBanks": [0],
+    "frameBlend": 0,
+    "transitionBlend": 1
+  }
+]
