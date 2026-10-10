@@ -10,8 +10,11 @@ export function advanceMotion(data, dt, moving = false, down = false) {
 export function motionPose(data, attackFrames = false) {
   if (data.down) return { clip: "idle", row: 0 };
   if (data.windup > 0 && attackFrames) return { clip: "attack", row: 2 };
-  if (data.swing > 0 && attackFrames)
-    return { clip: "attack", row: data.swing > 0.28 ? 2 : 3 };
+  if (data.swing > 0 && attackFrames) {
+    // Companions release on the gameplay event, then settle back to idle.
+    const transition = data.attackSequence === "release-recover" ? 0.13 : 0.28;
+    return { clip: "attack", row: data.swing > transition ? 2 : 3 };
+  }
   if (data.moving && !data.swing) {
     const stride = Math.floor(data.phase) % 4;
     return stride % 2

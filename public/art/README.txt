@@ -45,3 +45,10 @@ with a cyan tint over the illustrated stone waypoint base.
 camp-soil.webp: original neutral stony earth albedo for the camp.
 contact-shadow.webp: original transparent soft oval contact shadow.
 The Moor retains earth.webp as a separate repeated material.
+
+COMPANION COMBAT ART — 2026-10-10
+companions-a-attacks.webp and companions-b-attacks.webp: 4x6 atlases,
+384-pixel cells. Paired release/strike and recovery rows for Ilyra, Bram,
+Eira, then Soren, Aldric, Nyx; four existing facing columns.
+projectiles.webp: 4x1 atlas, 512-pixel cells. Right-pointing arrow, frost
+lance, healing mote and divine bolt; runtime rotates along flight direction.

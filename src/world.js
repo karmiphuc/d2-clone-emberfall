@@ -864,14 +864,15 @@ export function createWorld(canvas) {
         if (["Ilyra", "Eira", "Soren"].includes(event.id) && target) {
           const from = point(actor, 1.2),
             to = point(target);
-          for (let i = 0; i < 3; i++)
-            effects.spawn(event.id === "Soren" ? "frost" : "impact", from, {
-              to,
-              size: (event.id === "Ilyra" ? 0.4 : 0.7) - i * 0.08,
-              duration: 0.15 + i * 0.04,
-              opacity: 0.85 - i * 0.2,
-              color: event.id === "Eira" ? 0x9dffd7 : 0xffffff,
-            });
+          const kind = { Ilyra: "arrow", Eira: "holyBolt", Soren: "frostBolt" }[
+            event.id
+          ];
+          effects.spawn(kind, from, {
+            to,
+            size: event.id === "Ilyra" ? 1.1 : 1.4,
+            duration: Math.min(0.22, Math.max(0.08, from.distanceTo(to) / 36)),
+            opacity: event.id === "Ilyra" ? 1 : 0.8,
+          });
         } else {
           const pos = point(actor);
           if (target) pos.lerp(point(target), 0.5);
@@ -888,12 +889,21 @@ export function createWorld(canvas) {
             effects.spawn("frost", pos, { size: 1.8, duration: 0.35 });
         }
       }
-      if (event.type === "heal" && actor)
+      if (event.type === "heal" && actor) {
         effects.spawn("heal", point(actor, 0.7), {
           size: 2.8,
           duration: 1,
           rise: 1,
         });
+        const caster = findActor(event.source);
+        if (caster && caster !== actor)
+          effects.spawn("healBolt", point(caster, 1.2), {
+            to: point(actor),
+            size: 1.4,
+            duration: 0.22,
+            opacity: 0.65,
+          });
+      }
       if (event.type === "guard" && actor)
         effects.spawn("ward", point(actor, 0.5), {
           size: 2.7,
@@ -1189,10 +1199,6 @@ export function createWorld(canvas) {
               : 0;
         model.userData.windup = enemy.windup;
         updateActorMotion(model, dt, dir.lengthSq() > 0.00001);
-        model.userData.body.rotation.z =
-          enemy.windup > 0 ? Math.sin(time * 18) * 0.08 : 0;
-        if (enemy.windup > 0) model.userData.body.rotation.x = -0.15;
-        else model.userData.body.rotation.x = 0;
         if (dying) {
           const t = 1 - model.userData.deathTime / 0.55;
           model.userData.body.rotation.z = t * 1.3;

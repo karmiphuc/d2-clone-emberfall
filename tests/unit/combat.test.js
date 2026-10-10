@@ -37,9 +37,18 @@ test("an autoattack obeys its cooldown and cannot repeatedly award a kill", () =
   assert.equal(state.lootTaken.filter((id) => id === "fallen-1").length, 1);
 });
 test("enemy windups give the hero time to leave attack range", () => {
-  const c = createCombat(freshState());
+  const events = [],
+    c = createCombat(freshState(), (event) => events.push(event));
   c.tick(1 / 30, positions());
   assert.ok(c.enemies[0].windup > 0);
+  assert.ok(
+    events.some(
+      (event) =>
+        event.type === "windup" &&
+        event.id === "fallen-1" &&
+        event.target === "hero",
+    ),
+  );
   assert.equal(c.allies[0].hp, 120);
   for (let i = 0; i < 25; i++) c.tick(1 / 30, positions(-16, 12));
   assert.equal(c.allies[0].hp, 120);
@@ -159,4 +168,26 @@ test("selecting a basic attack replaces a queued targeted skill", () => {
   c.select("fallen-2");
   assert.equal(c.cleaveQueued, false);
   assert.equal(c.target, "fallen-2");
+});
+
+test("Eira prioritizes a wounded ally over an attack in the same action", () => {
+  const events = [],
+    c = createCombat(freshState(), (event) => events.push(event));
+  c.allies.find((ally) => ally.id === "hero").hp = 40;
+  c.tick(
+    0.02,
+    positions(-8, 5).map((p) =>
+      p.id === "Eira" ? { ...p, x: -9, z: 5, active: true } : p,
+    ),
+  );
+  assert.ok(
+    events.some(
+      (event) =>
+        event.type === "heal" && event.id === "hero" && event.source === "Eira",
+    ),
+  );
+  assert.ok(
+    !events.some((event) => event.type === "swing" && event.id === "Eira"),
+  );
+  assert.ok(c.allies.find((ally) => ally.id === "Eira").cooldown > 0);
 });

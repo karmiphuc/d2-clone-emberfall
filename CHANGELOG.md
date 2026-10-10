@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 — Companion strikes and aimed spellwork
+
+- Added original four-direction strike/release and recovery frames for all six companion roles.
+- Replaced generic ranged spark trails with illustrated arrows, frost lances, divine bolts and healing motes, oriented along their flight path.
+- Eira visibly casts toward the actual wounded ally; held companions complete their recovery normally.
+- Enemies face their intended victim during windup, with stable authored anticipation poses.
+- Added real-combat browser coverage for every companion animation and projectile type.
+
 ## 0.8.0 — Dusk atmosphere and direct skill targeting
 
 - Added original stony camp terrain, cooler dusk lighting and separate Moor ground materials; replaced camp path placeholders with illustrated cobbles.

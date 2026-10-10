@@ -32,6 +32,14 @@ const motionSheets = {
     6,
   ],
 };
+motionSheets.aAttack = [
+  new URL("../public/art/companions-a-attacks.webp", import.meta.url).href,
+  6,
+];
+motionSheets.bAttack = [
+  new URL("../public/art/companions-b-attacks.webp", import.meta.url).href,
+  6,
+];
 const figures = {
   Fallen: ["monsters", 0, 3],
   Risen: ["monsters", 1, 3],
@@ -46,6 +54,14 @@ const figures = {
   Akara: ["npc", 0, 3],
   Charsi: ["npc", 1, 3],
   Kashya: ["npc", 2, 3],
+};
+const attackScale = {
+  Ilyra: 1.04,
+  Bram: 1,
+  Eira: 1.06,
+  Soren: 1,
+  Aldric: 1.033,
+  Nyx: 1.058,
 };
 // Each atlas shares one image source/GPU allocation across its actors.
 const atlasCache = new Map();
@@ -105,6 +121,8 @@ export function createSpriteActor(name, weapon) {
       : ["a", "b", "monsters"].includes(sheet)
         ? [sheet]
         : [];
+  const companion = sheet === "a" || sheet === "b";
+  if (companion) keys.push(`${sheet}Attack`);
   for (const key of keys) {
     const [url, count] = motionSheets[key];
     animationMaps[key] = atlasTexture(url);
@@ -161,6 +179,7 @@ export function createSpriteActor(name, weapon) {
     weaponLight: light,
     renderStyle: "directional-sprite",
     moving: false,
+    attackSequence: companion ? "release-recover" : "windup-strike",
     down: false,
     motionKey: keys[0],
     animationMaps,
@@ -184,23 +203,29 @@ export function createSpriteActor(name, weapon) {
       y = facing.dot(up);
     const column = y <= 0 ? (x >= 0 ? 0 : 1) : x < 0 ? 2 : 3;
     const data = actor.userData;
-    const pose = motionPose(data, name === "hero" || sheet === "monsters");
-    const motionMap = animationMaps[data.motionKey];
+    const pose = motionPose(
+      data,
+      name === "hero" || sheet === "monsters" || companion,
+    );
+    const companionAttack = companion && pose.clip === "attack";
+    const motionKey = companionAttack ? `${sheet}Attack` : data.motionKey;
+    const motionMap = animationMaps[motionKey];
     const ready = motionMap?.image?.complete;
     const animated =
       ready &&
       (sheet === "monsters" ? pose.clip === "attack" : pose.clip !== "idle");
     const map = animated ? motionMap : texture;
-    const count = animated ? motionSheets[data.motionKey][1] : rows;
+    const count = animated ? motionSheets[motionKey][1] : rows;
     const frameRow = animated
       ? name === "hero"
         ? pose.row
-        : row * 2 + pose.row - (sheet === "monsters" ? 2 : 0)
+        : row * 2 + pose.row - (sheet === "monsters" || companionAttack ? 2 : 0)
       : data.spriteRow;
     if (material.map !== map) material.map = map;
     map.offset.set(column / 4, 1 - (frameRow + 1) / count);
-    const factor =
-      name === "hero"
+    const factor = companionAttack
+      ? attackScale[name]
+      : name === "hero"
         ? 1.08
         : name === "Risen"
           ? 1.32
@@ -215,11 +240,7 @@ export function createSpriteActor(name, weapon) {
     data.activeClip = animated ? pose.clip : "idle";
     data.activeRow = frameRow;
     actor.userData.spriteFrame = column;
-    material.rotation =
-      body.rotation.z +
-      (name !== "hero" && actor.userData.swing > 0
-        ? Math.sin(actor.userData.swing * 12) * 0.12
-        : 0);
+    material.rotation = body.rotation.z;
   };
   equipSprite(actor, weapon);
   return actor;

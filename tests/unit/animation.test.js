@@ -49,3 +49,16 @@ test("enemy windup holds a readable raised-weapon pose until its strike", () => 
   advanceMotion(actor, 0.3);
   assert.equal(motionPose(actor, true).clip, "idle");
 });
+
+test("companion release and recovery follow the actual strike, including held and downed actors", () => {
+  const actor = { attackSequence: "release-recover", swing: 0.26, phase: 0 };
+  advanceMotion(actor, 0.02, false);
+  assert.deepEqual(motionPose(actor, true), { clip: "attack", row: 2 });
+  advanceMotion(actor, 0.13, false);
+  assert.deepEqual(motionPose(actor, true), { clip: "attack", row: 3 });
+  advanceMotion(actor, 0.12, false);
+  assert.equal(motionPose(actor, true).clip, "idle");
+  actor.swing = 0.26;
+  advanceMotion(actor, 0.01, true, true);
+  assert.equal(motionPose(actor, true).clip, "idle");
+});

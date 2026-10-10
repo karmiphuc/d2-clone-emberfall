@@ -504,6 +504,9 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             );
             ally.specialCooldown = 3.5;
             emit({ type: "heal", id: wounded.id, source: ally.id });
+            // Healing is her action: don't immediately turn away to attack.
+            ally.cooldown = Math.max(ally.cooldown, spec.cooldown);
+            continue;
           }
         }
         if (regroupTime > 0) continue;
@@ -644,7 +647,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         } else if (enemy.cooldown <= 0) {
           enemy.windup = enemy.elite ? 0.95 : 0.5;
           enemy.victim = victim.id;
-          emit({ type: "windup", id: enemy.id });
+          emit({ type: "windup", id: enemy.id, target: victim.id });
         }
       }
       for (let i = drops.length - 1; i >= 0; i--) {

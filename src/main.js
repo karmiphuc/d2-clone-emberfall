@@ -132,6 +132,7 @@ let combatSound;
 function combatEvent(event) {
   game.combatVisual(event);
   combatSound?.(event);
+  if (event.type === "windup") game.animateAttack(event.id, event.target, 0);
   if (event.type === "enemyAttack")
     game.animateAttack(event.id, event.target, 0.26);
   if (event.type === "swing") {
@@ -189,6 +190,7 @@ function combatEvent(event) {
     );
   }
   if (event.type === "heal") {
+    if (event.source) game.animateAttack(event.source, event.id, 0.26);
     save();
   }
   if (event.type === "down" && event.id !== "hero")

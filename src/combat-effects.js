@@ -9,25 +9,45 @@ const CELLS = {
   fire: 5,
   shadow: 6,
   holy: 7,
+  arrow: 8,
+  frostBolt: 9,
+  healBolt: 10,
+  holyBolt: 11,
 };
 // Original painted effects share one atlas. A bounded pool prevents volleys and
 // repeat hunts from allocating an unbounded number of materials or draw calls.
 export function createCombatEffects(scene) {
   const maps = [];
   const up = new T.Vector3(0, 1, 0);
-  const atlas = new T.TextureLoader().load(
-    new URL("../public/art/combat-effects.webp", import.meta.url).href,
-    () => maps.forEach((map) => (map.needsUpdate = true)),
-  );
-  atlas.colorSpace = T.SRGBColorSpace;
-  atlas.minFilter = T.LinearFilter;
-  atlas.generateMipmaps = false;
-  for (let i = 0; i < 8; i++) {
-    const map = atlas.clone();
-    map.repeat.set(0.25, 0.5);
-    map.offset.set((i % 4) / 4, i < 4 ? 0.5 : 0);
-    maps.push(map);
+  function loadAtlas(url, rows, count) {
+    const clones = [];
+    const atlas = new T.TextureLoader().load(url, () =>
+      clones.forEach((map) => (map.needsUpdate = true)),
+    );
+    atlas.colorSpace = T.SRGBColorSpace;
+    atlas.minFilter = T.LinearFilter;
+    atlas.generateMipmaps = false;
+    for (let i = 0; i < count; i++) {
+      const map = atlas.clone();
+      map.repeat.set(0.25, 1 / rows);
+      map.offset.set((i % 4) / 4, 1 - (Math.floor(i / 4) + 1) / rows);
+      clones.push(map);
+      maps.push(map);
+    }
   }
+  loadAtlas(
+    new URL("../public/art/combat-effects.webp", import.meta.url).href,
+    2,
+    8,
+  );
+  loadAtlas(
+    new URL("../public/art/projectiles.webp", import.meta.url).href,
+    1,
+    4,
+  );
+  const right = new T.Vector3(),
+    cameraUp = new T.Vector3(),
+    direction = new T.Vector3();
   const root = new T.Group();
   root.name = "combat-effects";
   scene.add(root);
@@ -46,6 +66,18 @@ export function createCombatEffects(scene) {
       node.renderOrder = 3;
       root.add(node);
       effect = { node };
+      // Atlas bolts point right. Rotate in camera space, including elevation,
+      // so arrows travel tip-first in every world direction and viewport.
+      node.onBeforeRender = (_renderer, _scene, camera) => {
+        if (!effect.to) return;
+        direction.subVectors(effect.to, effect.from);
+        right.setFromMatrixColumn(camera.matrixWorld, 0);
+        cameraUp.setFromMatrixColumn(camera.matrixWorld, 1);
+        node.material.rotation = Math.atan2(
+          direction.dot(cameraUp),
+          direction.dot(right),
+        );
+      };
       pool.push(effect);
     }
     const { node } = effect;
@@ -62,6 +94,11 @@ export function createCombatEffects(scene) {
       rotation: options.rotation ?? 0,
     });
     node.material.map = maps[CELLS[kind] ?? 1];
+    const blending = kind === "arrow" ? T.NormalBlending : T.AdditiveBlending;
+    if (node.material.blending !== blending) {
+      node.material.blending = blending;
+      node.material.needsUpdate = true;
+    }
     node.material.color.set(options.color ?? 0xffffff);
     node.material.rotation = effect.rotation;
     node.material.opacity = effect.opacity;
