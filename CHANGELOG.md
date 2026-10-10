@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0 — Continuous motion and equipped mercenaries
+
+- Added fractional render interpolation for character movement, attack presentation, projectiles and effects; cached static scenery shadows.
+- Added optical-flow UV vectors and a shared sprite shader to interpolate painted silhouettes instead of abruptly swapping poses. Fixed sprite sizing keeps the ground anchor stable across clips.
+- Hero automatically attacks nearby living targets with clear line of sight, chains to another nearby foe and retaliates against in-range attackers. Movement and explicit targeting retain priority.
+- Added equipment ownership for all six mercenaries: weapon, armor, ring and charm slots, shared backpack, comparisons, removal, real stat bonuses and persistence through dismissal/reload.
+- Added eight original illustrated bows, maces, staves and paired daggers, available from Charsi and loot; enforced class and level restrictions.
+- Added save migration/validation and cross-owner item uniqueness, plus browser coverage for interpolation, auto-attacks, retreat input and mercenary equipment.
+
 ## 0.12.0 — Readable contact and creature motion
 
 - Added original six-phase sword and axe attacks in four facings, including follow-through and recovery.

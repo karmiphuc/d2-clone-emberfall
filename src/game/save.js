@@ -1,7 +1,13 @@
 import { DEN_ENCOUNTERS, freshDen, denWalkable } from "./den.js";
 import { ENCOUNTERS } from "./combat.js";
 import { COMPANIONS } from "./companions.js";
-import { ITEMS, starterEquipment, BAG_LIMIT } from "./items.js";
+import {
+  ITEMS,
+  starterEquipment,
+  freshCompanionEquipment,
+  canEquipItem,
+  BAG_LIMIT,
+} from "./items.js";
 import { TALENTS, levelOf, skillPoints } from "./progression.js";
 export const SAVE_KEY = "emberfall-camp-v1";
 const services = ["Charsi", "Kashya", "Stash"],
@@ -28,6 +34,7 @@ export function freshState() {
     skills: {},
     inventory: [],
     equipment: starterEquipment(),
+    companionEquipment: freshCompanionEquipment(),
     itemSerial: 0,
   };
 }
@@ -69,6 +76,7 @@ export function normalizeSave(raw) {
     if (
       source &&
       ITEMS[source.itemId]?.slot === slot &&
+      canEquipItem("hero", ITEMS[source.itemId]) &&
       ITEMS[source.itemId].level <= levelOf(result)
     ) {
       result.equipment[slot] = item(source) || result.equipment[slot];
@@ -87,6 +95,17 @@ export function normalizeSave(raw) {
   Object.values(result.equipment)
     .filter(Boolean)
     .forEach((i) => seen.add(i.uid));
+  for (const id of Object.keys(COMPANIONS))
+    for (const slot of ["weapon", "armor", "ring", "charm"]) {
+      const source = raw.companionEquipment?.[id]?.[slot],
+        def = ITEMS[source?.itemId];
+      if (
+        def?.slot === slot &&
+        def.level <= levelOf(result) &&
+        canEquipItem(id, def)
+      )
+        result.companionEquipment[id][slot] = item(source);
+    }
   if (Array.isArray(raw.inventory))
     result.inventory = raw.inventory
       .map(item)

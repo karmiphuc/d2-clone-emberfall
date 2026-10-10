@@ -1,5 +1,11 @@
 import { COMPANIONS } from "./companions.js";
-import { heroStats, lootItem, addLoot, ITEMS } from "./items.js";
+import {
+  heroStats,
+  companionStats,
+  lootItem,
+  addLoot,
+  ITEMS,
+} from "./items.js";
 import { levelOf, LEVEL_XP } from "./progression.js";
 // Rendering-independent rules for the first authored wilderness encounter.
 export const ENCOUNTERS = [
@@ -187,6 +193,9 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     queuedCleave = false,
     queuedTarget = null,
     pendingStrike = null;
+  let automaticTarget = false,
+    autoSuppressed = 0,
+    movingHero = false;
   let enemyRoute = null;
   const clearLine = (a, b) => {
     if (!enemyRoute) return true;
@@ -277,6 +286,9 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
           )
             ? 0.8
             : 1) *
+          (ally.id !== "hero"
+            ? 1 - companionStats(state, ally.id).armor / 100
+            : 1) *
           (ally.id === "hero"
             ? (1 - stats.armor / 100) *
               (1 - (state.skills.ironSkin || 0) * 0.08)
@@ -293,6 +305,19 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       x: ally.x,
       z: ally.z,
     });
+    if (ally.id === "hero" && !target && !movingHero && autoSuppressed <= 0) {
+      const attacker = enemies.find(
+        (e) =>
+          e.id === source &&
+          e.hp > 0 &&
+          distance(hero, e) <= 2 &&
+          clearLine(hero, e),
+      );
+      if (attacker) {
+        target = attacker.id;
+        automaticTarget = true;
+      }
+    }
     if (!ally.hp) {
       ally.order = null;
       emit({ type: "down", id: ally.id });
@@ -377,9 +402,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     stats = heroStats(state);
     allies.forEach((a) => {
       const max =
-        a.id === "hero"
-          ? stats.life
-          : COMPANIONS[a.id].hp + (stats.level - 1) * 12;
+        a.id === "hero" ? stats.life : companionStats(state, a.id).life;
       const gain = max - a.maxHp;
       a.maxHp = max;
       a.hp = restore ? max : Math.min(max, Math.max(0, a.hp + gain));
@@ -478,6 +501,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         queuedCleave = false;
         queuedTarget = null;
         target = id;
+        automaticTarget = false;
       }
     },
     cancel() {
@@ -487,6 +511,8 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       queuedTarget = null;
       target = null;
       hero.order = null;
+      automaticTarget = false;
+      autoSuppressed = 0.3;
     },
     rally() {
       api.cancel();
@@ -517,7 +543,10 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         clearLine(hero, enemy) &&
         distance(hero, enemy) <= 3.1 + (state.skills.wideArc || 0) * 0.6;
       if (!targetId && !inRange) return false;
-      if (targetId) target = targetId;
+      if (targetId) {
+        target = targetId;
+        automaticTarget = false;
+      }
       if (hero.cooldown > 0 || !inRange) {
         queuedCleave = true;
         queuedTarget = targetId || null;
@@ -564,7 +593,9 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         e.engaged = false;
       });
     },
-    tick(dt, positions, holding = false) {
+    tick(dt, positions, holding = false, heroMoving = false) {
+      movingHero = heroMoving;
+      autoSuppressed = Math.max(0, autoSuppressed - dt);
       for (const ally of allies) {
         const p = positions.find((p) => p.id === ally.id);
         ally.active = !!p?.active;
@@ -606,16 +637,40 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
           if (nearest && inRange) attack(nearest, true);
         }
       }
-      const focused = enemies.find((e) => e.id === target && e.hp > 0);
+      let focused = enemies.find((e) => e.id === target && e.hp > 0);
+      if (
+        !pendingStrike &&
+        automaticTarget &&
+        (!focused || distance(hero, focused) > 2 || !clearLine(hero, focused))
+      ) {
+        target = null;
+        focused = null;
+        automaticTarget = false;
+      }
+      if (!focused && !pendingStrike && !heroMoving && autoSuppressed <= 0) {
+        focused = enemies
+          .filter(
+            (e) => e.hp > 0 && distance(hero, e) <= 2 && clearLine(hero, e),
+          )
+          .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
+        if (focused) {
+          target = focused.id;
+          automaticTarget = true;
+        }
+      }
       if (focused && !pendingStrike) {
-        if (distance(hero, focused) > 1.7 || !clearLine(hero, focused))
+        if (
+          !automaticTarget &&
+          (distance(hero, focused) > 1.7 || !clearLine(hero, focused))
+        )
           hero.order = { x: focused.x, z: focused.z };
         if (!queuedCleave) attack(focused);
       }
       for (const ally of allies.slice(1)) {
         if (!ally.active || !ally.hp) continue;
         const spec = COMPANIONS[ally.id],
-          bonus = (stats.level - 1) * 2;
+          gear = companionStats(state, ally.id),
+          bonus = gear.damage - spec.damage;
         if (ally.id === "Eira" && ally.specialCooldown <= 0) {
           const wounded = allies
             .filter(
@@ -627,10 +682,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             )
             .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
           if (wounded) {
-            wounded.hp = Math.min(
-              wounded.maxHp,
-              wounded.hp + 22 + stats.level * 3,
-            );
+            wounded.hp = Math.min(wounded.maxHp, wounded.hp + gear.healing);
             ally.specialCooldown = 3.5;
             emit({ type: "heal", id: wounded.id, source: ally.id });
             // Healing is her action: don't immediately turn away to attack.
@@ -668,7 +720,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
           continue;
         }
         if (ally.cooldown > 0) continue;
-        ally.cooldown = spec.cooldown;
+        ally.cooldown = spec.cooldown * gear.cooldownMultiplier;
         if (ally.specialCooldown <= 0 && ally.id === "Ilyra") {
           near
             .filter((e) => distance(e, ally) <= 7 && clearLine(ally, e))

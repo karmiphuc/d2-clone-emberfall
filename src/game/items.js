@@ -1,4 +1,5 @@
 import { levelOf } from "./progression.js";
+import { COMPANIONS } from "./companions.js";
 export const ITEMS = {
   worn_sword: {
     name: "Worn longsword",
@@ -234,8 +235,102 @@ export const ITEMS = {
     life: 20,
     value: 115,
   },
+  hunting_bow: {
+    name: "Yew hunting bow",
+    slot: "weapon",
+    weaponType: "bow",
+    rarity: "common",
+    level: 1,
+    damage: 5,
+    value: 20,
+  },
+  frost_bow: {
+    name: "Frostwind bow",
+    slot: "weapon",
+    weaponType: "bow",
+    rarity: "magic",
+    level: 3,
+    damage: 13,
+    life: 8,
+    value: 60,
+    element: "frost",
+  },
+  iron_mace: {
+    name: "Iron flanged mace",
+    slot: "weapon",
+    weaponType: "mace",
+    rarity: "common",
+    level: 1,
+    damage: 5,
+    value: 20,
+  },
+  oath_hammer: {
+    name: "Oath hammer",
+    slot: "weapon",
+    weaponType: "mace",
+    rarity: "rare",
+    level: 4,
+    damage: 18,
+    armor: 3,
+    value: 85,
+    element: "holy",
+  },
+  renewal_staff: {
+    name: "Staff of renewal",
+    slot: "weapon",
+    weaponType: "staff",
+    rarity: "common",
+    level: 1,
+    damage: 3,
+    healing: 6,
+    value: 24,
+  },
+  glacial_staff: {
+    name: "Glacial staff",
+    slot: "weapon",
+    weaponType: "staff",
+    rarity: "magic",
+    level: 3,
+    damage: 12,
+    healing: 4,
+    value: 60,
+    element: "frost",
+  },
+  steel_daggers: {
+    name: "Paired steel daggers",
+    slot: "weapon",
+    weaponType: "daggers",
+    rarity: "common",
+    level: 1,
+    damage: 5,
+    value: 20,
+  },
+  nightfang: {
+    name: "Nightfang daggers",
+    slot: "weapon",
+    weaponType: "daggers",
+    rarity: "rare",
+    level: 4,
+    damage: 18,
+    life: 8,
+    value: 85,
+    element: "shadow",
+  },
 };
+for (const [id, item] of Object.entries(ITEMS))
+  if (item.slot === "weapon" && !item.weaponType)
+    item.weaponType = ["iron_axe", "ember_cleaver"].includes(id)
+      ? "axe"
+      : "sword";
 export const VENDOR_STOCK = [
+  "hunting_bow",
+  "iron_mace",
+  "renewal_staff",
+  "steel_daggers",
+  "frost_bow",
+  "glacial_staff",
+  "oath_hammer",
+  "nightfang",
   "leather_vest",
   "focus_ring",
   "copper_band",
@@ -259,7 +354,7 @@ export function starterEquipment() {
 }
 export function itemStats(item) {
   return (
-    ["damage", "life", "mana", "armor"]
+    ["damage", "life", "mana", "armor", "healing"]
       .filter((k) => item[k])
       .map(
         (k) =>
@@ -284,16 +379,74 @@ export function heroStats(state) {
     regen: 3 + (state.skills.flow || 0),
   };
 }
-export function equipItem(state, uid) {
+export function freshCompanionEquipment() {
+  return Object.fromEntries(
+    Object.keys(COMPANIONS).map((id) => [
+      id,
+      { weapon: null, armor: null, ring: null, charm: null },
+    ]),
+  );
+}
+export function allEquipment(state) {
+  return [
+    ...Object.values(state.equipment),
+    ...Object.values(state.companionEquipment || {}).flatMap((gear) =>
+      Object.values(gear),
+    ),
+  ].filter(Boolean);
+}
+export function canEquipItem(owner, item) {
+  if (!item) return false;
+  if (owner !== "hero" && !Object.hasOwn(COMPANIONS, owner)) return false;
+  if (item.slot !== "weapon") return true;
+  const types = {
+    hero: ["sword", "axe"],
+    Ilyra: ["bow"],
+    Bram: ["mace"],
+    Eira: ["staff"],
+    Soren: ["staff"],
+    Aldric: ["sword", "mace"],
+    Nyx: ["daggers"],
+  };
+  return types[owner].includes(item.weaponType);
+}
+export function companionStats(state, id) {
+  const base = COMPANIONS[id];
+  if (!base) return null;
+  const gear = Object.values(state.companionEquipment?.[id] || {})
+    .map((i) => ITEMS[i?.itemId])
+    .filter(Boolean);
+  const sum = (k) => gear.reduce((n, i) => n + (i[k] || 0), 0),
+    level = levelOf(state);
+  return {
+    life: base.hp + (level - 1) * 12 + sum("life"),
+    damage: base.damage + (level - 1) * 2 + sum("damage"),
+    armor: Math.min(45, sum("armor")),
+    healing: 22 + level * 3 + sum("healing") + Math.floor(sum("mana") / 3),
+    cooldownMultiplier: 1 - Math.min(0.2, sum("mana") * 0.003),
+  };
+}
+export function equipItem(state, uid, owner = "hero") {
   const i = state.inventory.findIndex((i) => i.uid === uid);
   if (i < 0) return false;
   const item = state.inventory[i],
     def = ITEMS[item.itemId];
-  if (!def || def.level > levelOf(state)) return false;
-  const old = state.equipment[def.slot];
+  if (!def || def.level > levelOf(state) || !canEquipItem(owner, def))
+    return false;
+  const gear =
+    owner === "hero" ? state.equipment : state.companionEquipment?.[owner];
+  if (!gear) return false;
+  const old = gear[def.slot];
   state.inventory.splice(i, 1);
-  state.equipment[def.slot] = item;
+  gear[def.slot] = item;
   if (old) state.inventory.push(old);
+  return true;
+}
+export function unequipItem(state, slot, owner) {
+  const gear = state.companionEquipment?.[owner];
+  if (!gear?.[slot] || state.inventory.length >= BAG_LIMIT) return false;
+  state.inventory.push(gear[slot]);
+  gear[slot] = null;
   return true;
 }
 export function sellItem(state, uid) {
@@ -316,7 +469,7 @@ export function buyItem(state, id) {
   do {
     state.itemSerial++;
   } while (
-    [...state.inventory, ...Object.values(state.equipment)].some(
+    [...state.inventory, ...allEquipment(state)].some(
       (i) => i?.uid === `shop-${state.itemSerial}`,
     )
   );
@@ -341,7 +494,7 @@ export function lootItem(state, enemyId, index, elite = false) {
 export function addLoot(state, item) {
   if (
     state.inventory.some((i) => i.uid === item.uid) ||
-    Object.values(state.equipment).some((i) => i?.uid === item.uid)
+    allEquipment(state).some((i) => i?.uid === item.uid)
   )
     return false;
   if (state.inventory.length >= BAG_LIMIT) {

@@ -63,3 +63,7 @@ MOTION ART — v0.12
 hero-sword-strikes.webp and hero-axe-strikes.webp: original transparent 4x6 atlases, 384-pixel cells, foot baseline 361. Rows preparation, coil, contact, follow-through, recovery, guard. Columns front-right, front-left, rear-left, rear-right. Sources exec-0d79508a-36a3-449c-bc97-e49db5e05d5f.png and exec-3f85a2e2-b305-48f9-9597-503c575ea13b.png retained in /workspace/generated_images.
 fallen-run.webp, risen-run.webp, brute-run.webp: original transparent 4x4 movement atlases, same facing order, cell dimensions and baseline. Sources exec-12861aea-4c11-4838-8d0f-184f538d64a3.png, exec-e6e03633-aa38-4d5a-889e-a81285b75c78.png, exec-fb93b39c-9f7c-49b4-ac81-6ee40172a5dd.png retained in /workspace/generated_images.
 Longer hero walk experiments failed alternating-foot review and are not bundled.
+
+MERCENARY EQUIPMENT AND MOTION DATA — v0.13
+merc-weapons.webp: original generated 4x2 transparent atlas, 384-pixel cells. Row-major: hunting bow, frost bow, iron mace, oath hammer, renewal staff, glacial staff, paired steel daggers, Nightfang daggers. Source exec-cece6670-5e70-4942-99de-056f0e5cd9b1.png retained in /workspace/generated_images; resized and converted to WebP for distribution.
+motion-flow.bin: numerical bidirectional optical-flow vectors derived from existing original character movement/attack atlases by scripts/build-motion-flow.py. Layout and frame pairs are recorded in src/motion-flow-data.json. No replacement character artwork or extracted game assets are included.

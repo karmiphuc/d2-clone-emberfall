@@ -2141,3 +2141,56 @@ dialog {
   font-size: 12px;
   text-align: center;
 }
+
+.merc-weapon-art {
+  background-image: url("../public/art/merc-weapons.webp");
+  background-size: 400% 200%;
+}
+.equipment-owner {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid #5c5137;
+  background: #151710;
+}
+.equipment-owner label {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #d4c39a;
+}
+.equipment-owner select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  background: #242318;
+  color: #e4d6ae;
+  border: 1px solid #756440;
+}
+.equipment-owner p {
+  margin: 8px 0 0;
+  color: #b6b1a0;
+  font-size: 12px;
+}
+.equipped-slot button {
+  padding: 3px 8px;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.companion-card > button[data-gear] {
+  width: 100%;
+  margin: 8px 0;
+}
+.equipped-slot button {
+  background: #24251a;
+  color: #decda5;
+  border: 1px solid #6b5d3d;
+  cursor: pointer;
+}
+.equipped-slot button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.equipped-slot button:hover:not(:disabled) {
+  border-color: #c2a66b;
+  background: #353323;
+}

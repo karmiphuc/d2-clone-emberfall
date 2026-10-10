@@ -37,6 +37,9 @@ import {
   VENDOR_STOCK,
   BAG_LIMIT,
   heroStats,
+  companionStats,
+  canEquipItem,
+  unequipItem,
   itemStats,
   equipItem,
   sellItem,
@@ -284,7 +287,7 @@ function enterMoor(fromDen = false) {
   document.querySelector(".map-caption").textContent = "BLOOD MOOR";
   document.querySelector("#return-camp").hidden = false;
   document.querySelector(".controls").innerHTML =
-    'CLICK ENEMY TO ATTACK <span>·</span> <span class="desktop-hint">RIGHT CLICK / </span>1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION';
+    'AUTO ATTACK NEARBY FOES <span>·</span> <span class="desktop-hint">RIGHT CLICK / </span>1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION';
   update();
   toast("Stay together. Enemy attacks are telegraphed—move to dodge.");
 }
@@ -301,7 +304,7 @@ function enterDen() {
   document.querySelector(".safe").classList.add("hostile");
   document.querySelector(".map-caption").textContent = "DEN OF EVIL";
   document.querySelector(".controls").innerHTML =
-    "CLICK ENEMY TO ATTACK <span>·</span> 1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION";
+    "AUTO ATTACK NEARBY FOES <span>·</span> 1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION";
   document.querySelector("#return-camp").hidden = false;
   update();
   toast("Clear all three chambers. The Gravewarden waits in the depths.");
@@ -359,7 +362,7 @@ document.querySelector("#return-camp").onclick = () => {
 };
 const roster = COMPANIONS;
 function update() {
-  game.setEquipment(state.equipment);
+  game.setEquipment(state.equipment, state.companionEquipment);
   document.querySelector("#potions").textContent = state.potions;
   document.querySelector("#party").innerHTML =
     `<button class="party-card" data-name="hero"><div class="portrait" data-level="${levelOf(state)}">${portrait("hero")}</div><div><div class="member-name">The Wanderer</div><div class="health-line"><i style="width:100%"></i></div><div class="member-role">WARRIOR · YOU</div></div></button>` +
@@ -375,7 +378,9 @@ function update() {
     .forEach(
       (b) =>
         (b.onclick = () =>
-          b.dataset.name === "hero" ? showCharacter() : showParty()),
+          b.dataset.name === "hero"
+            ? showCharacter()
+            : showInventory(b.dataset.name)),
     );
   companions.forEach(
     (c, i) => (c.visible = state.roster.includes(Object.keys(roster)[i])),
@@ -527,6 +532,7 @@ function itemCard(item, equipped = false) {
   return `<article class="item-card ${def.rarity}">${itemIcon(item.itemId, def.slot)}<div class="item-heading"><strong>${def.name}</strong><small>${def.rarity} · ${def.slot} · Lv ${def.level}</small></div><p>${itemStats(def)}</p>${!equipped && diff ? `<div class="item-compare">vs equipped: ${diff}</div>` : ""}${equipped ? '<span class="equipped-tag">Equipped</span>' : `<div class="item-actions"><button data-equip="${item.uid}" ${game.zone !== "camp" || def.level > levelOf(state) ? "disabled" : ""}>${def.level > levelOf(state) ? `Requires level ${def.level}` : "Equip"}</button><button data-sell="${item.uid}" ${game.zone !== "camp" ? "disabled" : ""}>Sell · ${def.value} gold</button></div>`}</article>`;
 }
 let selectedItem;
+let inventoryOwner = "hero";
 let inventoryFilter = "all",
   inventorySort = "newest";
 const bagFilters = {
@@ -551,7 +557,19 @@ const weaponArtwork = {
   ember_cleaver: 5,
   dawnsteel: 6,
 };
-function showInventory() {
+function showInventory(owner = inventoryOwner) {
+  if (
+    typeof owner === "string" &&
+    (owner === "hero" || Object.hasOwn(COMPANIONS, owner))
+  )
+    inventoryOwner = owner;
+  const merc = inventoryOwner !== "hero",
+    ownerName = merc ? inventoryOwner : "The Wanderer";
+  const equipment = merc
+    ? state.companionEquipment[inventoryOwner]
+    : state.equipment;
+  const displayModel = merc || inspectModel;
+  const stats = merc ? companionStats(state, inventoryOwner) : heroStats(state);
   const bag = state.inventory
     .filter((item) => matchesBagFilter(item, inventoryFilter))
     .reverse();
@@ -563,14 +581,18 @@ function showInventory() {
     selectedItem === "equipped"
       ? null
       : bag.find((i) => i.uid === selectedItem) ||
-        bag.find((i) => ITEMS[i.itemId].level <= levelOf(state)) ||
+        bag.find(
+          (i) =>
+            ITEMS[i.itemId].level <= levelOf(state) &&
+            canEquipItem(inventoryOwner, ITEMS[i.itemId]),
+        ) ||
         bag[0];
   if (selectedItem !== "equipped") selectedItem = selected?.uid;
   const def = selected ? ITEMS[selected.itemId] : null;
-  const current = def ? state.equipment[def.slot] : null;
+  const current = def ? equipment[def.slot] : null;
   const currentDef = current ? ITEMS[current.itemId] : null;
   const compare = def
-    ? ["damage", "life", "mana", "armor"]
+    ? ["damage", "life", "mana", "armor", "healing"]
         .filter((k) => def[k] || 0 || currentDef?.[k] || 0)
         .map((k) => {
           const delta = (def[k] || 0) - (currentDef?.[k] || 0);
@@ -578,16 +600,30 @@ function showInventory() {
         })
         .join("")
     : "";
-  const canEquip = game.zone === "camp" && def && def.level <= levelOf(state);
+  const compatible = def && canEquipItem(inventoryOwner, def);
+  const canEquip =
+    game.zone === "camp" && compatible && def.level <= levelOf(state);
   const weapon =
-    def?.slot === "weapon" ? selected.itemId : state.equipment.weapon?.itemId;
+    def?.slot === "weapon" && compatible
+      ? selected.itemId
+      : equipment.weapon?.itemId;
   const appearance = weaponArtwork[weapon] ?? 0;
   modal(
     "Inventory",
     `
     <div class="inventory-summary"><span>${state.gold} gold <small> · ${state.stash} stashed</small></span><span>${state.inventory.length} / ${BAG_LIMIT} items</span></div>
-    <div class="equipment-stage"><div class="hero-preview"><div class="hero-illustration" role="img" aria-label="The Wanderer holding ${ITEMS[weapon]?.name || "a weapon"}" style="--hx:${((appearance % 4) * 100) / 3}%;--hy:${Math.floor(appearance / 4) * 100}%" ${inspectModel ? "hidden" : ""}></div><canvas id="equipment-preview" aria-label="Directional character preview. Drag to turn." ${inspectModel ? "" : "hidden"}></canvas><button class="preview-toggle" id="preview-toggle">${inspectModel ? "Character portrait" : "Turn character"}</button>${
-      inspectModel
+    <div class="equipment-owner"><label>Equip for <select id="equipment-owner" aria-label="Equip for"><option value="hero" ${!merc ? "selected" : ""}>The Wanderer · Warrior</option>${Object.entries(
+      COMPANIONS,
+    )
+      .map(
+        ([id, c]) =>
+          `<option value="${id}" ${id === inventoryOwner ? "selected" : ""}>${id} · ${c.role}${state.roster.includes(id) ? "" : " · At camp"}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><p><strong>${stats.life}</strong> life · <strong>${stats.damage}</strong> damage · <strong>${stats.armor}%</strong> protection${inventoryOwner === "Eira" ? ` · <strong>${stats.healing}</strong> healing` : ""}</p></div>
+    <div class="equipment-stage"><div class="hero-preview"><div class="hero-illustration" role="img" aria-label="The Wanderer holding ${ITEMS[weapon]?.name || "a weapon"}" style="--hx:${((appearance % 4) * 100) / 3}%;--hy:${Math.floor(appearance / 4) * 100}%" ${displayModel ? "hidden" : ""}></div><canvas id="equipment-preview" aria-label="Directional character preview. Drag to turn." ${displayModel ? "" : "hidden"}></canvas>${merc ? "" : `<button class="preview-toggle" id="preview-toggle">${inspectModel ? "Character portrait" : "Turn character"}</button>`}${
+      displayModel
         ? `<div class="preview-motion" role="group" aria-label="Character motion">${[
             ["idle", "Stand"],
             ["walk", "Walk"],
@@ -599,15 +635,15 @@ function showInventory() {
             )
             .join("")}</div>`
         : ""
-    }<span class="preview-caption">${def?.slot === "weapon" ? `Preview: ${def.name}` : "The Wanderer · Level " + levelOf(state)}</span></div><div class="equipped-slots">${Object.entries(
-      state.equipment,
+    }<span class="preview-caption">${def?.slot === "weapon" && compatible ? `Preview: ${def.name}` : ownerName + " · Level " + levelOf(state)}</span></div><div class="equipped-slots">${Object.entries(
+      equipment,
     )
       .map(
         ([slot, item]) =>
-          `<div class="equipped-slot"><span class="slot-name">${slot}</span>${item ? `${itemIcon(item.itemId, slot)}<strong>${ITEMS[item.itemId].name}</strong>` : '<span class="empty-slot">Empty</span>'}</div>`,
+          `<div class="equipped-slot"><span class="slot-name">${slot}</span>${item ? `${itemIcon(item.itemId, slot)}<strong>${ITEMS[item.itemId].name}</strong>${merc ? `<button data-unequip="${slot}" aria-label="Unequip ${ITEMS[item.itemId].name} from ${ownerName}" ${game.zone !== "camp" || state.inventory.length >= BAG_LIMIT ? "disabled" : ""}>Remove</button>` : ""}` : `<span class="empty-slot">${merc && slot === "weapon" ? "Issued " + { Ilyra: "longbow", Bram: "mace", Eira: "sun staff", Soren: "frost staff", Aldric: "longsword", Nyx: "daggers" }[inventoryOwner] : "Empty"}</span>`}</div>`,
       )
       .join("")}</div></div>
-    ${selected ? `<section class="item-detail ${def.rarity}"><div class="compare-head"><div><small>Equipped</small><strong>${currentDef?.name || "Empty slot"}</strong></div><div><small>Selected · ${def.rarity}</small><strong>${def.name}</strong></div></div>${compare}<p class="requirement">${canEquip ? "Ready to equip" : game.zone !== "camp" ? "Return to camp to change equipment" : `Requires level ${def.level}`}</p><div class="item-actions"><button class="primary" data-equip="${selected.uid}" ${canEquip ? "" : "disabled"}>Equip ${def.slot}</button><button data-sell="${selected.uid}" ${game.zone === "camp" ? "" : "disabled"}>Sell · ${def.value} gold</button></div></section>` : `<p class="empty-bag">${state.inventory.length ? (selectedItem === "equipped" ? "Equipment updated. Select another item below to compare." : "Choose another category to compare your equipment.") : "Your backpack is empty. Find equipment in the Blood Moor or visit Charsi at the forge."}</p>`}
+    ${selected ? `<section class="item-detail ${def.rarity}"><div class="compare-head"><div><small>${ownerName} · Equipped</small><strong>${currentDef?.name || "Empty slot"}</strong></div><div><small>Selected · ${def.rarity}</small><strong>${def.name}</strong></div></div>${compare}<p class="requirement">${canEquip ? "Ready to equip" : game.zone !== "camp" ? "Return to camp to change equipment" : !compatible ? `${ownerName} cannot use this weapon` : `Requires level ${def.level}`}</p><div class="item-actions"><button class="primary" data-equip="${selected.uid}" ${canEquip ? "" : "disabled"}>Equip ${def.slot}${merc ? " on " + ownerName : ""}</button><button data-sell="${selected.uid}" ${game.zone === "camp" ? "" : "disabled"}>Sell · ${def.value} gold</button></div></section>` : `<p class="empty-bag">${state.inventory.length ? (selectedItem === "equipped" ? "Equipment updated. Select another item below to compare." : "Choose another category to compare your equipment.") : "Your backpack is empty. Find equipment in the Blood Moor or visit Charsi at the forge."}</p>`}
     <div class="bag-heading"><h3>Backpack</h3><span>${state.potions} healing potions · [4]</span></div>
     <div class="bag-tools"><div class="bag-filters" role="group" aria-label="Filter backpack">${Object.entries(
       bagFilters,
@@ -638,13 +674,13 @@ function showInventory() {
       )}${!bag.length ? `<p class="bag-empty">${state.inventory.length ? "No items in this category. Choose another filter." : "Your next find belongs here."}</p>` : ""}</div>
     <p class="inventory-help">Select an item to compare. Equip and sell in camp. Progress saves automatically.</p>`,
     [],
-    "The Wanderer · Equipment",
+    ownerName + " · Equipment",
   );
   dialog.classList.add("inventory-dialog");
-  if (inspectModel)
+  if (displayModel)
     preview = createCharacterPreview(
       document.querySelector("#equipment-preview"),
-      "hero",
+      inventoryOwner,
       weapon,
     );
   if (preview) preview.setMotion(previewMotion);
@@ -657,10 +693,32 @@ function showInventory() {
         .forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
     };
   });
-  document.querySelector("#preview-toggle").onclick = () => {
-    inspectModel = !inspectModel;
-    showInventory();
+  document.querySelector("#equipment-owner").onchange = (event) => {
+    selectedItem = null;
+    showInventory(event.target.value);
+    dialog.scrollTop = 0;
+    document.querySelector("#equipment-owner").focus();
   };
+  content.querySelectorAll("[data-unequip]").forEach(
+    (button) =>
+      (button.onclick = () => {
+        if (
+          game.zone === "camp" &&
+          unequipItem(state, button.dataset.unequip, inventoryOwner)
+        ) {
+          combat.refreshStats(true);
+          selectedItem = "equipped";
+          update();
+          showInventory();
+          toast(`${ownerName} returned equipment to the backpack`);
+        }
+      }),
+  );
+  if (document.querySelector("#preview-toggle"))
+    document.querySelector("#preview-toggle").onclick = () => {
+      inspectModel = !inspectModel;
+      showInventory();
+    };
   const refreshBag = (selector) => {
     const scroll = dialog.scrollTop;
     showInventory();
@@ -686,12 +744,16 @@ function showInventory() {
       }),
   );
   content.querySelector("[data-equip]")?.addEventListener("click", () => {
-    if (game.zone === "camp" && equipItem(state, selected.uid)) {
+    if (
+      game.zone === "camp" &&
+      equipItem(state, selected.uid, inventoryOwner)
+    ) {
       combat.refreshStats(true);
       selectedItem = "equipped";
       update();
       showInventory();
-      toast(`${def.name} equipped`);
+      dialog.scrollTop = 0;
+      toast(`${def.name} equipped${merc ? " on " + ownerName : ""}`);
     }
   });
   content.querySelector("[data-sell]")?.addEventListener("click", () => {
@@ -764,13 +826,18 @@ function showParty() {
     )
       .map(([name, r]) => {
         const active = state.roster.includes(name);
-        return `<article class="companion-card ${active ? "in-party" : ""}"><div class="companion-title">${portrait(name, "company-portrait")}<div><h3>${name}</h3><small>${r.role} · ${active ? "In your party" : "At camp"}</small></div></div><p>${r.description}</p><div class="muted">${r.special} · ${r.hp + (levelOf(state) - 1) * 12} life</div><button class="action" data-companion="${name}" ${!camp || (!active && state.roster.length >= 3) ? "disabled" : ""}>${active ? "Dismiss" : "Recruit"} ${name} · ${r.role}</button>${!active && state.roster.length === 3 && camp ? `<div class="swap-row"><select aria-label="Companion to replace with ${name}" data-swap-choice="${name}">${state.roster.map((id) => `<option value="${id}">Replace ${id}</option>`).join("")}</select><button data-swap="${name}">Swap</button></div>` : ""}</article>`;
+        return `<article class="companion-card ${active ? "in-party" : ""}"><div class="companion-title">${portrait(name, "company-portrait")}<div><h3>${name}</h3><small>${r.role} · ${active ? "In your party" : "At camp"}</small></div></div><p>${r.description}</p><div class="muted">${r.special} · ${companionStats(state, name).life} life · ${companionStats(state, name).damage} damage</div><button data-gear="${name}" aria-label="Equipment for ${name}">Equipment</button><button class="action" data-companion="${name}" ${!camp || (!active && state.roster.length >= 3) ? "disabled" : ""}>${active ? "Dismiss" : "Recruit"} ${name} · ${r.role}</button>${!active && state.roster.length === 3 && camp ? `<div class="swap-row"><select aria-label="Companion to replace with ${name}" data-swap-choice="${name}">${state.roster.map((id) => `<option value="${id}">Replace ${id}</option>`).join("")}</select><button data-swap="${name}">Swap</button></div>` : ""}</article>`;
       })
       .join("")}</div>`,
     [],
     "Kashya · Six specialists",
   );
   dialog.classList.add("wide", "company-dialog");
+  content
+    .querySelectorAll("[data-gear]")
+    .forEach(
+      (button) => (button.onclick = () => showInventory(button.dataset.gear)),
+    );
   content.querySelectorAll("[data-swap]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -1091,7 +1158,7 @@ document.querySelector("#skills-menu").onclick = showSkills;
 const help = () =>
   modal(
     "The road begins here",
-    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. Click an enemy to attack; right-click an enemy to approach and Cleave, or press 1 to Cleave nearby. Press 2 to guard and 4 to heal. Press 6 to retreat. K opens skill trees. Train and respec in camp. Each cleared hunt can be refreshed at the eastern gate after collecting all drops.</p>',
+    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. The hero attacks nearby foes automatically when stationary. Click an enemy to approach and focus it; right-click an enemy to approach and Cleave, or press 1 to Cleave nearby. Press 2 to guard and 4 to heal. Press 6 to retreat. K opens skill trees. Train and respec in camp. Click a mercenary portrait or choose Equip for in Inventory to manage their gear. Each cleared hunt can be refreshed at the eastern gate after collecting all drops.</p>',
   );
 document.querySelector("#help").onclick = help;
 document.querySelector("#settings").onclick = () =>
@@ -1101,6 +1168,7 @@ document.querySelector("#settings").onclick = () =>
       run: () => {
         game.low = !game.low;
         renderer.shadowMap.enabled = !game.low;
+        renderer.shadowMap.needsUpdate = true;
         renderer.setPixelRatio(Math.min(devicePixelRatio, game.low ? 1 : 1.75));
         dialog.close();
         toast(
@@ -1359,7 +1427,7 @@ let last = performance.now(),
   simulationTime = 0;
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min((now - last) / 1000, 0.05);
+  const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
   accumulator += dialog.open || document.hidden ? 0 : dt;
   while (accumulator >= 1 / 30) {
@@ -1368,6 +1436,7 @@ function frame(now) {
     accumulator -= 1 / 30;
   }
   if (dialog.open) game.update(0, simulationTime, true);
+  game.present(dialog.open ? 1 : accumulator * 30, dt);
   game.updateCamera(dt);
   if (pending && hero.position.distanceTo(pending.point) < 2) {
     const next = pending;
@@ -1403,10 +1472,11 @@ function frame(now) {
       (-v.y * 0.5 + 0.5) * innerHeight > innerHeight - 151;
   }
   for (const enemy of combat.enemies) {
+    const rendered = game.enemyModels.get(enemy.id)?.userData.renderPosition;
     const v = new THREE.Vector3(
-      enemy.x,
+      rendered?.x ?? enemy.x,
       enemy.elite ? 3.4 : 2.25,
-      enemy.z,
+      rendered?.z ?? enemy.z,
     ).project(camera);
     enemy.label.hidden =
       game.zone === "camp" || enemy.hp <= 0 || v.z > 1 || Math.abs(v.x) > 1;

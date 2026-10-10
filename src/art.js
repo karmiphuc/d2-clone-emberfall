@@ -31,6 +31,18 @@ const icons = {
   portal: 11,
 };
 export function itemIcon(id, slot = "", extra = "") {
+  const merc = [
+    "hunting_bow",
+    "frost_bow",
+    "iron_mace",
+    "oath_hammer",
+    "renewal_staff",
+    "glacial_staff",
+    "steel_daggers",
+    "nightfang",
+  ].indexOf(id);
+  if (merc >= 0)
+    return `<span class="item-art merc-weapon-art ${extra}" style="--ix:${((merc % 4) * 100) / 3}%;--iy:${Math.floor(merc / 4) * 100}%" aria-hidden="true"></span>`;
   const index =
     icons[id] ??
     (slot === "ring" ? 10 : slot === "charm" ? 11 : slot === "armor" ? 8 : 0);

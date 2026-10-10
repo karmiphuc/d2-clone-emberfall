@@ -108,6 +108,24 @@ export function createCombatEffects(scene) {
     node.userData.kind = kind;
     return effect;
   }
+  function presentEffect(e, t, reduced, interpolated = false) {
+    if (e.follow)
+      e.node.position
+        .copy(
+          interpolated
+            ? e.follow.userData.renderPosition || e.follow.position
+            : e.follow.position,
+        )
+        .addScaledVector(up, 0.5);
+    else if (e.to) e.node.position.lerpVectors(e.from, e.to, t);
+    else e.node.position.copy(e.from).addScaledVector(up, e.rise * t);
+    const scale = e.to
+      ? e.size
+      : e.size * (0.65 + Math.min(1, t * 5) * 0.35 + t * 0.15);
+    e.node.scale.setScalar(scale);
+    e.node.material.opacity =
+      e.opacity * Math.min(1, (1 - t) * 3) * (reduced ? 0.45 : 1);
+  }
   return {
     root,
     spawn,
@@ -129,17 +147,18 @@ export function createCombatEffects(scene) {
           e.node.visible = false;
           continue;
         }
-        if (e.follow)
-          e.node.position.copy(e.follow.position).addScaledVector(up, 0.5);
-        else if (e.to) e.node.position.lerpVectors(e.from, e.to, t);
-        else e.node.position.copy(e.from).addScaledVector(up, e.rise * t);
-        const scale = e.to
-          ? e.size
-          : e.size * (0.65 + Math.min(1, t * 5) * 0.35 + t * 0.15);
-        e.node.scale.setScalar(scale);
-        e.node.material.opacity =
-          e.opacity * Math.min(1, (1 - t) * 3) * (reduced ? 0.45 : 1);
+        presentEffect(e, t, reduced);
       }
+    },
+    present(alpha, reduced = false) {
+      for (const e of pool)
+        if (e.node.visible)
+          presentEffect(
+            e,
+            Math.max(0, (e.age - (1 - alpha) / 30) / e.duration),
+            reduced,
+            true,
+          );
     },
   };
 }

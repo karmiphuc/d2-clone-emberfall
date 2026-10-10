@@ -33,6 +33,9 @@ test("visible silhouettes can be hovered and right-clicked; transparent margins 
         .setFromMatrixColumn(game.camera.matrixWorld, 0),
       up = origin.clone().setFromMatrixColumn(game.camera.matrixWorld, 1);
     const project = (u, v) => {
+      const factor = (sprite.userData.frameScale || 1) / 1.4;
+      u = 0.5 + (u - 0.5) * factor;
+      v = 0.06 + (v - 0.06) * factor;
       const p = origin
         .clone()
         .addScaledVector(right, (u - sprite.center.x) * sprite.scale.x)

@@ -109,3 +109,22 @@ test("facing stays stable near a quadrant edge but turns decisively", () => {
   assert.equal(facingColumn(-0.3, 0.02, 1), 1);
   assert.equal(facingColumn(-0.3, 0.4, 1), 2);
 });
+
+test("continuous pose samples meet at stride and attack boundaries without resetting", async () => {
+  const { motionFrames } = await import("../../src/animation.js");
+  const a = motionFrames({ moving: true, phase: 0.999, gaitFrames: 2 }, true),
+    b = motionFrames({ moving: true, phase: 1, gaitFrames: 2 }, true);
+  assert.equal(a.next, b.row);
+  assert.ok(a.mix > 0.99);
+  assert.equal(b.mix, 0);
+  const base = {
+    detailedMotion: true,
+    attackDuration: 0.55,
+    attackWindup: 0.16,
+  };
+  const before = motionFrames({ ...base, swing: 0.39001 }, true),
+    contact = motionFrames({ ...base, swing: 0.39 }, true);
+  assert.equal(before.next, contact.row);
+  assert.ok(before.mix > 0.99);
+  assert.ok(contact.mix < 1e-8);
+});

@@ -20,7 +20,13 @@ export function visibleSpriteHit(hit) {
     masks.set(source, mask);
   }
   map.updateMatrix();
-  const uv = map.transformUv(hit.uv.clone());
+  const local = hit.uv.clone();
+  if (hit.object.userData.frameScale) {
+    local.x = ((local.x - 0.5) * 1.4) / hit.object.userData.frameScale + 0.5;
+    local.y = ((local.y - 0.06) * 1.4) / hit.object.userData.frameScale + 0.06;
+    if (local.x < 0 || local.x > 1 || local.y < 0 || local.y > 1) return false;
+  }
+  const uv = map.transformUv(local);
   const x = Math.min(
     mask.width - 1,
     Math.max(0, Math.floor(uv.x * mask.width)),

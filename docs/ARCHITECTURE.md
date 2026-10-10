@@ -68,3 +68,11 @@ Backpack filters and sort order are transient presentation state. They operate o
 `combat.setArea()` replaces area enemies/drops while retaining party life, mana and cooldowns. Main selects either the existing top-level Moor progress or `state.den`. Changing hostile areas resets living enemies, cancels attack intent and rebuilds actor/loot presentation; kills and rolled drops persist. Camp still restores the company. Dungeon attacks check line of sight, and engaged enemies use the shared route function when walls block direct pursuit. The Moor retains its original movement and combat behavior.
 
 The optional `den` object keeps save schema 2 and the existing key compatible. Normalization validates dungeon IDs, claimed rewards and item uniqueness across both areas. A Moor hunt reset never resets Den progress. The dungeon is a single authored clear, without a repeat/reset action yet.
+
+## Continuous presentation and mercenary ownership
+
+The simulation remains fixed at 30 Hz. `world.present(alpha, dt)` interpolates actor roots, posture and pose time for each rendered frame without changing gameplay positions or attack clocks. Camera and labels follow the rendered roots. Projectiles and effect animation use fractional age. Static sun shadows refresh on area changes or shadow-mode changes.
+
+`src/sprite-motion-material.js` samples adjacent painted frames through bidirectional UV motion fields in `public/art/motion-flow.bin`. Original raster art remains unchanged. `scripts/build-motion-flow.py` regenerates numerical fields using Pillow, numpy and OpenCV; then format `src/motion-flow-data.json`. The binary is committed and inlined by the standalone packager, so play/build/CI do not need Python dependencies. Clip/facing transitions are short blends; interpolation is approximate, especially where a weapon changes silhouette substantially.
+
+`companionEquipment` adds four optional slots for each of the six mercenaries to schema-2 saves. Hero equipment, mercenary equipment, backpack and uncollected drops share one UID validation set. Equip/remove transactions transfer exact item instances. Dismissal retains owned gear. `companionStats` supplies life, damage, armor, casting-speed multiplier and Eira healing to the combat rules. Weapon types constrain role compatibility; current character illustrations retain their class weapon shape.

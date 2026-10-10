@@ -1,5 +1,12 @@
 import * as T from "three";
-import { advanceMotion, motionPose, facingColumn } from "./animation.js";
+import {
+  advanceMotion,
+  motionPose,
+  motionFrames,
+  facingColumn,
+} from "./animation.js";
+import { createMotionMaterial } from "./sprite-motion-material.js";
+import { ITEMS } from "./game/items.js";
 
 // Original painted, directional figures retain the game's Three.js world,
 // pathfinding and combat roots. Frames are ordered front-right, front-left,
@@ -108,6 +115,18 @@ function atlasTexture(url) {
 export function equipSprite(actor, weapon) {
   const d = actor.userData;
   d.weaponId = weapon;
+  if (d.characterId !== "hero") {
+    const element = ITEMS[weapon]?.element;
+    d.weaponLight.color.set(
+      element === "frost"
+        ? "#79c6e3"
+        : element === "holy"
+          ? "#eed399"
+          : "#a486ce",
+    );
+    d.weaponLight.intensity = element ? 1.8 : 0;
+    d.weaponLight.visible = !!element;
+  }
   if (d.characterId === "hero") {
     d.spriteRow = ["iron_axe", "ember_cleaver"].includes(weapon) ? 1 : 0;
     d.motionKey = d.spriteRow ? "axe" : "sword";
@@ -154,13 +173,8 @@ export function createSpriteActor(name, weapon) {
   texture.minFilter = T.LinearFilter;
   texture.generateMipmaps = false;
   texture.repeat.set(1 / 4, 1 / rows);
-  const material = new T.SpriteMaterial({
-    map: texture,
-    transparent: true,
-    alphaTest: 0.3,
-    depthWrite: true,
-    toneMapped: false,
-  });
+  const motionMaterial = createMotionMaterial(texture);
+  const material = motionMaterial.material;
   const sprite = new T.Sprite(material);
   sprite.center.set(0.5, 0.06);
   const size = name === "Fallen" ? 2 : name === "Brute" ? 3.25 : 2.75;
@@ -168,7 +182,7 @@ export function createSpriteActor(name, weapon) {
   const light = new T.PointLight("#e87936", 0, 3);
   light.position.set(0.35, 1, 0.2);
   body.add(sprite);
-  if (name === "hero") body.add(light);
+  if (name === "hero" || companion) body.add(light);
   const shadowMap = atlasTexture(shadowUrl);
   const shadow = new T.Mesh(
     new T.PlaneGeometry(size * 0.65, size * 0.5),
@@ -198,6 +212,13 @@ export function createSpriteActor(name, weapon) {
     attackWindup: 0.16,
     baseSize: size,
     previousPosition: actor.position.clone(),
+    previousPhase: 0,
+    previousSwing: 0,
+    posePosition: new T.Vector3(),
+    previousPosePosition: new T.Vector3(),
+    simulationPosition: actor.position.clone(),
+    renderPosition: actor.position.clone(),
+    renderOffset: new T.Vector3(),
     path: [],
     swing: 0,
     characterId: name,
@@ -255,6 +276,21 @@ export function createSpriteActor(name, weapon) {
         ? pose.row
         : row * 2 + pose.row - (sheet === "monsters" || companionAttack ? 2 : 0)
       : data.spriteRow;
+    const sample = motionFrames(
+      {
+        ...data,
+        phase: data.renderPhase ?? data.phase,
+        swing: data.renderSwing ?? data.swing,
+      },
+      name === "hero" || sheet === "monsters" || companion,
+    );
+    const nextRow = animated
+      ? name === "hero" || monsterRun
+        ? sample.next
+        : row * 2 +
+          sample.next -
+          (sheet === "monsters" || companionAttack ? 2 : 0)
+      : data.spriteRow;
     if (material.map !== map) material.map = map;
     map.offset.set(column / 4, 1 - (frameRow + 1) / count);
     const factor =
@@ -269,13 +305,35 @@ export function createSpriteActor(name, weapon) {
               : sheet === "monsters"
                 ? 1.24
                 : 1;
-    const renderSize = size * (animated ? factor : 1);
+    const renderSize = size * 1.4;
+    sprite.userData.frameScale = animated ? factor : 1;
     if (sprite.scale.x !== renderSize) {
       sprite.scale.set(renderSize, renderSize, 1);
       sprite.updateMatrixWorld();
     }
     data.activeClip = animated ? pose.clip : "idle";
     data.activeRow = frameRow;
+    const displayRow = animated
+      ? name === "hero" || monsterRun
+        ? sample.row
+        : row * 2 +
+          sample.row -
+          (sheet === "monsters" || companionAttack ? 2 : 0)
+      : data.spriteRow;
+    const blended = motionMaterial.sample({
+      map,
+      key: animated ? motionKey : "idle",
+      row: displayRow,
+      next: nextRow,
+      mix: animated ? sample.mix : 0,
+      column,
+      count,
+      clip: data.activeClip,
+      factor: animated ? factor : 1,
+      dt: data.renderDt,
+    });
+    data.blendMix = blended.mix;
+    data.flowActive = blended.flow;
     actor.userData.spriteFrame = column;
     material.rotation = body.rotation.z;
   };
@@ -285,6 +343,11 @@ export function createSpriteActor(name, weapon) {
 
 export function updateActorMotion(actor, dt, moving = false, down = false) {
   const d = actor.userData;
+  d.renderPhase = undefined;
+  d.renderSwing = undefined;
+  d.previousPhase = d.phase;
+  d.previousSwing = d.swing;
+  d.previousPosePosition.copy(d.posePosition);
   const distance = d.previousPosition.distanceTo(actor.position);
   // Teleports must not advance a stride; preview actors opt into nominal speed.
   d.travelDistance = d.previewMotion ? undefined : distance < 1 ? distance : 0;
@@ -318,4 +381,31 @@ export function updateActorMotion(actor, dt, moving = false, down = false) {
     lunge + (d.recoilZ || 0) * recoil,
   );
   d.body.rotation.z = down ? Math.PI / 2 : recoil * 0.08;
+  d.posePosition.copy(d.body.position);
+}
+
+export function presentActor(actor, alpha, dt) {
+  const d = actor.userData;
+  d.renderPosition.lerpVectors(d.simulationPosition, actor.position, alpha);
+  if (d.simulationPosition.distanceToSquared(actor.position) > 1)
+    d.renderPosition.copy(actor.position);
+  const offset = d.renderPosition.clone().sub(actor.position);
+  d.renderOffset.copy(offset);
+  const c = Math.cos(actor.rotation.y),
+    s = Math.sin(actor.rotation.y);
+  const localOffset = new T.Vector3(
+    (offset.x * c - offset.z * s) / actor.scale.x,
+    0,
+    (offset.x * s + offset.z * c) / actor.scale.z,
+  );
+  d.body.position
+    .lerpVectors(d.previousPosePosition, d.posePosition, alpha)
+    .add(localOffset);
+  d.shadow.position.set(localOffset.x, 0.015, localOffset.z);
+  d.renderPhase = d.previousPhase + (d.phase - d.previousPhase) * alpha;
+  d.renderSwing = Math.max(
+    0,
+    d.previousSwing + (d.swing - d.previousSwing) * alpha,
+  );
+  d.renderDt = dt;
 }

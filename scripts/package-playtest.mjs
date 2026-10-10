@@ -17,13 +17,13 @@ for (const match of scripts) {
   // Vite resolves 3D material URLs relative to the bundle. Inline those too.
   for (const asset of [
     ...source.matchAll(
-      /new URL\("([^"\n]+\.(?:webp|png|jpg))",import\.meta\.url\)\.href/g,
+      /new URL\("([^"\n]+\.(?:webp|png|jpg|bin))",import\.meta\.url\)\.href/g,
     ),
   ]) {
     const data = await readFile(resolve(dirname(scriptPath), asset[1]));
     source = source.replace(asset[0], () =>
       JSON.stringify(
-        `data:image/${extname(asset[1]).slice(1)};base64,${data.toString("base64")}`,
+        `data:${extname(asset[1]) === ".bin" ? "application/octet-stream" : "image/" + extname(asset[1]).slice(1)};base64,${data.toString("base64")}`,
       ),
     );
   }

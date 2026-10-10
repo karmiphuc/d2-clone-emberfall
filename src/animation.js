@@ -51,6 +51,61 @@ export function motionPose(data, attackFrames = false) {
   return { clip: "idle", row: 0 };
 }
 
+// A continuous sample between authored poses; gameplay still uses discrete
+// contact events. The renderer warps corresponding pixels before blending.
+export function motionFrames(data, attackFrames = false) {
+  const pose = motionPose(data, attackFrames);
+  if (pose.clip === "walk") {
+    const phase = data.phase || 0;
+    return {
+      ...pose,
+      next: (pose.row + 1) % (data.gaitFrames || 2),
+      mix: phase - Math.floor(phase),
+    };
+  }
+  if (pose.clip === "attack" && data.detailedMotion) {
+    const duration = data.attackDuration || 0.55,
+      windup = data.attackWindup ?? 0.16;
+    const recovery = duration - windup;
+    const times = [
+      0,
+      windup * 0.5,
+      windup,
+      windup + recovery * 0.2,
+      windup + recovery * 0.47,
+      windup + recovery * 0.76,
+      duration,
+    ];
+    const elapsed = duration - data.swing;
+    const row = pose.row;
+    return {
+      ...pose,
+      next: Math.min(5, row + 1),
+      mix:
+        row === 5
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                1,
+                (elapsed - times[row]) / (times[row + 1] - times[row]),
+              ),
+            ),
+    };
+  }
+  if (
+    pose.clip === "attack" &&
+    data.attackSequence === "release-recover" &&
+    pose.row === 2
+  )
+    return {
+      ...pose,
+      next: 3,
+      mix: Math.max(0, Math.min(1, (0.26 - data.swing) / 0.13)),
+    };
+  return { ...pose, next: pose.row, mix: 0 };
+}
+
 // Hysteresis prevents left/right pose chatter along a quadrant boundary.
 export function facingColumn(x, y, previous) {
   let right = x >= 0,

@@ -225,3 +225,50 @@ test("moving or losing the target during anticipation cancels damage and mana co
   assert.equal(c.mana, 60);
   assert.equal(c.preparing, null);
 });
+
+test("an idle hero acquires nearby threats automatically and chains to the next living target", () => {
+  const s = freshState(),
+    c = createCombat(s);
+  c.enemies.forEach((e, i) => {
+    e.x = i < 2 ? i * 0.5 : 16;
+    e.z = i < 2 ? 0 : 13;
+    e.speed = 0;
+    e.cooldown = 999;
+    e.hp = e.maxHp = i < 2 ? 9 : 100;
+  });
+  const p = positions(0, 1.5);
+  const mana = c.mana;
+  c.tick(0.03, p);
+  assert.equal(c.target, "fallen-1");
+  assert.ok(c.preparing);
+  assert.equal(c.allies[0].order, null);
+  for (let i = 0; i < 30; i++) c.tick(0.03, p);
+  assert.equal(c.enemies[0].hp, 0);
+  assert.equal(c.enemies[1].hp, 0);
+  assert.equal(c.mana, mana);
+});
+test("automatic attacks do not chase outside range, override movement or cross dungeon walls", () => {
+  const c = createCombat(freshState());
+  c.enemies.forEach((e, i) => {
+    e.x = i ? 16 : 0;
+    e.z = i ? 13 : 0;
+    e.speed = 0;
+    e.cooldown = 999;
+  });
+  for (let i = 0; i < 20; i++) c.tick(0.03, positions(0, 1), false, true);
+  assert.equal(c.target, null);
+  assert.equal(c.enemies[0].hp, 34);
+  c.tick(0.03, positions(0, 1));
+  assert.ok(c.preparing);
+  c.cancel();
+  for (let i = 0; i < 30; i++) c.tick(0.03, positions(0, 4));
+  assert.equal(c.target, null);
+  assert.equal(c.allies[0].order, null);
+  const state = freshState(),
+    wall = (x) => x > 0.8 && x < 1.2;
+  const dungeon = createCombat(state, () => {}, wall);
+  dungeon.setArea([{ ...ENCOUNTERS[0], x: 1.5, z: 0 }], state.den, () => []);
+  for (let i = 0; i < 20; i++) dungeon.tick(0.03, positions(0, 0));
+  assert.equal(dungeon.target, null);
+  assert.equal(dungeon.enemies[0].hp, 34);
+});

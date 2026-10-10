@@ -2,7 +2,7 @@ import { createDungeon } from "./dungeon.js";
 import { denWalkable, DEN_GATE } from "./game/den.js";
 import * as T from "three";
 import { createActor, setActorWeapon, createMonster } from "./characters.js";
-import { updateActorMotion } from "./actor-sprites.js";
+import { updateActorMotion, presentActor } from "./actor-sprites.js";
 import { COMPANIONS } from "./game/companions.js";
 import { scenery, scatterGrass, updateSceneryVisibility } from "./scenery.js";
 import { visibleSpriteHit } from "./sprite-picking.js";
@@ -23,6 +23,8 @@ export function createWorld(canvas) {
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.25;
   let zoom = 19;
@@ -771,15 +773,34 @@ export function createWorld(canvas) {
     blocked,
     route: (a, b) => route(v(a.x, 0, a.z), v(b.x, 0, b.z)),
     updateCamera(dt) {
-      cameraFocus.lerp(hero.position, Math.min(1, dt * 7));
+      cameraFocus.lerp(
+        hero.position.clone().add(hero.userData.renderOffset),
+        1 - Math.exp(-dt * 7),
+      );
       camera.position.copy(cameraFocus).add(cameraOffset);
       camera.lookAt(cameraFocus.x, 0.6, cameraFocus.z);
       camera.updateMatrixWorld();
     },
-    setEquipment(equipment) {
+    setEquipment(equipment, mercGear = {}) {
       setActorWeapon(hero, equipment.weapon?.itemId || "worn_sword");
+      const issued = {
+        Ilyra: "bow",
+        Bram: "mace",
+        Eira: "sun_staff",
+        Soren: "frost_staff",
+        Aldric: "tempered_sword",
+        Nyx: "daggers",
+      };
+      companions.forEach((actor) =>
+        setActorWeapon(
+          actor,
+          mercGear[actor.userData.characterId]?.weapon?.itemId ||
+            issued[actor.userData.characterId],
+        ),
+      );
     },
     setZone(zone) {
+      renderer.shadowMap.needsUpdate = true;
       api.practiceWindup = 0;
       effects.clear();
       api.hoveredEnemy = null;
@@ -815,6 +836,7 @@ export function createWorld(canvas) {
       api.stop();
       hero.position.set(zone === "camp" ? 0 : -14, 0, zone === "camp" ? 5 : 10);
       hero.rotation.y = zone === "camp" ? Math.PI : 2.3;
+      hero.userData.renderPosition.copy(hero.position);
       companions.forEach((c, i) => {
         c.position
           .copy(hero.position)
@@ -1143,6 +1165,9 @@ export function createWorld(canvas) {
   }
   let repath = 0;
   api.update = (dt, time, paused) => {
+    if (!paused)
+      for (const actor of [hero, ...companions, ...enemyModels.values()])
+        actor.userData.simulationPosition.copy(actor.position);
     updateSceneryVisibility(sceneryProps, hero, camera, dt);
     if (api.zone === "den") dungeon.update(time);
     const marked =
@@ -1229,6 +1254,7 @@ export function createWorld(canvas) {
           active: o.visible,
         })),
         api.hold,
+        hero.userData.manualMoving || !!hero.userData.path.length,
       );
       const order = api.combat.allies[0].order;
       if (
@@ -1265,6 +1291,7 @@ export function createWorld(canvas) {
             1 - Math.max(0, (t - 0.45) / 0.55);
           model.userData.shadow.material.opacity = 0.6 * (1 - t);
           model.userData.body.position.y = -settle * 0.5;
+          model.userData.posePosition.copy(model.userData.body.position);
         }
       }
       const activeDrops = new Set(api.combat.drops.map((d) => d.id));
@@ -1346,6 +1373,11 @@ export function createWorld(canvas) {
         walk(c, dt, c.userData.companionId === "Nyx" ? 5.4 : 4.2);
       if (c.visible) updateActorMotion(c, dt, c.userData.moving, down);
     });
+  };
+  api.present = (alpha, dt) => {
+    for (const actor of [hero, ...companions, ...enemyModels.values()])
+      if (actor.visible) presentActor(actor, alpha, dt);
+    effects.present(alpha, api.reducedEffects);
   };
   return api;
 }
