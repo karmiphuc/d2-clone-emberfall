@@ -780,6 +780,7 @@ export function createWorld(canvas) {
       setActorWeapon(hero, equipment.weapon?.itemId || "worn_sword");
     },
     setZone(zone) {
+      api.practiceWindup = 0;
       effects.clear();
       api.hoveredEnemy = null;
       api.zone = zone;
@@ -874,6 +875,22 @@ export function createWorld(canvas) {
         object.position.clone().add(v(0, height, 0));
       if (event.type === "hit" && target) {
         target.userData.hitFlash = api.reducedEffects ? 0 : 0.13;
+        if (!api.reducedEffects && actor && actor !== target) {
+          const impulse = target.position
+            .clone()
+            .sub(actor.position)
+            .normalize();
+          const angle = target.rotation.y;
+          target.userData.recoilX =
+            impulse.x * Math.cos(angle) - impulse.z * Math.sin(angle);
+          target.userData.recoilZ =
+            impulse.x * Math.sin(angle) + impulse.z * Math.cos(angle);
+          target.userData.recoilStrength =
+            event.source === "hero" ? 0.22 : 0.12;
+          target.userData.recoilTime = 0.22;
+          target.userData.impactHold = 0.04;
+          if (event.source === "hero") actor.userData.impactHold = 0.045;
+        }
         const kind =
           event.source === "Soren"
             ? "frost"
@@ -957,14 +974,16 @@ export function createWorld(canvas) {
       }
       if (event.type === "kill") {
         const victim = findActor(event.id);
-        if (victim) victim.userData.deathTime = 0.55;
+        if (victim) victim.userData.deathTime = 1.2;
       }
     },
-    animateAttack(id, targetId, duration = 0.5) {
+    animateAttack(id, targetId, duration = 0.55, windup = 0.16) {
       const actor =
         [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
       if (actor) {
         actor.userData.swing = duration;
+        actor.userData.attackDuration = duration;
+        actor.userData.attackWindup = windup;
         const target =
           enemyModels.get(targetId) ||
           [hero, ...companions][actorNames.indexOf(targetId)];
@@ -974,6 +993,9 @@ export function createWorld(canvas) {
             target.position.z - actor.position.z,
           );
       }
+    },
+    releaseAttack(duration = 0.39) {
+      hero.userData.swing = duration;
     },
     moveTo(p) {
       hero.userData.path = route(hero.position, p);
@@ -1004,7 +1026,10 @@ export function createWorld(canvas) {
       api.pulse(0x81cbd6);
     },
     swing() {
-      hero.userData.swing = 0.26;
+      if (hero.userData.swing > 0) return;
+      hero.userData.path = [];
+      api.practiceWindup = 0.16;
+      api.animateAttack("hero", null, 0.55, 0.16);
     },
     pulse(color) {
       pulse.material.color.set(color);
@@ -1172,6 +1197,10 @@ export function createWorld(canvas) {
       keys.clear();
       return;
     }
+    if (api.practiceWindup > 0) {
+      api.practiceWindup = Math.max(0, api.practiceWindup - dt);
+      if (!api.practiceWindup) api.onPracticeStrike?.();
+    }
     let mx =
         (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) -
         (keys.has("KeyA") || keys.has("ArrowLeft") ? 1 : 0),
@@ -1229,11 +1258,13 @@ export function createWorld(canvas) {
         model.userData.windup = enemy.windup;
         updateActorMotion(model, dt, dir.lengthSq() > 0.00001);
         if (dying) {
-          const t = 1 - model.userData.deathTime / 0.55;
-          model.userData.body.rotation.z = t * 1.3;
-          model.userData.sprite.material.opacity = 1 - t;
+          const t = 1 - model.userData.deathTime / 1.2;
+          const settle = Math.min(1, t * 3);
+          model.userData.body.rotation.z = settle * 0.25;
+          model.userData.sprite.material.opacity =
+            1 - Math.max(0, (t - 0.45) / 0.55);
           model.userData.shadow.material.opacity = 0.6 * (1 - t);
-          model.userData.body.position.y = -t * 0.3;
+          model.userData.body.position.y = -settle * 0.5;
         }
       }
       const activeDrops = new Set(api.combat.drops.map((d) => d.id));
@@ -1264,6 +1295,7 @@ export function createWorld(canvas) {
         obj.rotation.y = time;
       }
     }
+    if (api.zone !== "camp" && api.combat?.preparing) hero.userData.path = [];
     walk(hero, dt, 4);
     updateActorMotion(hero, dt, hero.userData.moving);
     repath -= dt;
@@ -1310,7 +1342,7 @@ export function createWorld(canvas) {
     companions.forEach((c, i) => {
       const down = api.zone !== "camp" && api.combat?.allies[i + 1].hp === 0;
       c.userData.moving = false;
-      if (c.visible && !api.hold && !down)
+      if (c.visible && !api.hold && !down && c.userData.swing <= 0)
         walk(c, dt, c.userData.companionId === "Nyx" ? 5.4 : 4.2);
       if (c.visible) updateActorMotion(c, dt, c.userData.moving, down);
     });

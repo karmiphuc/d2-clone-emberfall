@@ -51,12 +51,13 @@ test("combat effects follow real healing and guard events, remain bounded and cl
     combat.enemies[0].hp = 1;
     combat.select(combat.enemies[0].id);
     game.update(0.03, 1, false);
+    for (let i = 0; i < 15; i++) game.update(0.05, 1 + i * 0.05, false);
     const corpse = game.enemyModels.get(combat.enemies[0].id);
     const collapsing =
       combat.enemies[0].hp === 0 &&
       corpse.visible &&
       corpse.userData.sprite.material.opacity < 1;
-    for (let i = 0; i < 20; i++) game.update(0.05, 1 + i * 0.05, false);
+    for (let i = 0; i < 30; i++) game.update(0.05, 2 + i * 0.05, false);
     const gone = !corpse.visible;
     game.setZone("camp");
     return {

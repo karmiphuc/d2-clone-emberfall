@@ -185,7 +185,8 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     regroupTime = 0,
     dead = false,
     queuedCleave = false,
-    queuedTarget = null;
+    queuedTarget = null,
+    pendingStrike = null;
   let enemyRoute = null;
   const clearLine = (a, b) => {
     if (!enemyRoute) return true;
@@ -298,18 +299,60 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     }
   }
   function attack(enemy, cleave = false) {
-    if (hero.hp <= 0 || hero.cooldown > 0) return false;
+    if (hero.hp <= 0 || hero.cooldown > 0 || pendingStrike) return false;
     if (
       !enemy ||
       enemy.hp <= 0 ||
       distance(hero, enemy) >
-        (cleave ? 3.1 + (state.skills.wideArc || 0) * 0.6 : 2)
+        (cleave ? 3.1 + (state.skills.wideArc || 0) * 0.6 : 2) ||
+      !clearLine(hero, enemy)
     )
       return false;
-    if (!clearLine(hero, enemy)) return false;
     if (cleave && mana < 8) return false;
-    hero.cooldown = cleave ? 0.8 : 0.55;
+    const duration = cleave ? 0.8 : 0.55,
+      windup = cleave ? 0.22 : 0.16;
+    hero.cooldown = duration;
+    pendingStrike = {
+      id: enemy.id,
+      cleave,
+      remaining: windup,
+      duration,
+      windup,
+    };
+    hero.order = null;
+    emit({
+      type: "prepare",
+      id: "hero",
+      target: enemy.id,
+      cleave,
+      duration,
+      windup,
+    });
+    return true;
+  }
+  function releaseStrike(strike) {
+    const enemy = enemies.find((e) => e.id === strike.id);
+    const { cleave, duration, windup } = strike;
+    if (
+      !hero.hp ||
+      !enemy?.hp ||
+      distance(hero, enemy) >
+        (cleave ? 3.1 + (state.skills.wideArc || 0) * 0.6 : 2.35) ||
+      !clearLine(hero, enemy) ||
+      (cleave && mana < 8)
+    ) {
+      emit({ type: "cancelStrike", id: "hero" });
+      return;
+    }
     if (cleave) mana -= 8;
+    // The visible cut and damage share this contact event.
+    emit({
+      type: "swing",
+      id: "hero",
+      target: enemy.id,
+      cleave,
+      duration: duration - windup,
+    });
     const damage =
       stats.damage +
       (state.skills.lastStand && hero.hp < hero.maxHp * 0.4 ? 15 : 0);
@@ -329,8 +372,6 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
           ),
         );
     else hurtEnemy(enemy, damage, "hero");
-    emit({ type: "swing", id: "hero", target: enemy.id, cleave });
-    return true;
   }
   function refreshStats(restore = false) {
     stats = heroStats(state);
@@ -403,6 +444,9 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     allies,
     enemies,
     drops,
+    get preparing() {
+      return pendingStrike ? { ...pendingStrike } : null;
+    },
     get mana() {
       return mana;
     },
@@ -427,18 +471,25 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     },
     select(id) {
       if (enemies.some((e) => e.id === id && e.hp > 0)) {
+        if (target !== id && pendingStrike) {
+          emit({ type: "cancelStrike", id: "hero" });
+          pendingStrike = null;
+        }
         queuedCleave = false;
         queuedTarget = null;
         target = id;
       }
     },
     cancel() {
+      if (pendingStrike) emit({ type: "cancelStrike", id: "hero" });
+      pendingStrike = null;
       queuedCleave = false;
       queuedTarget = null;
       target = null;
       hero.order = null;
     },
     rally() {
+      api.cancel();
       queuedCleave = false;
       queuedTarget = null;
       regroupTime = 3;
@@ -492,6 +543,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       return true;
     },
     restore() {
+      api.cancel();
       allies.forEach((a) => {
         a.hp = a.maxHp;
         a.cooldown = 0;
@@ -525,6 +577,14 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         ally.order = null;
       }
       if (dead) return;
+      if (pendingStrike) {
+        pendingStrike.remaining -= dt;
+        if (pendingStrike.remaining <= 0.000001) {
+          const strike = pendingStrike;
+          pendingStrike = null;
+          releaseStrike(strike);
+        }
+      }
       mana = Math.min(stats.mana, mana + dt * stats.regen);
       guard = Math.max(0, guard - dt);
       guardCooldown = Math.max(0, guardCooldown - dt);
@@ -547,7 +607,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         }
       }
       const focused = enemies.find((e) => e.id === target && e.hp > 0);
-      if (focused) {
+      if (focused && !pendingStrike) {
         if (distance(hero, focused) > 1.7 || !clearLine(hero, focused))
           hero.order = { x: focused.x, z: focused.z };
         if (!queuedCleave) attack(focused);

@@ -138,14 +138,22 @@ let combatArea = "moor";
 game.setCombat(combat);
 const damageNumbers = [];
 let combatSound;
+game.onPracticeStrike = () => {
+  combatSound?.({ type: "swing" });
+  game.combatVisual({ type: "swing", id: "hero", cleave: true });
+};
 function combatEvent(event) {
+  if (event.type === "prepare")
+    game.animateAttack(event.id, event.target, event.duration, event.windup);
+  if (event.type === "cancelStrike") game.hero.userData.swing = 0;
   game.combatVisual(event);
   combatSound?.(event);
   if (event.type === "windup") game.animateAttack(event.id, event.target, 0);
   if (event.type === "enemyAttack")
     game.animateAttack(event.id, event.target, 0.26);
   if (event.type === "swing") {
-    game.animateAttack(event.id, event.target, 0.26);
+    if (event.id === "hero") game.releaseAttack(event.duration);
+    else game.animateAttack(event.id, event.target, 0.26);
   }
   if (event.type === "hit") {
     const el = document.createElement("span");
@@ -973,6 +981,10 @@ function interact(id) {
 let pending = null;
 game.onManualMove = () => {
   pending = null;
+  if (game.practiceWindup) {
+    game.practiceWindup = 0;
+    hero.userData.swing = 0;
+  }
 };
 for (const npc of npcs) {
   const el = document.createElement("button");
@@ -1037,8 +1049,6 @@ function action(name, targetId) {
       return;
     }
     game.swing();
-    combatSound?.({ type: "swing" });
-    game.combatVisual({ type: "swing", id: "hero", cleave: true });
     toast("Practice swing · The camp is a sanctuary.");
   }
   if (name === "guard") {

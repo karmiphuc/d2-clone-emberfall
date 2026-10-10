@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.12.0 — Readable contact and creature motion
+
+- Added original six-phase sword and axe attacks in four facings, including follow-through and recovery.
+- Hero attacks now anticipate before contact; damage, sound and mana consumption share the strike event. Moving, losing range or losing a target cancels preparation.
+- Added four-phase Fallen, Risen and Brute movement, distance-driven gait timing and stable facing near quadrant boundaries.
+- Removed idle-frame interruptions from walking and planted companion feet during strike recovery.
+- Added restrained directional hit recoil and short visual impact holds; softened death settling and delayed the fade. Reduced effects suppresses recoil/holds.
+- Kept existing hero walk artwork after rejecting longer sheets with inconsistent foot alternation. Longer hero/companion cycles remain unfinished.
+- Added simulation and browser coverage for contact timing, cancellation, six attack phases and gait cadence.
+
 ## 0.11.0 — Beneath the Blood Moor
 
 - Added a connected Den of Evil dungeon with three chambers, eleven creatures, the Gravewarden and a one-time Akara bounty.

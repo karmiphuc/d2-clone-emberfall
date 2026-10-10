@@ -45,6 +45,7 @@ export function createCharacterPreview(canvas, id, weapon) {
   rim.position.set(4, 3, -3);
   scene.add(rim);
   const actor = createActor(id);
+  actor.userData.previewMotion = true;
   if (weapon) setActorWeapon(actor, weapon);
   actor.rotation.y = -0.35;
   scene.add(actor);
@@ -93,7 +94,9 @@ export function createCharacterPreview(canvas, id, weapon) {
       const dt = previousTime === null ? 0 : Math.min(0.1, time - previousTime);
       previousTime = time;
       if (mode === "attack" && time >= nextAttack) {
-        actor.userData.swing = 0.5;
+        actor.userData.swing = 0.55;
+        actor.userData.attackDuration = 0.55;
+        actor.userData.attackWindup = 0.16;
         nextAttack = time + 1.1;
       }
       updateActorMotion(actor, dt, mode === "walk");

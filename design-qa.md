@@ -1,35 +1,34 @@
-# v0.11 connected dungeon review
+# v0.12 motion and contact review
 
-Scope: an authored Den of Evil connected to the existing Blood Moor. [Previous review](docs/qa-v0.10.md). The rest of Act I is unfinished.
+Scope: movement and combat presentation in the existing camp, Blood Moor and Den. [Previous review](docs/qa-v0.11.md). No new campaign area or system.
 
 ## Evidence and visual target
 
-The existing Wrought Iron camp/HUD, painted characters and combat effects remain the reference. New original cave artwork uses the same muted, textured isometric direction. The transparent 2×2 cave atlas was opened and inspected before integration. It contains a limestone wall, entrance, ritual altar and stalagmite/bone cluster.
+Retained the original painted characters, muted dusk palette and stone/bronze HUD. Applied the Product Design workflow to the existing visual target. Local Playwright/Chromium captured the baseline, recorded the revised game and captured exact sword/axe phases; cloud browser tools are unavailable. Opened the new atlases, desktop/phone captures and temporal contact sheets before accepting the changes.
 
-Local Playwright/Chromium supplies browser screenshots; the cloud browser connector remains unavailable. The initial clear-test screenshot exposed an overly dark floor and repetitive reused Moor rubble. Subsequent desktop, phone and journal captures were opened and inspected after replacing that art and increasing cave fill lighting.
+Evidence: [normal combat](docs/screenshots/combat-v0.12.webp), [idle through attack recovery, sword and axe](docs/screenshots/attack-phases-v0.12.webp). Full before/after recordings and frame sequences are retained under `/workspace/emberfall-design/v12-before-video` and `/workspace/emberfall-design/v12-review`.
 
 ## Findings and resolutions
 
-1. **P2, resolved — first cave looks like repeated rubble in a black void.** Added original cave walls, entrance, altar and stalagmites. Raised floor/ambient illumination while retaining dark rock outside the traversable footprint and warm torch pools.
-2. **P2, resolved — hostile-area controls and labels assume the Moor.** Both hostile areas now display enemy/loot labels, action feedback, attacks and retreat. The cave has its own title, objective and minimap footprint; entrance/exit labels support normal approach and nearby E interaction.
-3. **P2, resolved — attacks could cross dungeon walls.** Dungeon melee/cleave and ranged attacks require clear line of sight. Engaged enemies use the shared route function around blocked passages. Hero and companion movement use the existing clearance-aware A\*.
-4. **P2, resolved — shared encounter progress would mix two areas.** Added validated dungeon-local kills, drops and a one-time reward. Area switching preserves party life/mana; camp restores them. Moor hunt resets leave the dungeon untouched.
-5. **P3 — authored wall segments repeat.** The three chambers use a limited original prop kit and a fixed layout. Further shape/prop variety and procedural generation remain future work. The Gravewarden reuses the existing elite creature artwork.
+1. **P1, improved — damage arrives before a readable hero swing.** Six painted attack phases now accompany a simulation windup: 160 ms basic / 220 ms Cleave. Contact emits the cut, sound, damage and mana cost together. Moving or losing the target/range cancels anticipation. Camp practice effects follow the same windup. Recovery finishes before the next basic swing.
+2. **P2, improved — moving figures alternate between walk and idle art; monsters slide.** Walking no longer inserts idle frames. Phase follows distance traveled rather than elapsed time. Fallen, Risen and Brutes have four-phase gaits, with separate stride lengths. Facing hysteresis reduces flicker near quadrant boundaries. Companions plant their feet during attack recovery.
+3. **P2, improved — hits lack weight and deaths topple like flat cards.** Added restrained directional recoil and a short visual contact hold without pausing gameplay clocks. Deaths settle slightly into the ground and fade after a short delay. Reduced effects suppresses new recoil, holds and flashes.
+4. **P2, remaining — hero/companion walks still have only two poses.** Longer generated hero sheets repeatedly failed left/right foot alternation. Rejected them instead of increasing frame count with inconsistent art. The accepted changes improve timing; they do not constitute a finished walk-animation overhaul.
+5. **P3, remaining — four facings and limited death animation.** Turning is still discrete. Monsters retain two attack poses. Deaths reuse the standing artwork; authored collapse frames, eight directions and longer companion cycles are future work.
 
 ## Fidelity surfaces
 
-- **Typography:** existing classical location/dialog headings and readable body text; short cave subtitle fits phone widths.
-- **Spacing/layout:** existing desktop/phone HUD; dungeon journal fits a 390 × 844 viewport without horizontal overflow.
-- **Colors/tokens:** cool grey limestone, dark earth and warm torchlight; shared bronze UI controls.
-- **Image quality:** original transparent cave illustrations, existing directional characters and pooled combat effects; no extracted Diablo assets.
-- **Copy/content:** dungeon enemy count, clear objective, recommended level, retreat persistence, reward and claimed state are explicit.
+- Typography, UI spacing, controls and content retain the existing layout; the phone capture has no horizontal overflow.
+- Colors retain painted leather/metal, muted red cloth, cool earth and warm restrained impact light.
+- New transparent sword/axe attack and creature gait atlases preserve identity and foot baselines. No extracted Diablo assets.
+- Runtime phase captures show a readable coil, cut and recovery at normal character size. The rear-facing swing remains less expressive than the front-facing cut.
 
 ## Verification
 
-Focused end-to-end play passed: approach the cave from the Moor, clear all 11 enemies, retreat/reload before collecting all loot, return to collect it, exit through the cave mouth, claim the Akara bounty and reject a duplicate claim. Unit coverage verifies old-save defaults, invalid progress rejection, area isolation, retained party vitals and attacks blocked by a wall.
+Focused browser checks passed for all six sword/axe attack phases, exact contact/damage timing, cancellation, held recovery, effects cleanup and action feedback. Unit coverage passes for windup, range/target loss, gait distance, impact holds and facing hysteresis.
 
-Full regression passed: 31 unit tests and 15 browser tests (46 total). After tightening queued Cleave across walls and dungeon drop validation, all unit tests and the dungeon/targeting browser checks passed again. A production check used a compatible level-three old-save fixture and normal controls to walk camp → Moor → Den → Moor → camp, inspect the journal on desktop/phone, and confirm dungeon entry persisted after reload. No page errors, missing assets or horizontal overflow were observed; the development hook is absent. The standalone build trained a talent with zero external image requests. Build/package, formatting and diff checks passed. Deployment is verified separately after publishing.
+Full regression passed: 35 unit tests and 16 browser tests (51 total), including four hunts to level six, equipment/talent persistence, all six companion roles and a complete Den clear. Build/package, formatting and diff checks passed.
 
-Final production evidence: [dungeon entrance](docs/screenshots/den-v0.11.webp), [phone journal](docs/screenshots/den-journal-mobile-v0.11.webp). Both were opened and inspected.
+The production build traversed camp → Moor → Den → Moor → camp using normal controls, then reloaded successfully. Desktop/phone checks found no page errors, missing assets or horizontal overflow, and no development hook. New motion artwork loaded successfully. The standalone HTML (29,644,817 bytes) trained a talent without external image requests. Public deployment is verified after publishing.
 
-final result: passed
+final result: passed for this scoped update; longer hero/companion walks remain open

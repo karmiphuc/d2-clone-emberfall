@@ -1,5 +1,5 @@
 import * as T from "three";
-import { advanceMotion, motionPose } from "./animation.js";
+import { advanceMotion, motionPose, facingColumn } from "./animation.js";
 
 // Original painted, directional figures retain the game's Three.js world,
 // pathfinding and combat roots. Frames are ordered front-right, front-left,
@@ -14,15 +14,15 @@ const sheets = {
   b: new URL("../public/art/companions-b.webp", import.meta.url).href,
 };
 const motionSheets = {
-  monsters: [
-    new URL("../public/art/monster-attacks.webp", import.meta.url).href,
-    6,
-  ],
   sword: [
     new URL("../public/art/hero-sword-motion.webp", import.meta.url).href,
     4,
   ],
   axe: [new URL("../public/art/hero-axe-motion.webp", import.meta.url).href, 4],
+  monsters: [
+    new URL("../public/art/monster-attacks.webp", import.meta.url).href,
+    6,
+  ],
   a: [
     new URL("../public/art/companions-a-motion.webp", import.meta.url).href,
     6,
@@ -39,6 +39,26 @@ motionSheets.aAttack = [
 motionSheets.bAttack = [
   new URL("../public/art/companions-b-attacks.webp", import.meta.url).href,
   6,
+];
+motionSheets.swordStrike = [
+  new URL("../public/art/hero-sword-strikes.webp", import.meta.url).href,
+  6,
+];
+motionSheets.axeStrike = [
+  new URL("../public/art/hero-axe-strikes.webp", import.meta.url).href,
+  6,
+];
+motionSheets.FallenRun = [
+  new URL("../public/art/fallen-run.webp", import.meta.url).href,
+  4,
+];
+motionSheets.RisenRun = [
+  new URL("../public/art/risen-run.webp", import.meta.url).href,
+  4,
+];
+motionSheets.BruteRun = [
+  new URL("../public/art/brute-run.webp", import.meta.url).href,
+  4,
 ];
 const figures = {
   Fallen: ["monsters", 0, 3],
@@ -117,12 +137,13 @@ export function createSpriteActor(name, weapon) {
   const animationMaps = {};
   const keys =
     name === "hero"
-      ? ["sword", "axe"]
+      ? ["sword", "axe", "swordStrike", "axeStrike"]
       : ["a", "b", "monsters"].includes(sheet)
         ? [sheet]
         : [];
   const companion = sheet === "a" || sheet === "b";
   if (companion) keys.push(`${sheet}Attack`);
+  if (sheet === "monsters") keys.push(`${name}Run`);
   for (const key of keys) {
     const [url, count] = motionSheets[key];
     animationMaps[key] = atlasTexture(url);
@@ -170,6 +191,13 @@ export function createSpriteActor(name, weapon) {
     weaponSlot: new T.Group(),
     weaponId: null,
     phase: 0,
+    gaitFrames: sheet === "monsters" ? 4 : 2,
+    strideLength: name === "Fallen" ? 1.6 : name === "Brute" ? 2.8 : 2.4,
+    detailedMotion: name === "hero",
+    attackDuration: 0.55,
+    attackWindup: 0.16,
+    baseSize: size,
+    previousPosition: actor.position.clone(),
     path: [],
     swing: 0,
     characterId: name,
@@ -201,37 +229,46 @@ export function createSpriteActor(name, weapon) {
     up.setFromMatrixColumn(camera.matrixWorld, 1);
     const x = facing.dot(right),
       y = facing.dot(up);
-    const column = y <= 0 ? (x >= 0 ? 0 : 1) : x < 0 ? 2 : 3;
+    const column = facingColumn(x, y, actor.userData.spriteFrame);
     const data = actor.userData;
     const pose = motionPose(
       data,
       name === "hero" || sheet === "monsters" || companion,
     );
     const companionAttack = companion && pose.clip === "attack";
-    const motionKey = companionAttack ? `${sheet}Attack` : data.motionKey;
+    const richHero = name === "hero" && pose.clip === "attack";
+    const monsterRun = sheet === "monsters" && pose.clip === "walk";
+    const motionKey = richHero
+      ? `${data.motionKey}Strike`
+      : monsterRun
+        ? `${name}Run`
+        : companionAttack
+          ? `${sheet}Attack`
+          : data.motionKey;
     const motionMap = animationMaps[motionKey];
     const ready = motionMap?.image?.complete;
-    const animated =
-      ready &&
-      (sheet === "monsters" ? pose.clip === "attack" : pose.clip !== "idle");
+    const animated = ready && pose.clip !== "idle";
     const map = animated ? motionMap : texture;
     const count = animated ? motionSheets[motionKey][1] : rows;
     const frameRow = animated
-      ? name === "hero"
+      ? name === "hero" || monsterRun
         ? pose.row
         : row * 2 + pose.row - (sheet === "monsters" || companionAttack ? 2 : 0)
       : data.spriteRow;
     if (material.map !== map) material.map = map;
     map.offset.set(column / 4, 1 - (frameRow + 1) / count);
-    const factor = companionAttack
-      ? attackScale[name]
-      : name === "hero"
-        ? 1.08
-        : name === "Risen"
-          ? 1.32
-          : sheet === "monsters"
-            ? 1.24
-            : 1;
+    const factor =
+      richHero || monsterRun
+        ? 1
+        : companionAttack
+          ? attackScale[name]
+          : name === "hero"
+            ? 1.08
+            : name === "Risen"
+              ? 1.32
+              : sheet === "monsters"
+                ? 1.24
+                : 1;
     const renderSize = size * (animated ? factor : 1);
     if (sprite.scale.x !== renderSize) {
       sprite.scale.set(renderSize, renderSize, 1);
@@ -248,19 +285,37 @@ export function createSpriteActor(name, weapon) {
 
 export function updateActorMotion(actor, dt, moving = false, down = false) {
   const d = actor.userData;
+  const distance = d.previousPosition.distanceTo(actor.position);
+  // Teleports must not advance a stride; preview actors opt into nominal speed.
+  d.travelDistance = d.previewMotion ? undefined : distance < 1 ? distance : 0;
+  d.previousPosition.copy(actor.position);
   advanceMotion(d, dt, moving, down);
   d.hitFlash = Math.max(0, (d.hitFlash || 0) - dt);
+  d.recoilTime = Math.max(0, (d.recoilTime || 0) - dt);
   const flash = d.hitFlash / 0.13,
     highlight = d.highlight || 0;
   d.sprite.material.color.setRGB(
-    1 + flash * 0.7 + highlight,
-    1 + flash * 0.3 + highlight * 0.75,
+    1 + flash * 0.55 + highlight,
+    1 + flash * 0.2 + highlight * 0.75,
     1 + highlight * 0.3,
   );
-  d.body.position.y = down
-    ? 0
-    : moving
-      ? Math.abs(Math.sin(d.phase * Math.PI)) * 0.025
-      : Math.sin(d.phase) * 0.009;
-  d.body.rotation.z = down ? Math.PI / 2 : 0;
+  const recoil =
+    Math.sin(Math.PI * Math.min(1, d.recoilTime / 0.22)) *
+    (d.recoilStrength || 0);
+  const attackProgress = d.swing ? 1 - d.swing / (d.attackDuration || 0.55) : 0;
+  const lunge =
+    d.detailedMotion && d.swing
+      ? Math.sin(Math.PI * Math.min(1, attackProgress * 1.5)) * 0.12
+      : 0;
+  d.body.position.set(
+    (d.recoilX || 0) * recoil,
+    down
+      ? 0
+      : moving
+        ? Math.abs(Math.sin(((d.phase || 0) / d.gaitFrames) * Math.PI * 2)) *
+          0.016
+        : Math.sin(d.idleTime) * 0.008,
+    lunge + (d.recoilZ || 0) * recoil,
+  );
+  d.body.rotation.z = down ? Math.PI / 2 : recoil * 0.08;
 }

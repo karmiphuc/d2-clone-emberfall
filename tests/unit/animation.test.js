@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { advanceMotion, motionPose } from "../../src/animation.js";
+import {
+  advanceMotion,
+  motionPose,
+  facingColumn,
+} from "../../src/animation.js";
 
 test("walking cycles both stride poses and stopping immediately restores idle", () => {
   const actor = { phase: 0, swing: 0 };
@@ -61,4 +65,47 @@ test("companion release and recovery follow the actual strike, including held an
   actor.swing = 0.26;
   advanceMotion(actor, 0.01, true, true);
   assert.equal(motionPose(actor, true).clip, "idle");
+});
+
+test("six-phase attacks show anticipation before contact and a full recovery", () => {
+  const actor = {
+    detailedMotion: true,
+    swing: 0.55,
+    attackDuration: 0.55,
+    attackWindup: 0.16,
+  };
+  assert.equal(motionPose(actor, true).row, 0);
+  actor.swing = 0.45;
+  assert.equal(motionPose(actor, true).row, 1);
+  actor.swing = 0.39;
+  assert.equal(motionPose(actor, true).row, 2);
+  actor.swing = 0.27;
+  assert.equal(motionPose(actor, true).row, 3);
+  actor.swing = 0.16;
+  assert.equal(motionPose(actor, true).row, 4);
+  actor.swing = 0.05;
+  assert.equal(motionPose(actor, true).row, 5);
+});
+test("stride phase follows distance and impact holds cannot stop gameplay clocks", () => {
+  const actor = {
+    gaitFrames: 6,
+    strideLength: 2.4,
+    travelDistance: 1.2,
+    phase: 0,
+    swing: 0.3,
+    impactHold: 0.04,
+  };
+  advanceMotion(actor, 0.03, true);
+  assert.equal(actor.phase, 3);
+  assert.equal(actor.swing, 0.3);
+  actor.travelDistance = 0;
+  advanceMotion(actor, 0.03, true);
+  assert.equal(actor.phase, 3);
+  assert.ok(actor.swing < 0.3);
+});
+test("facing stays stable near a quadrant edge but turns decisively", () => {
+  assert.equal(facingColumn(-0.02, -0.6, 0), 0);
+  assert.equal(facingColumn(-0.3, -0.6, 0), 1);
+  assert.equal(facingColumn(-0.3, 0.02, 1), 1);
+  assert.equal(facingColumn(-0.3, 0.4, 1), 2);
 });

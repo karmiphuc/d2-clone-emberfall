@@ -29,7 +29,13 @@ test("an autoattack obeys its cooldown and cannot repeatedly award a kill", () =
     combat = createCombat(state);
   combat.select("fallen-1");
   combat.tick(1 / 30, positions());
+  const before = combat.enemies[0].hp;
+  assert.ok(combat.preparing);
+  combat.tick(0.1, positions());
+  assert.equal(combat.enemies[0].hp, before);
+  combat.tick(0.07, positions());
   const hp = combat.enemies[0].hp;
+  assert.ok(hp < before);
   for (let i = 0; i < 5; i++) combat.tick(1 / 30, positions());
   assert.equal(combat.enemies[0].hp, hp);
   for (let i = 0; i < 150; i++) combat.tick(1 / 30, positions());
@@ -115,7 +121,7 @@ test("Cleave queues behind a basic attack, executes once and spends mana only on
   for (let i = 0; i < 5; i++) assert.equal(c.cleave(), true);
   assert.equal(c.cleaveQueued, true);
   assert.equal(c.mana, 60);
-  for (let i = 0; i < 20; i++) c.tick(1 / 30, positions());
+  for (let i = 0; i < 30; i++) c.tick(1 / 30, positions());
   assert.equal(events.filter((e) => e.type === "swing" && e.cleave).length, 1);
   assert.equal(c.cleaveQueued, false);
   assert.ok(c.mana >= 52 && c.mana < 55);
@@ -150,7 +156,11 @@ test("targeted Cleave approaches before spending mana and cancels when its targe
   assert.equal(c.mana, 60);
   c.tick(1 / 30, positions(c.enemies[0].x, c.enemies[0].z + 2.5));
   assert.equal(c.cleaveQueued, false);
-  assert.equal(c.mana, 52);
+  assert.equal(c.preparing.cleave, true);
+  assert.equal(c.mana, 60);
+  for (let i = 0; i < 7; i++)
+    c.tick(1 / 30, positions(c.enemies[0].x, c.enemies[0].z + 2.5));
+  assert.ok(c.mana >= 52 && c.mana < 53);
   assert.equal(events.filter((e) => e.type === "swing" && e.cleave).length, 1);
   c.restore();
   c.tick(1 / 30, positions(-16, 10));
@@ -190,4 +200,28 @@ test("Eira prioritizes a wounded ally over an attack in the same action", () => 
     !events.some((event) => event.type === "swing" && event.id === "Eira"),
   );
   assert.ok(c.allies.find((ally) => ally.id === "Eira").cooldown > 0);
+});
+
+test("moving or losing the target during anticipation cancels damage and mana cost", () => {
+  const events = [],
+    c = createCombat(freshState(), (e) => events.push(e));
+  c.tick(0.01, positions());
+  const initial = c.enemies[0].hp;
+  c.cleave("fallen-1");
+  assert.ok(c.preparing);
+  c.cancel();
+  for (let i = 0; i < 20; i++) c.tick(0.03, positions(-18, 13));
+  assert.equal(c.enemies[0].hp, initial);
+  assert.equal(c.mana, 60);
+  assert.equal(
+    events.filter((e) => e.type === "swing" && e.id === "hero").length,
+    0,
+  );
+  c.restore();
+  c.tick(0.01, positions());
+  c.cleave("fallen-1");
+  c.enemies[0].hp = 0;
+  c.tick(0.25, positions());
+  assert.equal(c.mana, 60);
+  assert.equal(c.preparing, null);
 });
