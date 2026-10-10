@@ -208,3 +208,25 @@ test("party walk loops keep a fixed cadence, one bank and resume without phase r
   assert.equal(slow.phase, 48.5);
   assert.equal(motionPose(slow, true).clip, "attack");
 });
+
+test("rigged contact phase matches traveled distance across acceleration and pauses", () => {
+  const a = {
+    phase: 0,
+    gaitFrames: 48,
+    walkLoopSeconds: 0.88725,
+    walkStrideDistance: 3.549,
+    travelDistance: 1.7745,
+  };
+  advanceMotion(a, 0.01, true);
+  assert.equal(a.phase, 24);
+  a.travelDistance = 0;
+  advanceMotion(a, 0.1, true);
+  assert.equal(a.phase, 24);
+  advanceMotion(a, 0.1, false);
+  a.travelDistance = 3.549;
+  advanceMotion(a, 0.01, true);
+  assert.equal(a.phase, 72);
+  a.swing = 0.2;
+  advanceMotion(a, 0.05, true);
+  assert.equal(a.phase, 72);
+});

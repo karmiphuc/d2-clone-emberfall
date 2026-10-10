@@ -1,0 +1,393 @@
+<!doctype html>
+<html>
+  <head>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/node_modules/three/build/three.module.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body style="margin: 0; background: #272a2c">
+    <script type="module">
+      import * as T from "three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      const cell = 256,
+        renderer = new T.WebGLRenderer({
+          alpha: true,
+          antialias: true,
+          preserveDrawingBuffer: true,
+        });
+      renderer.setSize(cell, cell);
+      renderer.setClearColor(0, 0);
+      renderer.outputColorSpace = T.SRGBColorSpace;
+      renderer.toneMapping = T.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
+      document.body.append(renderer.domElement);
+      renderer.domElement.style.width = "640px";
+      renderer.domElement.style.height = "640px";
+      const scene = new T.Scene(),
+        camera = new T.OrthographicCamera(-2.4, 2.4, 2.4, -2.4, 0.1, 100);
+      scene.add(new T.HemisphereLight("#f5ead7", "#3c414c", 2.2));
+      const key = new T.DirectionalLight("#fff1da", 3);
+      key.position.set(-3, 6, 5);
+      scene.add(key);
+      const fill = new T.DirectionalLight("#a7b7cb", 1);
+      fill.position.set(4, 2, -3);
+      scene.add(fill);
+      const gltf = await new GLTFLoader().loadAsync("/prototype.glb");
+      scene.add(gltf.scene);
+      const mixer = new T.AnimationMixer(gltf.scene),
+        action = mixer.clipAction(gltf.animations[0]);
+      action.play();
+      const meshes = {};
+      gltf.scene.traverse((o) => {
+        if (o.isMesh || o.isGroup) meshes[o.name] = o;
+      });
+      const loopTracks = gltf.animations[0].tracks.map((track) => {
+        const times = [],
+          values = [],
+          n = track.getValueSize(),
+          interp = track.createInterpolant();
+        for (let i = 0; i < 9; i++) {
+          times.push(i / 8);
+          values.push(...interp.evaluate((5 + (i % 8)) / 5));
+        }
+        return new track.constructor(
+          track.name,
+          times,
+          values,
+          T.InterpolateLinear,
+        );
+      });
+      const walkClip = new T.AnimationClip("walk", 1, loopTracks),
+        walkAction = mixer.clipAction(walkClip);
+      const parts = {
+        hero: [
+          "chain_boots",
+          "chain_cuirass",
+          "chain_gloves",
+          "chain_greaves",
+          "head_short",
+          "shield",
+          "cape",
+        ],
+        Bram: [
+          "plate_boots",
+          "plate_cuirass",
+          "plate_gauntlets",
+          "plate_greaves",
+          "plate_helm",
+          "shield",
+        ],
+      };
+      const adjustedMaterials = new Set();
+      gltf.scene.traverse((o) => {
+        if (o.isMesh) {
+          for (const m of Array.isArray(o.material)
+            ? o.material
+            : [o.material]) {
+            if (adjustedMaterials.has(m)) continue;
+            adjustedMaterials.add(m);
+            m.roughness = Math.max(0.6, m.roughness);
+            m.metalness = Math.min(0.65, m.metalness);
+            if (/Steel|WhiteCloth|Pommel|Blade/i.test(m.name)) {
+              m.color.multiplyScalar(0.6);
+            }
+          }
+        }
+      });
+      const meshNames = [
+        ...new Set([
+          ...parts.hero,
+          ...parts.Bram,
+          "longsword",
+          "hand_axe",
+          "mace",
+        ]),
+      ];
+      let currentRole = "hero";
+      function configure(role, weapon) {
+        currentRole = role;
+        for (const name of meshNames)
+          meshes[name].visible = parts[role].includes(name) || name === weapon;
+      }
+      function view(column, directions) {
+        const angle = (-column / directions) * Math.PI * 2;
+        const x = 30 * Math.cos(angle) + 42 * Math.sin(angle),
+          z = 42 * Math.cos(angle) - 30 * Math.sin(angle);
+        camera.position.set(x, 36, z);
+        camera.lookAt(0, 1, 0);
+        camera.updateMatrixWorld();
+        camera.top = camera.right;
+        camera.bottom = -camera.right;
+        camera.updateProjectionMatrix();
+        const origin = new T.Vector3(0, 0, 0).project(camera),
+          shift = (origin.y + 1) / 2 - 0.25;
+        camera.top += shift * 4.8;
+        camera.bottom += shift * 4.8;
+        camera.updateProjectionMatrix();
+      }
+      const bones = {};
+      gltf.scene.traverse((o) => {
+        if (o.isBone) bones[o.name] = o;
+      });
+      function makePoseClip(name, frames) {
+        return new T.AnimationClip(
+          name,
+          1,
+          gltf.animations[0].tracks.map((track) => {
+            const times = [],
+              values = [],
+              interp = track.createInterpolant();
+            frames.forEach((f, i) => {
+              times.push(i / (frames.length - 1));
+              values.push(...interp.evaluate(f / 5));
+            });
+            return new track.constructor(
+              track.name,
+              times,
+              values,
+              T.InterpolateLinear,
+            );
+          }),
+        );
+      }
+      const attacks = {
+        hero: mixer.clipAction(
+          makePoseClip("hero-strike", [1, 13, 14, 15, 15.35, 15.7, 16, 16, 1]),
+        ),
+        Bram: mixer.clipAction(
+          makePoseClip("tank-release", [15, 15.35, 15.7, 16, 1]),
+        ),
+      };
+      function rawPose(clip, phase) {
+        mixer.stopAllAction();
+        const a =
+          clip === "walk"
+            ? walkAction
+            : clip === "attack"
+              ? attacks[currentRole]
+              : action;
+        a.reset().play();
+        a.time = phase;
+        mixer.update(0);
+        gltf.scene.updateMatrixWorld(true);
+      }
+      function point(name) {
+        return bones[name].getWorldPosition(new T.Vector3());
+      }
+      rawPose("walk", 0.25);
+      const rightStart = point("ToesRight");
+      rawPose("walk", 0.5);
+      const rightEnd = point("ToesRight");
+      rawPose("walk", 0.75);
+      const leftStart = point("ToesLeft");
+      rawPose("walk", 0);
+      const leftEnd = point("ToesLeft");
+      const strideModel =
+        (rightStart.z - rightEnd.z + (leftStart.z - leftEnd.z)) * 2;
+      function aimBone(bone, from, to) {
+        const q = bone.getWorldQuaternion(new T.Quaternion()),
+          parent = bone.parent.getWorldQuaternion(new T.Quaternion());
+        bone.quaternion.copy(
+          parent
+            .invert()
+            .multiply(
+              new T.Quaternion().setFromUnitVectors(
+                from.normalize(),
+                to.normalize(),
+              ),
+            )
+            .multiply(q),
+        );
+        gltf.scene.updateMatrixWorld(true);
+      }
+      function lockToe(side, target) {
+        const thigh = bones["Thigh" + side],
+          shin = bones["Shin" + side],
+          foot = bones["Foot" + side],
+          toe = bones["Toes" + side];
+        const hip = thigh.getWorldPosition(new T.Vector3()),
+          knee = shin.getWorldPosition(new T.Vector3()),
+          ankle = foot.getWorldPosition(new T.Vector3());
+        const footQ = foot.getWorldQuaternion(new T.Quaternion());
+        const toeOffset = toe.getWorldPosition(new T.Vector3()).sub(ankle),
+          desired = target.clone().sub(toeOffset);
+        const upper = knee.distanceTo(hip),
+          lower = ankle.distanceTo(knee),
+          axis = desired.clone().sub(hip),
+          distance = Math.min(upper + lower - 0.00001, axis.length());
+        axis.normalize();
+        let pole = knee.clone().sub(hip);
+        pole.addScaledVector(axis, -pole.dot(axis));
+        if (pole.lengthSq() < 0.000001) pole.set(0, 0, 1);
+        pole.normalize();
+        const along =
+            (upper * upper - lower * lower + distance * distance) /
+            (2 * distance),
+          height = Math.sqrt(Math.max(0, upper * upper - along * along));
+        const newKnee = hip
+          .clone()
+          .addScaledVector(axis, along)
+          .addScaledVector(pole, height);
+        aimBone(thigh, knee.clone().sub(hip), newKnee.clone().sub(hip));
+        const kneeNow = shin.getWorldPosition(new T.Vector3()),
+          ankleNow = foot.getWorldPosition(new T.Vector3());
+        aimBone(shin, ankleNow.sub(kneeNow), desired.clone().sub(kneeNow));
+        foot.quaternion.copy(
+          foot.parent
+            .getWorldQuaternion(new T.Quaternion())
+            .invert()
+            .multiply(footQ),
+        );
+        gltf.scene.updateMatrixWorld(true);
+      }
+      function pose(clip, phase) {
+        rawPose(clip, phase);
+        if (clip === "walk") {
+          for (const [side, start, end, begin] of [
+            ["Right", rightStart, rightEnd, 0.25],
+            ["Left", leftStart, leftEnd, 0.75],
+          ]) {
+            const p = side === "Left" && phase < 0.001 ? 1 : phase;
+            if (p >= begin && p <= begin + 0.25) {
+              const t = (p - begin) / 0.25,
+                target = start.clone().lerp(end, t);
+              target.y = 0.02;
+              lockToe(side, target);
+            }
+          }
+        }
+      }
+      window.draw = (role, weapon, clip, phase, column = 0, dirs = 16) => {
+        configure(role, weapon);
+        view(column, dirs);
+        pose(clip, phase);
+        renderer.render(scene, camera);
+        return renderer.domElement.toDataURL("image/png");
+      };
+      window.bakeSet = async (role, weapon, directions) => {
+        const poses = [],
+          clips = {},
+          trace = [];
+        const capture = document.createElement("canvas");
+        capture.width = capture.height = cell;
+        const ctx = capture.getContext("2d", { willReadFrequently: true });
+        for (const clip of ["idle", "walk", "attack"]) {
+          const count =
+            clip === "walk"
+              ? 48
+              : clip === "attack"
+                ? role === "hero"
+                  ? 33
+                  : 17
+                : 1;
+          clips[clip] = Array.from({ length: directions }, () => []);
+          for (let column = 0; column < directions; column++) {
+            for (let row = 0; row < count; row++) {
+              const phase =
+                clip === "walk"
+                  ? row / count
+                  : clip === "idle"
+                    ? 1 / 5
+                    : row / (count - 1);
+              window.draw(role, weapon, clip, phase, column, directions);
+              ctx.clearRect(0, 0, cell, cell);
+              ctx.drawImage(renderer.domElement, 0, 0);
+              const rgba = ctx.getImageData(0, 0, cell, cell).data;
+              let x0 = cell,
+                y0 = cell,
+                x1 = 0,
+                y1 = 0;
+              for (let y = 0; y < cell; y++)
+                for (let x = 0; x < cell; x++)
+                  if (rgba[(y * cell + x) * 4 + 3] > 2) {
+                    x0 = Math.min(x0, x);
+                    y0 = Math.min(y0, y);
+                    x1 = Math.max(x1, x);
+                    y1 = Math.max(y1, y);
+                  }
+              if (x0 < 2 || y0 < 2 || x1 >= cell - 2 || y1 >= cell - 2)
+                throw Error(
+                  `Clipped ${role} ${weapon} ${clip} ${column} ${row}`,
+                );
+              x0 -= 2;
+              y0 -= 2;
+              x1 += 2;
+              y1 += 2;
+              const w = x1 - x0 + 1,
+                h = y1 - y0 + 1,
+                image = document.createElement("canvas");
+              image.width = w;
+              image.height = h;
+              image
+                .getContext("2d")
+                .drawImage(capture, x0, y0, w, h, 0, 0, w, h);
+              const frame = {
+                w,
+                h,
+                origin: [cell * 0.5 - x0, cell * 0.75 - y0],
+              };
+              clips[clip][column].push(frame);
+              poses.push({ frame, image });
+              if (clip === "walk" && column === 0) {
+                const record = { row, bones: {} };
+                for (const name of ["ToesLeft", "ToesRight"])
+                  record.bones[name] = point(name).toArray();
+                trace.push(record);
+              }
+            }
+            await new Promise((r) => setTimeout(r, 0));
+          }
+        }
+        poses.sort((a, b) => b.frame.h - a.frame.h || b.frame.w - a.frame.w);
+        const width = 2048;
+        let x = 0,
+          y = 0,
+          height = 0;
+        for (const p of poses) {
+          if (x + p.frame.w > width) {
+            x = 0;
+            y += height;
+            height = 0;
+          }
+          p.frame.x = x;
+          p.frame.y = y;
+          x += p.frame.w;
+          height = Math.max(height, p.frame.h);
+        }
+        const atlas = document.createElement("canvas");
+        atlas.width = width;
+        atlas.height = Math.ceil((y + height) / 128) * 128;
+        if (atlas.height > 8192) throw Error("Atlas exceeds texture budget");
+        const atlasContext = atlas.getContext("2d");
+        for (const p of poses)
+          atlasContext.drawImage(p.image, p.frame.x, p.frame.y);
+        return {
+          image: atlas.toDataURL("image/webp", 0.94),
+          metadata: {
+            directions,
+            width,
+            height: atlas.height,
+            unitsPerPixel: (4.8 * 1.4) / cell,
+            stride: strideModel * 1.4,
+            clips,
+          },
+          trace,
+        };
+      };
+      window.ready = {
+        strideModel,
+        animations: gltf.animations.map((a) => ({
+          name: a.name,
+          duration: a.duration,
+        })),
+        meshes: meshNames,
+      };
+      window.draw("hero", "longsword", "walk", 0);
+    </script>
+  </body>
+</html>

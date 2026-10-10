@@ -1171,7 +1171,7 @@ document.querySelector("#help").onclick = help;
 document.querySelector("#settings").onclick = () =>
   modal(
     "Camp settings",
-    "<p>Rendering resolution adjusts to your device while UI text stays sharp.</p>",
+    '<p>Rendering resolution adjusts to your device while UI text stays sharp.</p><p class="muted">Hero and tank animation artwork adapted from <a href="https://opengameart.org/content/isometric-hero-and-heroine" target="_blank" rel="noopener">Clint Bellanger’s Flare characters</a>, <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>. Adaptations include the mantle, materials, foot contacts and directional rendering.</p>',
     [
       {
         label: game.low ? "Enable detailed shadows" : "Use performance mode",

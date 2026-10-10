@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("complete action sets vary between attacks, stay stable during playback and preserve atlas picking", async ({
+test("rigged actions stay coherent while legacy variants preserve atlas picking", async ({
   page,
 }) => {
   const errors = [];
@@ -49,45 +49,49 @@ test("complete action sets vary between attacks, stay stable during playback and
           data.sprite.onBeforeRender(g.renderer, g.scene, g.camera);
           samples.push({
             action,
-            variant: action === "walk" && data.walkLoopSeconds ? 0 : variant,
+            variant:
+              data.rigged || (action === "walk" && data.walkLoopSeconds)
+                ? 0
+                : variant,
             shown: data.displayVariant,
             clip: data.activeClip,
             column: data.sprite.material.map.offset.x,
             width: data.sprite.material.map.image.width,
           });
         }
-      return { count: data.variantCount, character: data.characterId, samples };
+      return {
+        count: data.variantCount,
+        character: data.characterId,
+        columns: data.rigged?.directions || 12,
+        cell: 96,
+        rigged: !!data.rigged,
+        samples,
+      };
     });
     return { attacks, maps, others };
   });
   for (let i = 0; i < 6; i += 3)
     expect(
       new Set(result.attacks.slice(i, i + 3).map((a) => a.variant)).size,
-    ).toBe(3);
+    ).toBe(1);
   result.attacks.forEach((a, i) => {
-    if (i) expect(a.variant).not.toBe(result.attacks[i - 1].variant);
+    expect(a.variant).toBe(0);
     expect(a.samples.every((s) => s.variant === a.variant)).toBe(true);
     expect(a.samples[2].frame).toBe(12);
-    expect(
-      a.samples.every(
-        (s) => s.column >= a.variant / 3 && s.column < (a.variant + 1) / 3,
-      ),
-    ).toBe(true);
+    expect(a.samples.every((s) => s.column >= 0 && s.column < 1)).toBe(true);
   });
-  expect(
-    result.maps.every((m) => m.width === 128 * 12 && m.repeat === 1 / 12),
-  ).toBe(true);
+  expect(result.maps.every((m) => m.width === 2048 && m.height > 0)).toBe(true);
   expect(
     result.others.every(
       (a) =>
-        a.count === 3 &&
+        (a.character === "Bram" ? a.count === 1 : a.count === 3) &&
         a.samples.every(
           (s) =>
             s.shown === s.variant &&
             s.clip === s.action &&
-            s.width === 96 * 12 &&
-            s.column >= s.variant / 3 &&
-            s.column < (s.variant + 1) / 3,
+            s.width === (a.rigged ? 2048 : a.cell * a.columns) &&
+            s.column >= (a.count === 1 ? 0 : s.variant / 3) &&
+            s.column < (a.count === 1 ? 1 : (s.variant + 1) / 3),
         ),
     ),
   ).toBe(true);

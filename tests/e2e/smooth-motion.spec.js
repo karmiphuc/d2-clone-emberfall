@@ -53,7 +53,7 @@ test("render interpolation moves figures between physics ticks and plays longer 
   expect(distances.every((d) => d > 0.001)).toBe(true);
   expect(Math.max(...distances)).toBeLessThan(0.06);
   expect(
-    result.phases.every((p) => p.sequence && p.count === 16 && p.mix === 0),
+    result.phases.every((p) => p.sequence && p.count === 48 && p.mix === 0),
   ).toBe(true);
   expect(new Set(result.phases.map((p) => p.frame)).size).toBe(3);
   expect(errors).toEqual([]);
@@ -113,20 +113,32 @@ test("hero attacks advance through a full sprite sequence without a two-pose res
     g.renderer.shadowMap.enabled = false;
     g.stop();
     g.animateAttack("hero");
-    const samples = [];
+    const samples = [],
+      transformErrors = [];
     for (let i = 0; i < 66; i++) {
       d.swing = d.renderSwing = 0.55 - i / 120;
       d.moving = false;
       d.renderDt = 1 / 120;
       g.renderer.render(g.scene, g.camera);
       samples.push(d.sequenceFrame);
+      const matrix = d.sprite.matrixWorld.elements;
+      transformErrors.push(
+        Math.abs(
+          Math.hypot(matrix[0], matrix[1], matrix[2]) - d.sprite.scale.x,
+        ),
+      );
     }
     d.swing = d.renderSwing = 0.39;
     g.renderer.render(g.scene, g.camera);
     return {
       samples,
+      transformErrors,
       contact: d.sequenceFrame,
-      height: d.animationMaps.swordStrike.image.height,
+      atlasLoaded:
+        d.animationMaps.swordStrike.image.width ===
+          d.riggedMaps.sword.frames.width &&
+        d.animationMaps.swordStrike.image.height ===
+          d.riggedMaps.sword.frames.height,
       count: d.sequenceLength,
     };
   });
@@ -134,8 +146,9 @@ test("hero attacks advance through a full sprite sequence without a two-pose res
   expect(
     result.samples.every((v, i) => i === 0 || v >= result.samples[i - 1]),
   ).toBe(true);
+  expect(Math.max(...result.transformErrors)).toBeLessThan(1e-8);
   expect(result.contact).toBe(12);
   expect(result.count).toBe(33);
-  expect(result.height).toBe(33 * 128);
+  expect(result.atlasLoaded).toBe(true);
   expect(fields).toEqual([]);
 });

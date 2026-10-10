@@ -21,7 +21,11 @@ export function advanceMotion(data, dt, moving = false, down = false) {
   if (data.moving && data.walkLoopSeconds) {
     if (!data.swing && !(data.windup > 0))
       data.phase =
-        (data.phase || 0) + (dt * data.gaitFrames) / data.walkLoopSeconds;
+        (data.phase || 0) +
+        (data.walkStrideDistance
+          ? ((data.travelDistance ?? dt * 4) / data.walkStrideDistance) *
+            data.gaitFrames
+          : (dt * data.gaitFrames) / data.walkLoopSeconds);
   } else if (data.moving) {
     const distance = data.travelDistance ?? dt * 4;
     data.phase =

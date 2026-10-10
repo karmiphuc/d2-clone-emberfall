@@ -83,7 +83,8 @@ test("attack entry and recovery use one display clock without wrong-atlas or bac
       exit.push({
         clip: d.activeClip,
         frame: d.sequenceFrame,
-        height: d.sprite.material.map.image.height,
+        length: d.sequenceLength,
+        atlas: d.sprite.material.map === d.riggedMaps.sword.map,
       });
     }
     return { entry, exit };
@@ -93,9 +94,11 @@ test("attack entry and recovery use one display clock without wrong-atlas or bac
     result.exit
       .slice(0, 4)
       .every(
-        (s) => s.clip === "attack" && s.height === 33 * 128 && s.frame >= 30,
+        (s) =>
+          s.clip === "attack" && s.length === 33 && s.atlas && s.frame >= 30,
       ),
   ).toBe(true);
   expect(result.exit.at(-1).clip).toBe("walk");
-  expect(result.exit.at(-1).height).toBe(16 * 128);
+  expect(result.exit.at(-1).length).toBe(48);
+  expect(result.exit.at(-1).atlas).toBe(true);
 });

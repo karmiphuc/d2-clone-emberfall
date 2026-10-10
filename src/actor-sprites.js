@@ -1,3 +1,4 @@
+import { RIGGED_SPRITES, directionFrame } from "./rigged-sprites.js";
 import { renderedActionVariant } from "./action-variants.js";
 import * as T from "three";
 import sequences from "./animation-sequence-data.json";
@@ -153,7 +154,15 @@ export function createSpriteActor(name, weapon) {
   const [sheet, row, rows] = figures[name] || figures.hero;
   const actor = new T.Group(),
     body = new T.Group();
-  const texture = atlasTexture(sheets[sheet]);
+  const rigged = RIGGED_SPRITES[name];
+  const riggedMaps = {};
+  if (rigged)
+    for (const [key, set] of Object.entries(rigged.sets)) {
+      riggedMaps[key] = { map: atlasTexture(set.url), frames: set.frames };
+    }
+  const texture = rigged
+    ? Object.values(riggedMaps)[0].map
+    : atlasTexture(sheets[sheet]);
   const animationMaps = {};
   const keys =
     name === "hero"
@@ -165,6 +174,11 @@ export function createSpriteActor(name, weapon) {
   if (companion) keys.push(`${sheet}Attack`);
   if (sheet === "monsters") keys.push(`${name}Run`);
   for (const key of keys) {
+    if (rigged) {
+      const base = key.replace(/Strike$|Attack$/, "");
+      animationMaps[key] = riggedMaps[base].map;
+      continue;
+    }
     const [url, count] = motionSheets[key];
     animationMaps[key] = atlasTexture(url);
     animationMaps[key].repeat.set(1 / (4 * sequences.variants), 1 / count);
@@ -173,12 +187,21 @@ export function createSpriteActor(name, weapon) {
   texture.magFilter = T.LinearFilter;
   texture.minFilter = T.LinearFilter;
   texture.generateMipmaps = false;
-  texture.repeat.set(1 / 4, 1 / rows);
-  const motionMaterial = createMotionMaterial(texture);
-  const material = motionMaterial.material;
+  texture.repeat.set(1 / (rigged?.directions || 4), 1 / (rigged ? 1 : rows));
+  const motionMaterial = rigged ? null : createMotionMaterial(texture);
+  const material = rigged
+    ? new T.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.01,
+        depthWrite: false,
+        toneMapped: false,
+      })
+    : motionMaterial.material;
   const sprite = new T.Sprite(material);
   sprite.center.set(0.5, 0.06);
-  const size = name === "Fallen" ? 2 : name === "Brute" ? 3.25 : 2.75;
+  const size =
+    rigged?.size || (name === "Fallen" ? 2 : name === "Brute" ? 3.25 : 2.75);
   sprite.scale.set(size, size, 1);
   const light = new T.PointLight("#e87936", 0, 3);
   light.position.set(0.35, 1, 0.2);
@@ -186,7 +209,10 @@ export function createSpriteActor(name, weapon) {
   if (name === "hero" || companion) body.add(light);
   const shadowMap = atlasTexture(shadowUrl);
   const shadow = new T.Mesh(
-    new T.PlaneGeometry(size * 0.65, size * 0.5),
+    new T.PlaneGeometry(
+      (rigged ? 2.75 : size) * 0.65,
+      (rigged ? 2.75 : size) * 0.5,
+    ),
     new T.MeshBasicMaterial({
       map: shadowMap,
       transparent: true,
@@ -206,14 +232,24 @@ export function createSpriteActor(name, weapon) {
     weaponSlot: new T.Group(),
     weaponId: null,
     phase: 0,
-    variantCount:
-      name === "hero" || companion || sheet === "monsters"
+    rigged,
+    riggedMaps,
+    walkStrideDistance: rigged?.stride,
+    variantCount: rigged
+      ? 1
+      : name === "hero" || companion || sheet === "monsters"
         ? sequences.variants
         : 1,
     walkVariant: 0,
     attackVariant: 0,
-    gaitFrames: companion ? sequences[sheet] : 16,
-    walkLoopSeconds: name === "hero" ? 0.7 : companion ? 0.8 : 0,
+    gaitFrames: rigged?.walkFrames || (companion ? sequences[sheet] : 16),
+    walkLoopSeconds: rigged
+      ? rigged.stride / 4
+      : name === "hero"
+        ? 0.7
+        : companion
+          ? 0.8
+          : 0,
     strideLength:
       { Ilyra: 2.65, Bram: 2.6, Eira: 2.4, Soren: 2.45, Aldric: 2.5, Nyx: 2.9 }[
         name
@@ -247,9 +283,9 @@ export function createSpriteActor(name, weapon) {
     activeClip: "idle",
     activeRow: row,
     disposeTextures() {
-      texture.dispose();
-      shadowMap.dispose();
-      Object.values(animationMaps).forEach((map) => map.dispose());
+      new Set([texture, shadowMap, ...Object.values(animationMaps)]).forEach(
+        (map) => map.dispose(),
+      );
     },
   };
   const facing = new T.Vector3(),
@@ -273,6 +309,60 @@ export function createSpriteActor(name, weapon) {
       renderData,
       name === "hero" || sheet === "monsters" || companion,
     );
+    if (rigged) {
+      const set = riggedMaps[data.motionKey],
+        map = set.map,
+        frames = set.frames;
+      const clip = map.image?.complete ? pose.clip : "idle";
+      const sample = sequenceFrames(renderData, true);
+      const column = directionFrame(
+        yaw,
+        Math.atan2(-right.z, right.x),
+        rigged.directions,
+        data.riggedFacing,
+      );
+      const displayRow = clip === "idle" ? 0 : sample.row;
+      const frame = frames.clips[clip][column][displayRow];
+      data.riggedFacing = column;
+      map.repeat.set(frame.w / frames.width, frame.h / frames.height);
+      map.offset.set(
+        frame.x / frames.width,
+        1 - (frame.y + frame.h) / frames.height,
+      );
+      if (material.map !== map) material.map = map;
+      sprite.center.set(
+        frame.origin[0] / frame.w,
+        1 - frame.origin[1] / frame.h,
+      );
+      sprite.scale.set(
+        frame.w * frames.unitsPerPixel,
+        frame.h * frames.unitsPerPixel,
+        1,
+      );
+      // Frame dimensions change during this callback, after scene traversal.
+      // Refresh the world matrix before Three.js uploads this draw’s transform.
+      sprite.updateMatrixWorld(true);
+      sprite.userData.frameScale = 0;
+      data.activeClip = clip;
+      data.activeRow =
+        clip === "walk"
+          ? displayRow
+          : clip === "attack"
+            ? companion
+              ? row * 2 + pose.row - 2
+              : pose.row
+            : data.spriteRow;
+      data.sequenceFrame = displayRow;
+      data.sequenceLength = frames.clips[clip][column].length;
+      data.sequenceActive = clip !== "idle";
+      data.displayVariant = 0;
+      data.blendMix = 0;
+      data.transitionMix = 1;
+      data.spriteFrame = column;
+      data.packedFrame = frame;
+      material.rotation = body.rotation.z;
+      return;
+    }
     const companionAttack = companion && pose.clip === "attack";
     const richHero = name === "hero" && pose.clip === "attack";
     const monsterRun = sheet === "monsters" && pose.clip === "walk";
@@ -379,7 +469,7 @@ export function updateActorMotion(actor, dt, moving = false, down = false) {
     (d.recoilStrength || 0);
   const attackProgress = d.swing ? 1 - d.swing / (d.attackDuration || 0.55) : 0;
   const lunge =
-    d.detailedMotion && d.swing
+    d.detailedMotion && !d.rigged && d.swing
       ? Math.sin(Math.PI * Math.min(1, attackProgress * 1.5)) * 0.12
       : 0;
   d.body.position.set(

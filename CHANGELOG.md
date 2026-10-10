@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.20.0 — Rigged animation pilot
+
+- Replace hero and Bram movement with sprites rendered from a coherent skeletal rig, sampled into 48-frame alternating gaits.
+- Add 16 hero facings and eight Bram facings, fixed lighting, planted-toe correction and displacement-calibrated playback.
+- Render real sword, axe and mace attack arcs; keep existing contact timing, automatic attacks and equipment behavior.
+- Pack cropped frames with exact root offsets, preserving scale and complete feet/weapon silhouettes.
+- Add a reproducible asset pipeline and credit Clint Bellanger’s CC BY 3.0 Flare source.
+- Keep the other five mercenaries on their existing artwork while evaluating this two-character prototype.
+
 ## 0.19.0 — Simple party walk loops
 
 - Play a single repeating walk sequence for the hero and all six mercenaries at a fixed cadence, including equipment previews.

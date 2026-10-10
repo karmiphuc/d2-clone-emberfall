@@ -19,6 +19,7 @@ test("every mercenary follows through turns, settles, and respects Hold with ste
         c.userData.path = [];
       });
       actor.position.set(-14, 0, 6);
+      actor.userData.previousPosition.copy(actor.position);
       actor.rotation.y = Math.PI / 2;
       actor.userData.follow = null;
       actor.userData.swing = 0;
@@ -50,7 +51,14 @@ test("every mercenary follows through turns, settles, and respects Hold with ste
           movingTicks++;
           maxCadenceError = Math.max(
             maxCadenceError,
-            Math.abs(actor.userData.phase - phase - 0.5),
+            Math.abs(
+              actor.userData.phase -
+                phase -
+                (actor.userData.walkStrideDistance
+                  ? (distance / actor.userData.walkStrideDistance) *
+                    actor.userData.gaitFrames
+                  : 0.5),
+            ),
           );
           if (!actor.userData.moving) falseIdle++;
           g.present(0.5, 1 / 120);
@@ -87,6 +95,7 @@ test("every mercenary follows through turns, settles, and respects Hold with ste
         drift,
         heldTravel,
         gaitFrames: actor.userData.gaitFrames,
+        rigged: !!actor.userData.rigged,
         atlasRow,
         sequenceLength,
         maxCadenceError,
@@ -111,8 +120,8 @@ test("every mercenary follows through turns, settles, and respects Hold with ste
     expect(r.mix, r.id).toBe(0);
     expect(r.transition, r.id).toBe(1);
     expect(r.bank, r.id).toBe(0);
-    expect(r.gaitFrames, r.id).toBe(24);
-    expect(r.sequenceLength, r.id).toBe(24);
-    expect(r.atlasRow, r.id).toBe((index % 3) * 24 + 12);
+    expect(r.gaitFrames, r.id).toBe(r.rigged ? 48 : 24);
+    expect(r.sequenceLength, r.id).toBe(r.rigged ? 48 : 24);
+    expect(r.atlasRow, r.id).toBe(r.rigged ? 12 : (index % 3) * 24 + 12);
   }
 });
