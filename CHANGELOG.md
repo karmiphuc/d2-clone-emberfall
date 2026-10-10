@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 — Dusk atmosphere and direct skill targeting
+
+- Added original stony camp terrain, cooler dusk lighting and separate Moor ground materials; replaced camp path placeholders with illustrated cobbles.
+- Added original soft contact shadows beneath heroes, companions, NPCs and enemies.
+- Added right-click Cleave on enemy silhouettes and labels: approach into range, execute once and charge mana on impact. Basic retargeting, movement and target death cancel the skill intent.
+- Added visible-silhouette picking so transparent sprite margins remain clickable ground.
+- Added enemy hover/selection highlights, a ground marker and an aiming cursor.
+- Added targeted-skill simulation and real mouse-input regression tests.
+
 ## 0.7.0 — Responsive actions and readable combat state
 
 - Cleave queues behind the current basic attack, executes once when ready, and spends mana only on execution. Movement, regrouping and retreat cancel the queued action.

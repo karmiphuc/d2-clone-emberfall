@@ -3,6 +3,7 @@ import { createActor, setActorWeapon, createMonster } from "./characters.js";
 import { updateActorMotion } from "./actor-sprites.js";
 import { COMPANIONS } from "./game/companions.js";
 import { scenery, scatterGrass, updateSceneryVisibility } from "./scenery.js";
+import { visibleSpriteHit } from "./sprite-picking.js";
 import { createCombatEffects } from "./combat-effects.js";
 import { createWilderness } from "./wilderness.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
@@ -21,7 +22,7 @@ export function createWorld(canvas) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
   renderer.toneMapping = T.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.35;
+  renderer.toneMappingExposure = 1.25;
   let zoom = 19;
   const camera = new T.OrthographicCamera();
   camera.position.set(30, 36, 42);
@@ -49,8 +50,9 @@ export function createWorld(canvas) {
     },
     { passive: false },
   );
-  scene.add(new T.HemisphereLight("#9ca5ab", "#4d3b25", 1.45));
-  const sun = new T.DirectionalLight("#d9c8a5", 2.1);
+  const ambient = new T.HemisphereLight("#8195ac", "#2f332e", 1.1);
+  scene.add(ambient);
+  const sun = new T.DirectionalLight("#b6c0cf", 1.55);
   sun.position.set(-16, 28, -15);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -112,9 +114,9 @@ export function createWorld(canvas) {
   }
   // Procedural material: soil grain, worn paths and sparse moss on a shared ground map.
   const tex = document.createElement("canvas");
-  tex.width = tex.height = 2048;
+  tex.width = tex.height = 4096;
   const c = tex.getContext("2d");
-  c.scale(2, 2);
+  c.scale(4, 4);
   c.fillStyle = "#535746";
   c.fillRect(0, 0, 1024, 1024);
   for (let i = 0; i < 95000; i++) {
@@ -123,7 +125,7 @@ export function createWorld(canvas) {
     c.fillRect(rand() * 1024, rand() * 1024, rand() * 3 + 1, rand() * 3 + 1);
   }
   function path(points, width) {
-    c.strokeStyle = "#8b806355";
+    c.strokeStyle = "#8b857636";
     c.lineWidth = width;
     c.lineCap = "round";
     c.lineJoin = "round";
@@ -170,7 +172,7 @@ export function createWorld(canvas) {
   texture.colorSpace = T.SRGBColorSpace;
   texture.anisotropy = 8;
   new T.TextureLoader().load(
-    new URL("../public/art/earth.webp", import.meta.url).href,
+    new URL("../public/art/camp-soil.webp", import.meta.url).href,
     (loaded) => {
       for (let x = 0; x < 8; x++)
         for (let y = 0; y < 8; y++)
@@ -494,18 +496,10 @@ export function createWorld(canvas) {
     if (Math.abs(x) < 16 && Math.abs(z) < 12) continue;
     rock(x, z, 0.2 + rand() * 0.7);
   }
-  for (let i = 0; i < 110; i++) {
-    const x = -16 + i * 0.32,
-      z = 2.4 + Math.sin(i * 0.07) * 0.75;
-    const tile = mesh(
-      new T.DodecahedronGeometry(0.16 + rand() * 0.12, 0),
-      mat(i % 3 ? "#746650" : "#88795f"),
-      x,
-      0.015,
-      z + (rand() - 0.5) * 1.5,
-    );
-    tile.scale.set(1.4, 0.15, 1);
-    tile.rotation.y = rand() * 6;
+  for (let i = 0; i < 22; i++) {
+    const x = -16 + i * 1.55,
+      z = 2.4 + Math.sin(i * 0.38) * 0.75;
+    scenery(scene, "details", 1, x, z, 2.3, 1.5, 0.45);
   }
   for (let x = -18; x < 19; x += 4) {
     beam(v(x, 0.9, -14.7), v(x + 3.8, 1.5, -14.7), 0.08, darkwood);
@@ -754,6 +748,7 @@ export function createWorld(canvas) {
     npcs,
     obstacles,
     hold: false,
+    hoveredEnemy: null,
     low: false,
     zone: "camp",
     combat: null,
@@ -770,6 +765,7 @@ export function createWorld(canvas) {
     },
     setZone(zone) {
       effects.clear();
+      api.hoveredEnemy = null;
       api.zone = zone;
       campObjects.forEach((o) => (o.visible = zone === "camp"));
       wilderness.root.visible = zone === "moor";
@@ -780,7 +776,12 @@ export function createWorld(canvas) {
         obstacles.length,
         ...(zone === "camp" ? campObstacles : wilderness.obstacles),
       );
-      scene.background.set(zone === "camp" ? "#1e2223" : "#282e28");
+      ambient.color.set(zone === "camp" ? "#8195ac" : "#708796");
+      ambient.groundColor.set(zone === "camp" ? "#2f332e" : "#222d2d");
+      ambient.intensity = zone === "camp" ? 1.1 : 1.3;
+      sun.color.set(zone === "camp" ? "#b6c0cf" : "#879eaa");
+      sun.intensity = zone === "camp" ? 1.55 : 1.4;
+      scene.background.set(zone === "camp" ? "#1e2223" : "#202b30");
       scene.fog.color.copy(scene.background);
       api.stop();
       hero.position.set(zone === "camp" ? 0 : -14, 0, zone === "camp" ? 5 : 10);
@@ -814,7 +815,10 @@ export function createWorld(canvas) {
       for (const obj of enemyModels.values()) {
         obj.userData.disposeTextures?.();
         obj.traverse((o) => {
-          if (o.isMesh) o.geometry.dispose();
+          if (o.isMesh) {
+            o.geometry.dispose();
+            o.material.dispose();
+          }
           if (o.isSprite) {
             o.material.dispose();
           }
@@ -985,27 +989,50 @@ export function createWorld(canvas) {
   pulse.rotation.x = -Math.PI / 2;
   const ray = new T.Raycaster(),
     pointer = new T.Vector2();
-  canvas.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
+  function castPointer(event) {
     pointer.set(
-      (e.clientX / innerWidth) * 2 - 1,
-      (-e.clientY / innerHeight) * 2 + 1,
+      (event.clientX / innerWidth) * 2 - 1,
+      (-event.clientY / innerHeight) * 2 + 1,
     );
     ray.setFromCamera(pointer, camera);
-    if (api.zone === "moor" && api.combat) {
-      const hit = ray.intersectObjects(
-        [...enemyModels.values()].filter((o) => o.visible),
-        true,
-      )[0];
-      if (hit) {
-        let obj = hit.object;
-        while (obj && !obj.userData.enemyId) obj = obj.parent;
-        if (obj) {
-          api.combat.select(obj.userData.enemyId);
-          api.onManualMove?.();
-          return;
-        }
-      }
+  }
+  function pickEnemy() {
+    if (api.zone !== "moor" || !api.combat) return null;
+    const living = [...enemyModels.values()].filter(
+      (o) =>
+        o.visible &&
+        api.combat.enemies.some((e) => e.id === o.userData.enemyId && e.hp > 0),
+    );
+    for (const hit of ray.intersectObjects(living, true)) {
+      if (!hit.object.isSprite || !visibleSpriteHit(hit)) continue;
+      let object = hit.object;
+      while (object && !object.userData.enemyId) object = object.parent;
+      if (object) return object.userData.enemyId;
+    }
+    return null;
+  }
+  canvas.addEventListener("pointermove", (event) => {
+    castPointer(event);
+    api.hoveredEnemy = pickEnemy();
+    canvas.style.cursor = api.hoveredEnemy ? "crosshair" : "default";
+  });
+  canvas.addEventListener("pointerleave", () => {
+    api.hoveredEnemy = null;
+    canvas.style.cursor = "default";
+  });
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 && event.button !== 2) return;
+    castPointer(event);
+    const enemyId = pickEnemy();
+    if (event.button === 2) {
+      api.onSecondaryAttack?.(enemyId);
+      return;
+    }
+    if (enemyId) {
+      api.combat.select(enemyId);
+      api.onManualMove?.();
+      return;
     }
     const hits = ray.intersectObject(ground);
     if (hits.length) {
@@ -1014,6 +1041,21 @@ export function createWorld(canvas) {
       api.moveTo(hits[0].point);
     }
   });
+  const targetRing = mesh(
+    new T.RingGeometry(0.63, 0.69, 48),
+    new T.MeshBasicMaterial({
+      color: "#bd6949",
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+    }),
+    0,
+    0.04,
+    0,
+  );
+  targetRing.rotation.x = -Math.PI / 2;
+  targetRing.castShadow = false;
+  targetRing.visible = false;
   const keys = new Set();
   window.addEventListener("keydown", (e) => keys.add(e.code));
   window.addEventListener("keyup", (e) => keys.delete(e.code));
@@ -1039,6 +1081,19 @@ export function createWorld(canvas) {
   let repath = 0;
   api.update = (dt, time, paused) => {
     updateSceneryVisibility(sceneryProps, hero, camera, dt);
+    const marked =
+      api.zone === "moor" &&
+      api.combat?.enemies.find(
+        (e) => e.hp > 0 && e.id === (api.hoveredEnemy || api.combat.target),
+      );
+    targetRing.visible = !!marked;
+    if (marked) {
+      targetRing.position.set(marked.x, 0.04, marked.z);
+      targetRing.scale.setScalar(marked.elite ? 1.7 : 1);
+      targetRing.material.color.set(
+        api.hoveredEnemy === marked.id ? "#e2c287" : "#bd6949",
+      );
+    }
     if (!paused) effects.update(dt, api.reducedEffects);
     flames.forEach((f, i) => {
       f.scale.y = 2.8 + Math.sin(time * 9 + i) * 0.12;
@@ -1126,6 +1181,12 @@ export function createWorld(canvas) {
         const dir = model.position.clone().sub(prev);
         if (dir.lengthSq() > 0.00001)
           model.rotation.y = Math.atan2(dir.x, dir.z);
+        model.userData.highlight =
+          api.hoveredEnemy === enemy.id
+            ? 0.2
+            : api.combat.target === enemy.id
+              ? 0.08
+              : 0;
         model.userData.windup = enemy.windup;
         updateActorMotion(model, dt, dir.lengthSq() > 0.00001);
         model.userData.body.rotation.z =
@@ -1136,6 +1197,7 @@ export function createWorld(canvas) {
           const t = 1 - model.userData.deathTime / 0.55;
           model.userData.body.rotation.z = t * 1.3;
           model.userData.sprite.material.opacity = 1 - t;
+          model.userData.shadow.material.opacity = 0.6 * (1 - t);
           model.userData.body.position.y = -t * 0.3;
         }
       }

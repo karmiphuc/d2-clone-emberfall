@@ -218,6 +218,16 @@ function refreshEnemyLabels() {
       pending = null;
       combat.select(enemy.id);
     };
+    el.onpointerenter = () => {
+      game.hoveredEnemy = enemy.id;
+    };
+    el.onpointerleave = () => {
+      if (game.hoveredEnemy === enemy.id) game.hoveredEnemy = null;
+    };
+    el.oncontextmenu = (event) => {
+      event.preventDefault();
+      game.onSecondaryAttack?.(enemy.id);
+    };
     container.append(el);
     enemy.label = el;
   }
@@ -234,7 +244,7 @@ function enterMoor() {
   document.querySelector(".map-caption").textContent = "BLOOD MOOR";
   document.querySelector("#return-camp").hidden = false;
   document.querySelector(".controls").innerHTML =
-    "CLICK ENEMY TO ATTACK <span>·</span> 1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION";
+    'CLICK ENEMY TO ATTACK <span>·</span> <span class="desktop-hint">RIGHT CLICK / </span>1 CLEAVE <span>·</span> 2 GUARD <span>·</span> 4 POTION';
   update();
   toast("Stay together. Enemy attacks are telegraphed—move to dodge.");
 }
@@ -797,7 +807,7 @@ for (const npc of npcs) {
   document.querySelector("#labels").append(el);
   npc.label = el;
 }
-function action(name) {
+function action(name, targetId) {
   if (name === "rally") {
     game.hold = false;
     game.regroup();
@@ -823,7 +833,8 @@ function action(name) {
   }
   if (name === "attack") {
     if (game.zone === "moor") {
-      if (!combat.cleave()) toast("Cleave needs a nearby enemy and 8 mana.");
+      if (!combat.cleave(targetId))
+        toast("Cleave needs a nearby enemy and 8 mana.");
       return;
     }
     game.swing();
@@ -854,6 +865,11 @@ function action(name) {
     toast("Life is already full. Potion preserved.");
   }
 }
+game.onSecondaryAttack = (targetId) => {
+  if (dialog.open) return;
+  pending = null;
+  action("attack", targetId);
+};
 document
   .querySelectorAll("[data-action]")
   .forEach((b) => (b.onclick = () => action(b.dataset.action)));
@@ -866,7 +882,7 @@ document.querySelector("#skills-menu").onclick = showSkills;
 const help = () =>
   modal(
     "The road begins here",
-    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. Click an enemy to attack, 1 to cleave, 2 to guard, and 4 to heal. Press 6 to retreat. K opens skill trees. Train and respec in camp. Each cleared hunt can be refreshed at the eastern gate after collecting all drops.</p>',
+    '<p>Explore the camp and meet its inhabitants. Click a name to approach and talk.</p><div class="item-row"><span>Move</span><span>Click ground / WASD</span></div><div class="item-row"><span>Interact nearby</span><span>E</span></div><div class="item-row"><span>Regroup companions</span><span>Space / 3</span></div><div class="item-row"><span>Hold / follow</span><span>5</span></div><div class="item-row"><span>Zoom</span><span>Mouse wheel</span></div><div class="item-row"><span>Inventory / journal / party</span><span>I / J / P</span></div><p class="muted">Progress is saved locally on this browser. Enter the eastern gate to fight in the Blood Moor. Click an enemy to attack; right-click an enemy to approach and Cleave, or press 1 to Cleave nearby. Press 2 to guard and 4 to heal. Press 6 to retreat. K opens skill trees. Train and respec in camp. Each cleared hunt can be refreshed at the eastern gate after collecting all drops.</p>',
   );
 document.querySelector("#help").onclick = help;
 document.querySelector("#settings").onclick = () =>
@@ -1146,13 +1162,17 @@ function frame(now) {
       enemy.elite ? 3.4 : 2.25,
       enemy.z,
     ).project(camera);
-    enemy.label.hidden = game.zone !== "moor" || enemy.hp <= 0 || v.z > 1;
-    enemy.label.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
+    enemy.label.hidden =
+      game.zone !== "moor" || enemy.hp <= 0 || v.z > 1 || Math.abs(v.x) > 1;
+    const edge = enemy.elite ? 64 : 42;
+    enemy.label.style.left = `${Math.max(edge, Math.min(innerWidth - edge, (v.x * 0.5 + 0.5) * innerWidth))}px`;
     enemy.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
     enemy.label.querySelector("b").style.width =
       `${(enemy.hp / enemy.maxHp) * 100}%`;
     enemy.label.classList.toggle("winding", enemy.windup > 0);
     enemy.label.classList.toggle("chilled", enemy.slow > 0);
+    enemy.label.classList.toggle("hovered", game.hoveredEnemy === enemy.id);
+    enemy.label.classList.toggle("selected", combat.target === enemy.id);
   }
   const focused = combat.enemies.find(
     (e) => e.id === combat.target && e.hp > 0,

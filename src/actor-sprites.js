@@ -4,6 +4,8 @@ import { advanceMotion, motionPose } from "./animation.js";
 // Original painted, directional figures retain the game's Three.js world,
 // pathfinding and combat roots. Frames are ordered front-right, front-left,
 // back-left, back-right; their transparent feet align with the ground plane.
+const shadowUrl = new URL("../public/art/contact-shadow.webp", import.meta.url)
+  .href;
 const sheets = {
   npc: new URL("../public/art/npc-directions.webp", import.meta.url).href,
   monsters: new URL("../public/art/monsters.webp", import.meta.url).href,
@@ -128,9 +130,23 @@ export function createSpriteActor(name, weapon) {
   light.position.set(0.35, 1, 0.2);
   body.add(sprite);
   if (name === "hero") body.add(light);
-  actor.add(body);
+  const shadowMap = atlasTexture(shadowUrl);
+  const shadow = new T.Mesh(
+    new T.PlaneGeometry(size * 0.65, size * 0.5),
+    new T.MeshBasicMaterial({
+      map: shadowMap,
+      transparent: true,
+      opacity: 0.6,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.015;
+  actor.add(shadow, body);
   actor.userData = {
     body,
+    shadow,
     legs: [],
     arms: [new T.Group(), new T.Group()],
     weaponSlot: new T.Group(),
@@ -153,6 +169,7 @@ export function createSpriteActor(name, weapon) {
     activeRow: row,
     disposeTextures() {
       texture.dispose();
+      shadowMap.dispose();
       Object.values(animationMaps).forEach((map) => map.dispose());
     },
   };
@@ -212,8 +229,13 @@ export function updateActorMotion(actor, dt, moving = false, down = false) {
   const d = actor.userData;
   advanceMotion(d, dt, moving, down);
   d.hitFlash = Math.max(0, (d.hitFlash || 0) - dt);
-  const flash = d.hitFlash / 0.13;
-  d.sprite.material.color.setRGB(1 + flash * 0.7, 1 + flash * 0.3, 1);
+  const flash = d.hitFlash / 0.13,
+    highlight = d.highlight || 0;
+  d.sprite.material.color.setRGB(
+    1 + flash * 0.7 + highlight,
+    1 + flash * 0.3 + highlight * 0.75,
+    1 + highlight * 0.3,
+  );
   d.body.position.y = down
     ? 0
     : moving

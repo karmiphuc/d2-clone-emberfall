@@ -41,3 +41,7 @@ combat-effects.webp: original transparent 4x2 VFX atlas. Row-major order:
 silver cleave, metal sparks, frost shards, healing wisps, protective sigil,
 ember burst, shadow slash, holy light. The Moor portal reuses the sigil
 with a cyan tint over the illustrated stone waypoint base.
+
+camp-soil.webp: original neutral stony earth albedo for the camp.
+contact-shadow.webp: original transparent soft oval contact shadow.
+The Moor retains earth.webp as a separate repeated material.

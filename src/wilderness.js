@@ -31,7 +31,15 @@ export function createWilderness(groundMaterial, oakTexture) {
     new T.PlaneGeometry(80, 80),
     groundMaterial.clone(),
   );
-  ground.material.color.set("#939b77");
+  const moorTexture = new T.TextureLoader().load(
+    new URL("../public/art/earth.webp", import.meta.url).href,
+  );
+  moorTexture.colorSpace = T.SRGBColorSpace;
+  moorTexture.wrapS = moorTexture.wrapT = T.RepeatWrapping;
+  moorTexture.repeat.set(12, 12);
+  moorTexture.anisotropy = 8;
+  ground.material.map = moorTexture;
+  ground.material.color.set("#e4e7df");
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.03;
   ground.receiveShadow = true;

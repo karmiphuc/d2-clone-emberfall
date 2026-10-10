@@ -42,7 +42,7 @@ export function scenery(
   const sprite = new T.Sprite(
     new T.SpriteMaterial({
       map,
-      color: "#c7bfae",
+      color: sheet === "moor" ? "#acb7b8" : "#bcc1c0",
       alphaTest: 0.25,
       depthWrite: true,
       toneMapped: false,
@@ -105,7 +105,7 @@ export function scatterGrass(parent, count, random, camp = false) {
   geometry.translate(0, 0.36, 0);
   const material = new T.MeshBasicMaterial({
     map: cellTexture("details", 2),
-    color: "#858a69",
+    color: camp ? "#899278" : "#6f9389",
     transparent: true,
     alphaTest: 0.3,
     depthWrite: true,

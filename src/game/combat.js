@@ -182,7 +182,8 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     rallyCooldown = 0,
     regroupTime = 0,
     dead = false,
-    queuedCleave = false;
+    queuedCleave = false,
+    queuedTarget = null;
   const hero = allies[0];
   function hurtEnemy(enemy, damage, source) {
     if (enemy.hp <= 0) return;
@@ -237,6 +238,10 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         });
       }
       if (target === enemy.id) target = null;
+      if (queuedTarget === enemy.id) {
+        queuedCleave = false;
+        queuedTarget = null;
+      }
     }
   }
   function hitAlly(ally, damage, source) {
@@ -354,15 +359,21 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       return dead;
     },
     select(id) {
-      if (enemies.some((e) => e.id === id && e.hp > 0)) target = id;
+      if (enemies.some((e) => e.id === id && e.hp > 0)) {
+        queuedCleave = false;
+        queuedTarget = null;
+        target = id;
+      }
     },
     cancel() {
       queuedCleave = false;
+      queuedTarget = null;
       target = null;
       hero.order = null;
     },
     rally() {
       queuedCleave = false;
+      queuedTarget = null;
       regroupTime = 3;
       if (state.skills.battleCry && rallyCooldown <= 0 && mana >= 15) {
         mana -= 15;
@@ -377,22 +388,24 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       target = null;
       allies.forEach((a) => (a.order = null));
     },
-    cleave() {
-      const enemy = enemies
-        .filter((e) => e.hp > 0)
-        .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
-      if (
-        !hero.hp ||
-        mana < 8 ||
-        !enemy ||
-        distance(hero, enemy) > 3.1 + (state.skills.wideArc || 0) * 0.6
-      )
-        return false;
-      if (hero.cooldown > 0) {
+    cleave(targetId) {
+      const enemy = targetId
+        ? enemies.find((e) => e.id === targetId && e.hp > 0)
+        : enemies
+            .filter((e) => e.hp > 0)
+            .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
+      if (!hero.hp || mana < 8 || !enemy) return false;
+      const inRange =
+        distance(hero, enemy) <= 3.1 + (state.skills.wideArc || 0) * 0.6;
+      if (!targetId && !inRange) return false;
+      if (targetId) target = targetId;
+      if (hero.cooldown > 0 || !inRange) {
         queuedCleave = true;
+        queuedTarget = targetId || null;
         return true;
       }
       queuedCleave = false;
+      queuedTarget = null;
       return attack(enemy, true);
     },
     defend() {
@@ -423,6 +436,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       rallyCooldown = 0;
       dead = false;
       queuedCleave = false;
+      queuedTarget = null;
       target = null;
       enemies.forEach((e) => {
         e.windup = 0;
@@ -449,17 +463,25 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       rallyCooldown = Math.max(0, rallyCooldown - dt);
       regroupTime = Math.max(0, regroupTime - dt);
       if (queuedCleave && hero.cooldown <= 0) {
-        queuedCleave = false;
-        const nearest = enemies
-          .filter((e) => e.hp > 0)
-          .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
-        attack(nearest, true);
+        const nearest = queuedTarget
+          ? enemies.find((e) => e.id === queuedTarget && e.hp > 0)
+          : enemies
+              .filter((e) => e.hp > 0)
+              .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
+        const inRange =
+          nearest &&
+          distance(hero, nearest) <= 3.1 + (state.skills.wideArc || 0) * 0.6;
+        if (!nearest || mana < 8 || inRange || !queuedTarget) {
+          queuedCleave = false;
+          queuedTarget = null;
+          if (nearest && inRange) attack(nearest, true);
+        }
       }
       const focused = enemies.find((e) => e.id === target && e.hp > 0);
       if (focused) {
         if (distance(hero, focused) > 1.7)
           hero.order = { x: focused.x, z: focused.z };
-        attack(focused);
+        if (!queuedCleave) attack(focused);
       }
       for (const ally of allies.slice(1)) {
         if (!ally.active || !ally.hp) continue;

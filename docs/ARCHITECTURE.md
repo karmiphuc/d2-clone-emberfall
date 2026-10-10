@@ -46,3 +46,11 @@ The reduced-effects setting starts from `prefers-reduced-motion`, softens effect
 ## Action intent and HUD state
 
 Cleave can store one pending intent while the shared melee cooldown runs. The simulation resolves it before the next basic attack, checks current range and mana again, and charges only on execution. Repeated input does not stack intents. Manual movement/cancel, regroup and restore clear it. The intent is transient and never persisted. Read-only cooldown and queued-state getters drive compact action-bar feedback; the HUD does not advance timers or change combat rules.
+
+## Terrain and direct targeting
+
+Camp terrain composites the original stony albedo with existing path placement at higher resolution. The Moor uses its own repeating earth texture rather than copying the camp's paths. Zone changes select ambient/directional light colors and intensities while retaining the camp's local fire lights. Original shadow decals share a loaded image source; each actor owns its geometry/material and cloned texture, disposed with the actor or preview.
+
+`src/sprite-picking.js` tests the current atlas frame's transformed UV against a cached 8-bit alpha mask, with its longest dimension capped at 512 pixels. Enemy raycasts exclude dead actors and shadow meshes. Hover and selected state drive the cursor, labels, subtle sprite highlighting and a ground ring.
+
+Right-click skill targeting can retain an explicit enemy ID while approaching. The simulation rechecks life, range and mana before execution; it clears the intent on cancellation, normal retargeting, restoration or target death. Untargeted keyboard/action-bar Cleave retains its nearby-enemy behavior. No new save fields are required.

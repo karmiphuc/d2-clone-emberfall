@@ -129,3 +129,34 @@ test("canceling movement intent discards queued Cleave without charging mana", (
   assert.equal(c.guard, 2);
   assert.equal(c.cooldowns.guard, 7);
 });
+
+test("targeted Cleave approaches before spending mana and cancels when its target dies", () => {
+  const events = [],
+    c = createCombat(freshState(), (event) => events.push(event));
+  c.tick(1 / 30, positions(-16, 10));
+  assert.equal(c.cleave("fallen-1"), true);
+  c.tick(1 / 30, positions(-16, 10));
+  assert.equal(c.cleaveQueued, true);
+  assert.ok(c.allies[0].order);
+  assert.equal(c.mana, 60);
+  c.tick(1 / 30, positions(c.enemies[0].x, c.enemies[0].z + 2.5));
+  assert.equal(c.cleaveQueued, false);
+  assert.equal(c.mana, 52);
+  assert.equal(events.filter((e) => e.type === "swing" && e.cleave).length, 1);
+  c.restore();
+  c.tick(1 / 30, positions(-16, 10));
+  c.cleave("fallen-1");
+  c.enemies[0].hp = 0;
+  c.tick(1 / 30, positions(-16, 10));
+  assert.equal(c.cleaveQueued, false);
+  assert.equal(c.mana, 60);
+});
+
+test("selecting a basic attack replaces a queued targeted skill", () => {
+  const c = createCombat(freshState());
+  c.tick(1 / 30, positions(-16, 10));
+  c.cleave("fallen-1");
+  c.select("fallen-2");
+  assert.equal(c.cleaveQueued, false);
+  assert.equal(c.target, "fallen-2");
+});
