@@ -168,7 +168,7 @@ export function createSpriteActor(name, weapon) {
   for (const key of keys) {
     const [url, count] = motionSheets[key];
     animationMaps[key] = atlasTexture(url);
-    animationMaps[key].repeat.set(0.25, 1 / count);
+    animationMaps[key].repeat.set(1 / (4 * sequences.variants), 1 / count);
   }
   texture.colorSpace = T.SRGBColorSpace;
   texture.magFilter = T.LinearFilter;
@@ -207,6 +207,12 @@ export function createSpriteActor(name, weapon) {
     weaponSlot: new T.Group(),
     weaponId: null,
     phase: 0,
+    variantCount:
+      name === "hero" || companion || sheet === "monsters"
+        ? sequences.variants
+        : 1,
+    walkVariant: 0,
+    attackVariant: 0,
     gaitFrames: 16,
     strideLength: name === "Fallen" ? 1.6 : name === "Brute" ? 2.8 : 2.4,
     detailedMotion: name === "hero",
@@ -299,7 +305,10 @@ export function createSpriteActor(name, weapon) {
         : row * sequenceCount + sample.next
       : data.spriteRow;
     if (material.map !== map) material.map = map;
-    map.offset.set(column / 4, 1 - (displayRow + 1) / count);
+    const variant = animated ? data[`${pose.clip}Variant`] || 0 : 0;
+    const columns = animated ? 4 * sequences.variants : 4;
+    const atlasColumn = column + variant * 4;
+    map.offset.set(atlasColumn / columns, 1 - (displayRow + 1) / count);
     const factor = 1;
     const renderSize = size * 1.4;
     sprite.userData.frameScale = animated ? factor : 1;
@@ -315,13 +324,15 @@ export function createSpriteActor(name, weapon) {
       row: displayRow,
       next: nextRow,
       mix: animated ? sample.mix : 0,
-      column,
+      column: atlasColumn,
+      columns,
       count,
       clip: data.activeClip,
       factor: animated ? factor : 1,
       dt: data.renderDt,
     });
     data.blendMix = blended.mix;
+    data.displayVariant = variant;
     data.sequenceFrame = sample.row;
     data.sequenceLength = sequenceCount;
     data.sequenceActive = blended.sequence;

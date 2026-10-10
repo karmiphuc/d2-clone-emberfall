@@ -1,6 +1,9 @@
+import { updateWalkVariant } from "./action-variants.js";
 // Movement is distance-driven in the world; previews use the same stride at
 // a nominal speed. Impact holds affect presentation only, never the simulation.
 export function advanceMotion(data, dt, moving = false, down = false) {
+  const wasMoving = data.moving,
+    previousPhase = data.phase;
   data.moving = moving && !down;
   data.down = down;
   data.idleTime = (data.idleTime || 0) + dt;
@@ -12,6 +15,7 @@ export function advanceMotion(data, dt, moving = false, down = false) {
         ? (distance / (data.strideLength || 2.4)) * data.gaitFrames
         : dt * 6);
   }
+  updateWalkVariant(data, wasMoving, previousPhase);
   const hold = Math.min(dt, data.impactHold || 0);
   data.impactHold = Math.max(0, (data.impactHold || 0) - dt);
   data.swing = down ? 0 : Math.max(0, (data.swing || 0) - (dt - hold));

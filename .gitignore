@@ -7,3 +7,5 @@ playwright-report/
 .env.*
 !.env.example
 artifacts/
+
+scripts/__pycache__/

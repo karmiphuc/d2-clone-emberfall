@@ -1,3 +1,4 @@
+import { beginAttackVariant } from "./action-variants.js";
 import { createRenderBudget } from "./render-budget.js";
 import { createDungeon } from "./dungeon.js";
 import { denWalkable, DEN_GATE } from "./game/den.js";
@@ -1017,6 +1018,7 @@ export function createWorld(canvas) {
       const actor =
         [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
       if (actor) {
+        beginAttackVariant(actor.userData, duration === 0);
         actor.userData.swing = duration;
         actor.userData.attackDuration = duration;
         actor.userData.attackWindup = windup;

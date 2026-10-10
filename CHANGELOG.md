@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 — Stable lighting and varied action sets
+
+- Normalized sprite diffuse exposure and opaque surface mattes across authored and interpolated movement/attack frames, with consistent soft silhouette edges.
+- Added two original alternate sword/axe key-pose sets: low side slash/chop and high diagonal cut/chop, baked into full 33-frame sequences.
+- Added three movement and attack sets for every hero, companion and creature, including anchored weight/lean/recovery variations derived from existing poses.
+- Chose complete sets using independent shuffled bags, avoiding immediate repeats; choices stay fixed through strikes and change at stride boundaries. Enemy windup/release share one set. Combat clocks and damage remain unchanged.
+- Packed variants in horizontal banks and reduced baked cell sizes to bound texture memory; targeting and equipment previews use the chosen bank.
+
 ## 0.14.0 — Longer animation sequences
 
 - Replaced runtime optical-flow deformation with 16-frame movement sequences, 33-frame hero attacks and 17-frame companion/monster attacks, sampled continuously between neighboring frames.

@@ -1,3 +1,4 @@
+import { beginAttackVariant } from "./action-variants.js";
 import * as T from "three";
 import {
   createSpriteActor,
@@ -94,6 +95,7 @@ export function createCharacterPreview(canvas, id, weapon) {
       const dt = previousTime === null ? 0 : Math.min(0.1, time - previousTime);
       previousTime = time;
       if (mode === "attack" && time >= nextAttack) {
+        beginAttackVariant(actor.userData);
         actor.userData.swing = 0.55;
         actor.userData.attackDuration = 0.55;
         actor.userData.attackWindup = 0.16;

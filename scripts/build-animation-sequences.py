@@ -73,46 +73,51 @@ def bake(name,characters,steps,loop):
     print(f'{name}: {count} frames x {len(characters)} characters, {(ART/name).stat().st_size:,} bytes',flush=True)
     return count
 
-meta={'interpolator':'RIFE 4.9 ONNX','modelSha256':hashlib.sha256(Path(model).read_bytes()).hexdigest()}
-for weapon in ['sword','axe']:
-    passing=ART/f'hero-{weapon}-passing.webp'
-    opposite=ART/f'hero-{weapon}-passing-opposite.webp'
-    cols=[]
-    for col in range(4):
-        a=frame(f'hero-{weapon}-motion.webp',4,0,col,1.08)
-        b=frame(f'hero-{weapon}-motion.webp',4,1,col,1.08)
-        # Contact and new passing poses alternate around the stride loop.
-        if passing.exists() and opposite.exists():
-            p=register(frame(passing,2,0,col),a)
-            q=register(frame(opposite,1,0,col),b)
-            cols.append([a,p,b,q])
-        else:cols.append([a,b])
-    meta[weapon]=bake(f'hero-{weapon}-walk-sequence.webp',[cols],4 if len(cols[0])==4 else 8,True)
-    cols=[]
-    for col in range(4):
-        original=[frame(f'hero-{weapon}-strikes.webp',6,row,col) for row in range(6)]
-        mid=ART/f'hero-{weapon}-downstroke.webp'
-        if not mid.exists():raise SystemExit(f'Missing {mid}')
-        top=register(frame(mid,2,0,col),original[2])
-        low=register(frame(mid,2,1,col),original[3])
-        cols.append([original[0],original[1],top,original[2],low,*original[3:],frame('hero-directions.webp',2,0 if weapon=='sword' else 1,col)])
-    meta[weapon+'Strike']=bake(f'hero-{weapon}-attack-sequence.webp',[cols],4,False)
-SIZE = 128
-for sheet in ['a','b']:
+def main():
+    meta={'interpolator':'RIFE 4.9 ONNX','modelSha256':hashlib.sha256(Path(model).read_bytes()).hexdigest()}
+    for weapon in ['sword','axe']:
+        passing=ART/f'hero-{weapon}-passing.webp'
+        opposite=ART/f'hero-{weapon}-passing-opposite.webp'
+        cols=[]
+        for col in range(4):
+            a=frame(f'hero-{weapon}-motion.webp',4,0,col,1.08)
+            b=frame(f'hero-{weapon}-motion.webp',4,1,col,1.08)
+            # Contact and new passing poses alternate around the stride loop.
+            if passing.exists() and opposite.exists():
+                p=register(frame(passing,2,0,col),a)
+                q=register(frame(opposite,1,0,col),b)
+                cols.append([a,p,b,q])
+            else:cols.append([a,b])
+        meta[weapon]=bake(f'hero-{weapon}-walk-sequence.webp',[cols],4 if len(cols[0])==4 else 8,True)
+        cols=[]
+        for col in range(4):
+            original=[frame(f'hero-{weapon}-strikes.webp',6,row,col) for row in range(6)]
+            mid=ART/f'hero-{weapon}-downstroke.webp'
+            if not mid.exists():raise SystemExit(f'Missing {mid}')
+            top=register(frame(mid,2,0,col),original[2])
+            low=register(frame(mid,2,1,col),original[3])
+            cols.append([original[0],original[1],top,original[2],low,*original[3:],frame('hero-directions.webp',2,0 if weapon=='sword' else 1,col)])
+        meta[weapon+'Strike']=bake(f'hero-{weapon}-attack-sequence.webp',[cols],4,False)
+    SIZE = 128
+    for sheet in ['a','b']:
+        chars=[]
+        for actor in range(3):
+            chars.append([[frame(f'companions-{sheet}-motion.webp',6,actor*2+i,col) for i in range(2)] for col in range(4)])
+        meta[sheet]=bake(f'companions-{sheet}-walk-sequence.webp',chars,8,True)
+        chars=[]
+        factors={'a':[1.04,1,1.06],'b':[1,1.033,1.058]}
+        for actor in range(3):
+            chars.append([[frame(f'companions-{sheet}-attacks.webp',6,actor*2+i,col,factors[sheet][actor]) for i in range(2)]+[frame(f'companions-{sheet}.webp',3,actor,col)] for col in range(4)])
+        meta[sheet+'Attack']=bake(f'companions-{sheet}-attack-sequence.webp',chars,8,False)
+    for actor,name in enumerate(['Fallen','Risen','Brute']):
+        cols=[[frame(name.lower()+'-run.webp',4,i,col) for i in range(4)] for col in range(4)]
+        meta[name+'Run']=bake(name.lower()+'-walk-sequence.webp',[cols],4,True)
     chars=[]
-    for actor in range(3):
-        chars.append([[frame(f'companions-{sheet}-motion.webp',6,actor*2+i,col) for i in range(2)] for col in range(4)])
-    meta[sheet]=bake(f'companions-{sheet}-walk-sequence.webp',chars,8,True)
-    chars=[]
-    factors={'a':[1.04,1,1.06],'b':[1,1.033,1.058]}
-    for actor in range(3):
-        chars.append([[frame(f'companions-{sheet}-attacks.webp',6,actor*2+i,col,factors[sheet][actor]) for i in range(2)]+[frame(f'companions-{sheet}.webp',3,actor,col)] for col in range(4)])
-    meta[sheet+'Attack']=bake(f'companions-{sheet}-attack-sequence.webp',chars,8,False)
-for actor,name in enumerate(['Fallen','Risen','Brute']):
-    cols=[[frame(name.lower()+'-run.webp',4,i,col) for i in range(4)] for col in range(4)]
-    meta[name+'Run']=bake(name.lower()+'-walk-sequence.webp',[cols],4,True)
-chars=[]
-for actor,name in enumerate(['Fallen','Risen','Brute']):
-    chars.append([[frame('monster-attacks.webp',6,actor*2+i,col,1.32 if name=='Risen' else 1.24) for i in range(2)]+[frame('monsters.webp',3,actor,col)] for col in range(4)])
-meta['monsters']=bake('monster-attack-sequence.webp',chars,8,False)
-(ROOT/'src/animation-sequence-data.json').write_text(json.dumps(meta,indent=2)+'\n')
+    for actor,name in enumerate(['Fallen','Risen','Brute']):
+        chars.append([[frame('monster-attacks.webp',6,actor*2+i,col,1.32 if name=='Risen' else 1.24) for i in range(2)]+[frame('monsters.webp',3,actor,col)] for col in range(4)])
+    meta['monsters']=bake('monster-attack-sequence.webp',chars,8,False)
+    (ROOT/'src/animation-sequence-data.json').write_text(json.dumps(meta,indent=2)+'\n')
+
+
+if __name__ == "__main__":
+    main()

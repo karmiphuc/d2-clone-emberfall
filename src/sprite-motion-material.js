@@ -3,7 +3,7 @@ export function createMotionMaterial(map) {
   const material = new T.SpriteMaterial({
     map,
     transparent: true,
-    alphaTest: 0.18,
+    alphaTest: 0.1,
     depthWrite: true,
     toneMapped: false,
   });
@@ -51,7 +51,7 @@ export function createMotionMaterial(map) {
     `,
       );
   };
-  material.customProgramCacheKey = () => "emberfall-sequence-v2";
+  material.customProgramCacheKey = () => "emberfall-sequence-v3";
   let previous = null,
     transition = null;
   return {
@@ -63,12 +63,13 @@ export function createMotionMaterial(map) {
       next,
       mix,
       column,
+      columns = 4,
       count,
       clip,
       factor = 1,
       dt = 1 / 60,
     }) {
-      const frame = { map, key, row, column, count, clip, factor };
+      const frame = { map, key, row, column, columns, count, clip, factor };
       if (
         previous &&
         (previous.key !== key ||
@@ -91,15 +92,15 @@ export function createMotionMaterial(map) {
       uniforms.poseA.value = a.map;
       uniforms.poseB.value = b.map;
       uniforms.rectA.value.set(
-        a.column / 4,
+        a.column / a.columns,
         1 - (a.row + 1) / a.count,
-        0.25,
+        1 / a.columns,
         1 / a.count,
       );
       uniforms.rectB.value.set(
-        b.column / 4,
+        b.column / b.columns,
         1 - (b.row + 1) / b.count,
-        0.25,
+        1 / b.columns,
         1 / b.count,
       );
       uniforms.poseMix.value = blend;

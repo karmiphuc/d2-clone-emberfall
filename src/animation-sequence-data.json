@@ -12,5 +12,9 @@
   "FallenRun": 16,
   "RisenRun": 16,
   "BruteRun": 16,
-  "monsters": 17
+  "monsters": 17,
+  "variants": 3,
+  "heroCell": 128,
+  "otherCell": 96,
+  "consistency": "opaque interiors and per-facing diffuse exposure"
 }

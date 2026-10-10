@@ -138,6 +138,6 @@ test("hero attacks advance through a full sprite sequence without a two-pose res
   ).toBe(true);
   expect(result.contact).toBe(12);
   expect(result.count).toBe(33);
-  expect(result.height).toBe(33 * 160);
+  expect(result.height).toBe(33 * 128);
   expect(fields).toEqual([]);
 });
