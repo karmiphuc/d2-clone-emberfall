@@ -211,6 +211,9 @@ export function createSpriteActor(name, weapon) {
 export function updateActorMotion(actor, dt, moving = false, down = false) {
   const d = actor.userData;
   advanceMotion(d, dt, moving, down);
+  d.hitFlash = Math.max(0, (d.hitFlash || 0) - dt);
+  const flash = d.hitFlash / 0.13;
+  d.sprite.material.color.setRGB(1 + flash * 0.7, 1 + flash * 0.3, 1);
   d.body.position.y = down
     ? 0
     : moving

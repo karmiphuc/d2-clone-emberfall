@@ -377,6 +377,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       mana -= 10;
       guard = 3 + (state.skills.bulwark || 0);
       guardCooldown = 8;
+      emit({ type: "guard", id: "hero", duration: guard });
       return true;
     },
     heal() {
@@ -502,12 +503,22 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
               hurtEnemy(e, 14 + bonus, ally.id);
             });
           ally.specialCooldown = 6;
-          emit({ type: "special", id: ally.id, name: "Frostburst" });
+          emit({
+            type: "special",
+            id: ally.id,
+            target: enemy.id,
+            name: "Frostburst",
+          });
           emit({ type: "swing", id: ally.id, target: enemy.id });
         } else if (ally.specialCooldown <= 0 && ally.id === "Nyx") {
           hurtEnemy(enemy, (spec.damage + bonus) * 2.8, ally.id);
           ally.specialCooldown = 4;
-          emit({ type: "special", id: ally.id, name: "Backstab" });
+          emit({
+            type: "special",
+            id: ally.id,
+            target: enemy.id,
+            name: "Backstab",
+          });
           emit({ type: "swing", id: ally.id, target: enemy.id });
         } else if (ally.specialCooldown <= 0 && ally.id === "Aldric") {
           hurtEnemy(
@@ -519,7 +530,12 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             .filter((a) => a.active && a.hp > 0 && distance(a, ally) < 5)
             .forEach((a) => (a.hp = Math.min(a.maxHp, a.hp + 5 + stats.level)));
           ally.specialCooldown = 5;
-          emit({ type: "special", id: ally.id, name: "Holy strike" });
+          emit({
+            type: "special",
+            id: ally.id,
+            target: enemy.id,
+            name: "Holy strike",
+          });
           emit({ type: "swing", id: ally.id, target: enemy.id });
         } else {
           hurtEnemy(enemy, spec.damage + bonus, ally.id);

@@ -3,6 +3,7 @@ import { createActor, setActorWeapon, createMonster } from "./characters.js";
 import { updateActorMotion } from "./actor-sprites.js";
 import { COMPANIONS } from "./game/companions.js";
 import { scenery, scatterGrass, updateSceneryVisibility } from "./scenery.js";
+import { createCombatEffects } from "./combat-effects.js";
 import { createWilderness } from "./wilderness.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
@@ -619,7 +620,9 @@ export function createWorld(canvas) {
   });
   const enemyModels = new Map(),
     lootModels = new Map();
-  const projectiles = [];
+  const effects = createCombatEffects(scene);
+  const findActor = (id) =>
+    [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
   const actorNames = ["hero", ...Object.keys(COMPANIONS)];
   // Grid A* for every commanded move. A clearance margin prevents clipping tents and props.
   const STEP = 0.65,
@@ -766,6 +769,7 @@ export function createWorld(canvas) {
       setActorWeapon(hero, equipment.weapon?.itemId || "worn_sword");
     },
     setZone(zone) {
+      effects.clear();
       api.zone = zone;
       campObjects.forEach((o) => (o.visible = zone === "camp"));
       wilderness.root.visible = zone === "moor";
@@ -800,6 +804,7 @@ export function createWorld(canvas) {
       repath = 0;
     },
     setCombat(combat) {
+      effects.clear();
       api.combat = combat;
       for (const obj of lootModels.values()) {
         obj.geometry.dispose();
@@ -827,22 +832,91 @@ export function createWorld(canvas) {
         enemyModels.set(enemy.id, obj);
       }
     },
-    projectile(sourceId, targetId) {
-      const source = [hero, ...companions][actorNames.indexOf(sourceId)],
-        target = enemyModels.get(targetId);
-      if (!source || !target) return;
-      const a = source.position.clone().add(v(0, 1.2, 0)),
-        b = target.position.clone().add(v(0, 1, 0));
-      const line = new T.Line(
-        new T.BufferGeometry().setFromPoints([a, b]),
-        new T.LineBasicMaterial({
-          color: sourceId === "Ilyra" ? 0xd3bd85 : 0x9fcce1,
-          transparent: true,
-          opacity: 0.8,
-        }),
-      );
-      scene.add(line);
-      projectiles.push({ line, life: 0.17 });
+    effects,
+    reducedEffects: window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches,
+    combatVisual(event) {
+      const actor = findActor(event.id || event.source || "hero");
+      const target = findActor(event.victim || event.target);
+      const point = (object, height = 1) =>
+        object.position.clone().add(v(0, height, 0));
+      if (event.type === "hit" && target) {
+        target.userData.hitFlash = api.reducedEffects ? 0 : 0.13;
+        const kind =
+          event.source === "Soren"
+            ? "frost"
+            : event.source === "Nyx"
+              ? "shadow"
+              : event.source === "Aldric"
+                ? "holy"
+                : "impact";
+        effects.spawn(kind, point(target), {
+          size: 1.2,
+          duration: 0.3,
+          opacity: kind === "impact" ? 0.55 : 0.25,
+        });
+      }
+      if (event.type === "swing" && actor) {
+        if (["Ilyra", "Eira", "Soren"].includes(event.id) && target) {
+          const from = point(actor, 1.2),
+            to = point(target);
+          for (let i = 0; i < 3; i++)
+            effects.spawn(event.id === "Soren" ? "frost" : "impact", from, {
+              to,
+              size: (event.id === "Ilyra" ? 0.4 : 0.7) - i * 0.08,
+              duration: 0.15 + i * 0.04,
+              opacity: 0.85 - i * 0.2,
+              color: event.id === "Eira" ? 0x9dffd7 : 0xffffff,
+            });
+        } else {
+          const pos = point(actor);
+          if (target) pos.lerp(point(target), 0.5);
+          const kind = event.id === "Nyx" ? "shadow" : "slash";
+          effects.spawn(kind, pos, {
+            size: event.cleave ? 4 : event.id === "hero" ? 2.4 : 1.8,
+            opacity: event.id === "hero" ? 0.65 : 0.4,
+            duration: event.cleave ? 0.4 : 0.23,
+            rotation: actor.rotation.y > 0 ? -0.3 : 0.3,
+          });
+          if (event.id === "hero" && hero.userData.weaponId === "ember_cleaver")
+            effects.spawn("fire", pos, { size: 2, duration: 0.35 });
+          if (event.id === "hero" && hero.userData.weaponId === "frost_edge")
+            effects.spawn("frost", pos, { size: 1.8, duration: 0.35 });
+        }
+      }
+      if (event.type === "heal" && actor)
+        effects.spawn("heal", point(actor, 0.7), {
+          size: 2.8,
+          duration: 1,
+          rise: 1,
+        });
+      if (event.type === "guard" && actor)
+        effects.spawn("ward", point(actor, 0.5), {
+          size: 2.7,
+          duration: event.duration,
+          follow: actor,
+          opacity: 0.24,
+        });
+      if (event.type === "level")
+        effects.spawn("holy", point(hero), { size: 5, duration: 1.5, rise: 1 });
+      if (event.type === "special" && actor) {
+        const kind = {
+          Frostburst: "frost",
+          Backstab: "shadow",
+          "Holy strike": "holy",
+          Challenge: "ward",
+        }[event.name];
+        if (kind)
+          effects.spawn(kind, point(target || actor), {
+            size: event.name === "Frostburst" ? 4.2 : 3,
+            duration: 0.65,
+            opacity: event.name === "Challenge" ? 0.3 : 0.4,
+          });
+      }
+      if (event.type === "kill") {
+        const victim = findActor(event.id);
+        if (victim) victim.userData.deathTime = 0.55;
+      }
     },
     animateAttack(id, targetId, duration = 0.5) {
       const actor =
@@ -888,7 +962,7 @@ export function createWorld(canvas) {
       api.pulse(0x81cbd6);
     },
     swing() {
-      hero.userData.swing = 0.5;
+      hero.userData.swing = 0.26;
     },
     pulse(color) {
       pulse.material.color.set(color);
@@ -965,17 +1039,7 @@ export function createWorld(canvas) {
   let repath = 0;
   api.update = (dt, time, paused) => {
     updateSceneryVisibility(sceneryProps, hero, camera, dt);
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-      const p = projectiles[i];
-      p.life -= dt;
-      p.line.material.opacity = Math.max(0, p.life / 0.17) * 0.8;
-      if (p.life <= 0) {
-        p.line.removeFromParent();
-        p.line.geometry.dispose();
-        p.line.material.dispose();
-        projectiles.splice(i, 1);
-      }
-    }
+    if (!paused) effects.update(dt, api.reducedEffects);
     flames.forEach((f, i) => {
       f.scale.y = 2.8 + Math.sin(time * 9 + i) * 0.12;
       f.scale.x = 2.6 + Math.sin(time * 5) * 0.09;
@@ -1053,7 +1117,10 @@ export function createWorld(canvas) {
       if (api.combat.target && !order) hero.userData.path = [];
       for (const enemy of api.combat.enemies) {
         const model = enemyModels.get(enemy.id);
-        model.visible = enemy.hp > 0;
+        const dying = enemy.hp <= 0 && (model.userData.deathTime || 0) > 0;
+        model.visible = enemy.hp > 0 || dying;
+        if (dying)
+          model.userData.deathTime = Math.max(0, model.userData.deathTime - dt);
         const prev = model.position.clone();
         model.position.set(enemy.x, 0, enemy.z);
         const dir = model.position.clone().sub(prev);
@@ -1065,6 +1132,12 @@ export function createWorld(canvas) {
           enemy.windup > 0 ? Math.sin(time * 18) * 0.08 : 0;
         if (enemy.windup > 0) model.userData.body.rotation.x = -0.15;
         else model.userData.body.rotation.x = 0;
+        if (dying) {
+          const t = 1 - model.userData.deathTime / 0.55;
+          model.userData.body.rotation.z = t * 1.3;
+          model.userData.sprite.material.opacity = 1 - t;
+          model.userData.body.position.y = -t * 0.3;
+        }
       }
       const activeDrops = new Set(api.combat.drops.map((d) => d.id));
       for (const [id, obj] of lootModels) {

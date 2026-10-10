@@ -112,19 +112,27 @@ export function createWilderness(groundMaterial, oakTexture) {
   }
   const arch = add(new T.BoxGeometry(5.8, 0.6, 1.2), "#777b6d", -0.5, 2.8, -12);
   arch.rotation.z = 0.06;
-  const portal = new T.Mesh(
-    new T.TorusGeometry(1.15, 0.07, 6, 32),
-    new T.MeshBasicMaterial({ color: "#b5dada" }),
+  const portalMap = new T.TextureLoader().load(
+    new URL("../public/art/combat-effects.webp", import.meta.url).href,
   );
-  portal.position.set(-15, 1.3, 10);
+  portalMap.colorSpace = T.SRGBColorSpace;
+  portalMap.repeat.set(0.25, 0.5);
+  portalMap.offset.set(0, 0);
+  const portal = new T.Sprite(
+    new T.SpriteMaterial({
+      map: portalMap,
+      color: "#72d9ff",
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+      blending: T.AdditiveBlending,
+      opacity: 0.7,
+    }),
+  );
+  portal.position.set(-15, 1.5, 10);
+  portal.scale.set(2.7, 3.5, 1);
   root.add(portal);
-  const base = add(
-    new T.CylinderGeometry(1.7, 1.9, 0.12, 12),
-    "#667d72",
-    -15,
-    0.04,
-    10,
-  );
+  const base = scenery(root, "services", 0, -15, 10, 3.4, 2.8, 0.3);
   scatterGrass(root, 230, random);
   // Low dry-stone field boundaries frame the route without blocking the combat path.
   for (let i = 0; i < 35; i++) {

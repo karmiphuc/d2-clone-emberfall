@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — Combat feedback and companion effects
+
+- Added original painted cleave arcs, impact sparks, frost shards, healing wisps, protection sigils, embers, shadow slashes and holy light.
+- Replaced instantaneous ranged lines with short traveling trails and distinct companion spell effects.
+- Healing appears on the actual recipient; Guard follows the hero for its gameplay duration.
+- Added brief hit flashes and enemy collapse/fade transitions. Actual melee strikes now align with immediate damage feedback.
+- Replaced the Moor portal placeholder with a cyan sigil and illustrated stone base.
+- Added opt-in synthesized combat audio and a reduced-effects setting that honors the system reduced-motion preference.
+- Bounded effect allocation, reuse and cleanup across retreats and repeat hunts; added browser coverage for these behaviors.
+
 ## 0.5.0 — Character motion and illustrated environments
 
 - Added original four-direction sword and axe walk, windup and strike poses, plus walk frames for all six companion roles.

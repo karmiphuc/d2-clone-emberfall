@@ -36,3 +36,8 @@ moor-props.webp: 2x2 cells, mossy rocks, grave, ruined wagon, dead oak.
 ground-details.webp: 2x2 cells, firepit, cobblestones, grass, supplies.
 camp-services.webp: 2x2 cells, waypoint, stash, forge, bench.
 Environment cells are 768 pixels square with real alpha.
+
+combat-effects.webp: original transparent 4x2 VFX atlas. Row-major order:
+silver cleave, metal sparks, frost shards, healing wisps, protective sigil,
+ember burst, shadow slash, holy light. The Moor portal reuses the sigil
+with a cyan tint over the illustrated stone waypoint base.

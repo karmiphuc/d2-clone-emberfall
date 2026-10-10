@@ -1,57 +1,50 @@
-# v0.5 motion and environment review
+# v0.6 combat presentation review
 
-Scope: short character motion cycles, readable enemy attacks, illustrated camp/Moor props and usable inventory animation controls. This review accepts this incremental release, not complete Diablo II fidelity or a finished Act I. The [v0.4 review](docs/qa-v0.4.md) records the preceding character/interface work.
+Scope: coherent attack feedback, distinct companion effects, readable combat, defeat transitions and a more complete return portal. This accepts the incremental combat presentation release, not a finished Diablo II recreation or Act I. Prior [character/interface](docs/qa-v0.4.md) and [motion/environment](docs/qa-v0.5.md) reviews retain the broader reference comparisons.
 
-## Visual evidence
+## Reference and browser evidence
 
-- Source: Wrought Iron concept, `/workspace/generated_images/exec-a7beda27-92b6-4531-b36c-47df6e086183.png`, 1586 × 992. Opened and inspected alongside the implementation.
-- [Reference comparison](docs/screenshots/design-comparison-v0.5.webp): source normalized to 1440 × 900 beside the production inventory at the same viewport and scale 1. Both show camp, the worn sword equipped and an iron axe selected with a +3 damage comparison. A local save fixture supplies the axe; inventory contents otherwise reflect real implemented equipment.
-- [Before/after camp](docs/screenshots/camp-comparison-v0.5.webp): v0.4 and v0.5, fresh camp at 1440 × 900. The new tents, forge, stash, waypoint, firepit and benches replace the prominent primitive structures.
-- [Camp](docs/screenshots/camp-v0.5.webp), [inventory](docs/screenshots/inventory-v0.5.webp), [directional preview](docs/screenshots/preview-v0.5.webp), [skills](docs/screenshots/skills-v0.5.webp), [Blood Moor](docs/screenshots/moor-v0.5.webp).
-- [Motion strip](docs/screenshots/motion-v0.5.webp): actual renderer crops, walk A, walk B, windup and strike. Deterministic development staging sets the phase and facing; this is not a mockup pasted over the game.
-- [Mobile](docs/screenshots/mobile-v0.5.webp): 390 × 844, inventory with axe attack preview. Full head, weapon and feet fit; motion controls and Close remain reachable without horizontal overflow.
+The new visual source is the original transparent effects atlas, `/workspace/generated_images/exec-c2d450df-d3d0-4b0e-8f25-37f253bcdb31.png`, inspected before integration. Its eight cells provide silver cleave, impact sparks, frost, healing, protection, embers, shadow and holy light. The established Wrought Iron concept remains the overall palette and interface reference; this pass does not claim its full-scene fidelity.
 
-Camp, inventory, skills and mobile screenshots use the production build. Moor and motion views use development staging; first-area gameplay is independently covered by browser tests. Local Playwright/Chromium provided browser evidence; the cloud browser connector was unavailable in this session.
+- [Cleave and party combat](docs/screenshots/cleave-v0.6.webp), 1440 × 900 at scale 1: actual rendered combat events, separated damage numbers, Guard and the return portal.
+- [Elemental party](docs/screenshots/elemental-v0.6.webp): Soren, Aldric and Nyx in an actual first encounter with frost, holy and shadow effects.
+- [Effect-layer comparison](docs/screenshots/effects-comparison-v0.6.webp): identical frozen encounter/camera, effects hidden on the left and visible on the right. Damage text is hidden in both so the comparison isolates effects. This is a controlled renderer comparison, not a historical screenshot of v0.5.
+- [Production camp](docs/screenshots/combat-camp-v0.6.webp) and [mobile settings](docs/screenshots/settings-mobile-v0.6.webp), 390 × 844.
+
+Moor captures use development staging to place the party and freeze the short effects; gameplay is separately verified by real encounter tests. Production captures use normal controls with no debug hook. Local Playwright/Chromium provided browser evidence because the cloud browser connector was unavailable.
 
 ## Findings and fixes
 
-1. **P2, resolved — tent bases clipped by terrain.** The first capture (`v05-camp-first.png`) showed billboards sunk into the ground. Props now shift their foot position along the ground toward the front of their footprint instead. The second and production captures show complete bases and tent entrances.
-2. **P2, resolved — preview controls overlap boots.** The initial overlay crowded the lower figure. Motion controls and the equipment caption now occupy their own rows below the canvas. The final mobile capture shows the full axe attack pose and readable selected-state controls.
-3. **P2, resolved — held companions never finish a swing.** Animation recovery now advances independently of following/path movement. Unit and rendered browser tests verify recovery while holding formation.
-4. **P2, resolved — unreadable static enemy attacks.** Fallen, Risen and Brute use raised-weapon telegraph and strike frames synchronized with the existing combat simulation. Unit tests cover held windups; the browser test observes both actual atlas rows during an encounter.
-5. **P3, improved — oversized grass clutter.** The initial environment pass overfilled the camp center. Grass placement now leaves the central services and fire routes clear. Grass uses a single instanced draw per area.
+1. **P2, resolved — simultaneous attacks obscure enemies.** The first elemental capture showed a large white center where frost, holy and shadow hits overlapped. Reduced minor impact size/opacity, companion slash opacity, and major burst size/opacity. The final capture retains enemy silhouettes and blue chilled-state labels around the impact.
+2. **P2, resolved — effects ignore their recipient.** Healing previously pulsed at the hero regardless of the wounded ally. Effects now resolve actor/target IDs from actual combat events. The browser test wounds Bram and verifies both restored life and a healing effect at Bram's position. Guard follows the moving hero for its active duration.
+3. **P2, resolved — damage numbers stack into ambiguous values.** Repeated hits on a victim now use separate horizontal positions and an additional vertical offset for larger bursts. The final cleave capture shows the distinct 9, 4 and 14 hits.
+4. **P2, resolved — dead enemies disappear instantly.** Defeated enemies collapse and fade over 0.55 seconds. The simulation marks them dead immediately; the focused browser test verifies the visible transition and final removal.
+5. **P2, resolved — regression during damage-label adjustment.** An intermediate broad replacement referenced the damage record from NPC/enemy-label code and caused frame errors. Restricted offsets to damage labels, reran the full suite, and recaptured with zero page errors.
+6. **P3, improved — placeholder portal.** Replaced the plain torus and flat polygon base with a tinted illustrated protection sigil above the stone waypoint artwork.
 
-No unresolved P0/P1/P2 regressions remain within this release's scope. Broader visual differences from the concept remain explicitly open below.
+No unresolved P0/P1/P2 regressions remain in this release's scope.
 
 ## Required fidelity surfaces
 
-- **Typography:** existing Cinzel headings and Inter interface copy retain the classical hierarchy and readable compact labels. Stand, Walk and Attack are explicit text controls.
-- **Spacing/layout:** the inventory's portrait/equipment, comparison/action and backpack sequence remains intact. The motion row increases preview height without obscuring the figure or clipping mobile controls.
-- **Colors/tokens:** stone, muted brass, parchment, oxblood actions and red/blue resource globes remain consistent. The environment still has a warmer, flatter ground treatment than the reference's cool dusk lighting.
-- **Image quality:** original transparent atlases supply four directional facings, two short walking poses and hero/enemy attack poses. Cell margins, boot placement, weapon visibility and rendered pose changes were inspected. Illustrated scenery replaces the largest camp placeholders; terrain, fences and smaller props remain mixed geometry and raster art.
-- **Copy/content:** preview state says which weapon is being inspected; equipped slots retain the actual equipped weapon until the player presses Equip. Buttons expose selected state through `aria-pressed`. No nonfunctional talents or campaign promises were added.
+- **Typography:** existing classical headings and compact interface labels remain. Damage values retain their readable parchment/red distinction; offsets prevent repeated hits merging into one apparent number.
+- **Spacing/layout:** the HUD and equipment layout are unchanged. The reduced-effects control fits the mobile settings dialog without horizontal overflow.
+- **Colors/tokens:** silver/gold melee, blue frost, green healing, violet shadow and gold holy effects distinguish roles against the muted Moor. Lower opacity prevents additive effects washing out nearby figures.
+- **Image quality:** original transparent raster artwork supplies the effects and portal. Shared atlas cells and a 64-sprite pool keep allocation bounded. Effects use real world positions, short lifetimes and no extra per-effect lights.
+- **Copy/content:** Sound now describes both wind and combat cues. Reduce combat effects softens opacity and suppresses hit flashes; its default honors the system reduced-motion preference. No new progression promises or nonfunctional skills were added.
 
 ## Verification
 
-- **21 unit tests and 8 browser tests passed.** Coverage includes motion timing, held recovery, actual sword/axe and enemy atlas selection, equipment/save persistence, town transactions, navigation, narrow-screen UI, full expedition rewards, defeat recovery, four hunts to level 6, talent allocation/respec and all six companion roles.
-- Production browser checked camp, selected weapon comparison, Stand/Walk/Attack preview, mobile framing and talent learning: no page errors, missing assets or horizontal overflow. Development hooks are absent.
-- Standalone HTML loaded through a local HTTP server and rendered the attack preview: no external image requests or page errors. The artifact is approximately 16 MB. Direct file-origin storage behavior remains browser-dependent.
-- Browser staging behind a tent verified fading to 0.30 opacity with depth writing disabled; collision footprints stay intact.
-- Production build and standalone packaging passed. Software-rendered browser verification does not establish a hardware performance target.
+- 21 unit tests and all 9 browser tests passed, covering town, navigation, equipment/save persistence, motion, effects, expedition/reward, defeat and repeated hunts through level 6 with all companion roles.
+- After the final damage-label/practice-audio adjustment, the focused effects browser test passed again, including healing position, following Guard, bounded allocation, expiry, retreat cleanup, defeat transition, reduced effects and sound controls.
+- Production and standalone browser checks: no page errors, missing assets or horizontal overflow; production debug hook absent; standalone makes no external image requests. Build and packaging passed.
+- Sound controls and audio-node execution were exercised in Chromium; subjective audio quality was not evaluated through listening.
+- The pool cap is verified, but a hardware frame-rate target is not established by software-rendered browser tests.
 
-## Follow-up work
+## Follow-up
 
-- Longer, smoother eight-direction cycles. The two generated stride poses vary in strength by facing; companion attacks still lean and monsters retain idle silhouettes while walking.
-- More cohesive dusk lighting, ground contact shadows and terrain detail. Remaining fence, wagon and small prop geometry is visibly simpler than the concept.
-- Greater ornament and larger character artwork in the inventory. Existing layout prioritizes working comparisons, equipment state and mobile controls; it is not a pixel-for-pixel match.
-- Den of Evil and subsequent Act I content remain unimplemented.
-
-## Implementation checklist
-
-- [x] Integrate original motion/scenery atlases and preserve combat/navigation roots.
-- [x] Inspect actual motion frames and compare source, before and after screenshots.
-- [x] Fix ground clipping and mobile preview overlap, then recapture.
-- [x] Pass progression, equipment and motion regression tests.
-- [x] Verify production and standalone builds in Chromium.
+- Longer, smoother directional animation and stronger companion-specific attack poses.
+- More physical projectile timing, richer sound recordings and a broader range of enemy attacks.
+- Clearer action cooldown/status feedback and further terrain/lighting cohesion.
+- Den of Evil and the remaining Act I campaign remain unimplemented.
 
 final result: passed

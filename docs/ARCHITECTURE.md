@@ -36,3 +36,9 @@ Atlas textures share loaded image sources while retaining per-actor UV transform
 `src/art.js` maps semantic item IDs and companion names to original illustrated atlases. All images are local; no asset CDN is needed. The standalone packager embeds CSS images and 3D material images as data URLs. Browser tests verify weapon sprite row/save agreement and narrow-screen controls.
 
 The camera follows the hero while preserving the isometric angle. `src/scenery.js` shares illustrated prop atlas images and renders grass in one instanced draw per area. Prop bases are shifted toward their ground footprint rather than sunk into the ground plane. Large props and trees fade when their projected bounds obscure the hero; faded sprites stop writing depth. Collision geometry and first-area encounter rules are preserved.
+
+## Combat feedback
+
+Combat events carry actor and target IDs. `world.combatVisual` resolves their world positions without changing simulation damage or cooldowns. `src/combat-effects.js` shares eight atlas cells across a reusable pool capped at 64 sprites, with no per-effect lights. Effects age only while gameplay runs, release their slots on expiry, and clear on zone or encounter changes. Ranged trails interpolate source-to-target positions; Guard follows its actor; healing resolves the wounded actor rather than the hero. Enemy death presentation lasts 0.55 seconds while the simulation treats the enemy as defeated immediately.
+
+The reduced-effects setting starts from `prefers-reduced-motion`, softens effect opacity and disables hit flashes. It is session-local. `src/combat-audio.js` creates short filtered-noise and tonal cues only after the player enables Sound, reuses a noise buffer, limits trigger frequency and disconnects completed nodes. Neither system writes new save fields.

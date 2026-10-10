@@ -1,3 +1,4 @@
+import { createCombatAudio } from "./combat-audio.js";
 import * as THREE from "three";
 import "./style.css";
 import { portrait, itemIcon } from "./art.js";
@@ -49,7 +50,7 @@ const save = () => {
 };
 const app = document.querySelector("#app");
 app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to move, or use WASD. Press E near a towns-person to interact."></canvas><div id="vignette"></div><div class="labels" id="labels"></div>
-<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle ambient sound" aria-label="Toggle ambient sound">Sound</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">Help</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">Settings</button></div></header>
+<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle sound" aria-label="Toggle sound">Sound</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">Help</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">Settings</button></div></header>
 <aside class="party" id="party" aria-label="Your party"></aside><aside class="quest"><div class="eyebrow">Quest journal</div><h2 id="quest-title">A light in the darkness</h2><p id="quest-text">Speak to Akara.<br>Find your footing in camp.</p><button id="journal-link">OPEN JOURNAL &nbsp; [J]</button></aside>
 <div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div></div>
 <div class="controls">CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP</div><div class="chapter"><strong>ACT I · THE SIGHTLESS EYE</strong><span id="save-note">PROGRESS SAVED ON THIS DEVICE</span></div>
@@ -127,21 +128,30 @@ const { hero, companions, npcs, camera, renderer } = game;
 let combat = createCombat(state, combatEvent, game.blocked);
 game.setCombat(combat);
 const damageNumbers = [];
+let combatSound;
 function combatEvent(event) {
+  game.combatVisual(event);
+  combatSound?.(event);
   if (event.type === "enemyAttack")
     game.animateAttack(event.id, event.target, 0.26);
   if (event.type === "swing") {
-    game.animateAttack(event.id, event.target);
-    if (event.target && ["Ilyra", "Eira", "Soren"].includes(event.id))
-      game.projectile(event.id, event.target);
-    if (event.cleave) game.pulse(0xe4d6a6);
+    game.animateAttack(event.id, event.target, 0.26);
   }
   if (event.type === "hit") {
     const el = document.createElement("span");
     el.className = "damage-number" + (event.victim === "hero" ? " taken" : "");
     el.textContent = Math.round(event.damage);
     document.querySelector("#damage-numbers").append(el);
-    damageNumbers.push({ el, x: event.x, z: event.z, life: 0.9 });
+    const lane = damageNumbers.filter((d) => d.victim === event.victim).length;
+    damageNumbers.push({
+      el,
+      victim: event.victim,
+      x: event.x,
+      z: event.z,
+      life: 0.9,
+      offset: ((lane % 3) - 1) * 32,
+      lift: Math.floor(lane / 3) * 0.35,
+    });
   }
   if (event.type === "level") {
     const banner = document.querySelector("#level-up");
@@ -150,7 +160,7 @@ function combatEvent(event) {
     clearTimeout(levelTimer);
     levelTimer = setTimeout(() => (banner.hidden = true), 4500);
     update();
-    game.pulse(0xe4d897);
+
     toast(`Level ${event.level}! Two talent points gained. Train in camp [K].`);
   }
   if (event.type === "special") {
@@ -179,7 +189,6 @@ function combatEvent(event) {
     );
   }
   if (event.type === "heal") {
-    game.pulse(0x91c8a5);
     save();
   }
   if (event.type === "down" && event.id !== "hero")
@@ -819,19 +828,20 @@ function action(name) {
       return;
     }
     game.swing();
+    combatSound?.({ type: "swing" });
+    game.combatVisual({ type: "swing", id: "hero", cleave: true });
     toast("Practice swing · The camp is a sanctuary.");
   }
   if (name === "guard") {
     if (game.zone === "moor") {
       if (combat.defend()) {
-        game.pulse(0xd5bd78);
         toast(
           `Guard raised · damage reduced for ${3 + (state.skills.bulwark || 0)} seconds.`,
         );
       } else toast("Guard needs 10 mana and an 8-second cooldown.");
       return;
     }
-    game.pulse(0xd5bd78);
+    game.combatVisual({ type: "guard", id: "hero", duration: 3 });
     toast("Guard stance · Ready for what lies beyond.");
   }
   if (name === "heal") {
@@ -871,6 +881,20 @@ document.querySelector("#settings").onclick = () =>
         dialog.close();
         toast(
           game.low ? "Performance mode enabled." : "Detailed shadows enabled.",
+        );
+      },
+    },
+    {
+      label: game.reducedEffects
+        ? "Use full combat effects"
+        : "Reduce combat effects",
+      run: () => {
+        game.reducedEffects = !game.reducedEffects;
+        dialog.close();
+        toast(
+          game.reducedEffects
+            ? "Combat effects softened."
+            : "Full combat effects enabled.",
         );
       },
     },
@@ -917,14 +941,15 @@ document.querySelector("#sound").onclick = async () => {
     source.connect(filter).connect(gain).connect(ctx.destination);
     source.start();
     audio = ctx;
-    toast("Ambient wind enabled.");
+    combatSound = createCombatAudio(ctx);
+    toast("Wind and combat sounds enabled.");
   } else {
     if (audio.state === "running") {
       await audio.suspend();
-      toast("Ambient sound muted.");
+      toast("Sound muted.");
     } else {
       await audio.resume();
-      toast("Ambient wind enabled.");
+      toast("Wind and combat sounds enabled.");
     }
   }
   document.querySelector("#sound").style.color =
@@ -1087,8 +1112,12 @@ function frame(now) {
   for (let i = damageNumbers.length - 1; i >= 0; i--) {
     const d = damageNumbers[i];
     d.life -= dt;
-    const v = new THREE.Vector3(d.x, 2.7 + (1 - d.life), d.z).project(camera);
-    d.el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
+    const v = new THREE.Vector3(
+      d.x,
+      2.7 + (1 - d.life) + (d.lift || 0),
+      d.z,
+    ).project(camera);
+    d.el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth + (d.offset || 0)}px`;
     d.el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
     d.el.style.opacity = Math.min(1, d.life * 2);
     if (d.life <= 0) {

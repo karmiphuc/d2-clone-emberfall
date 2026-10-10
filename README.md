@@ -31,11 +31,11 @@ Open the URL printed by Vite. For a production build, run `npm run build` and `n
 - Mouse wheel zooms. I opens inventory; J journal; P party; C character; K or T opens skill trees.
 - Click enemies to approach and attack. 1 cleaves (8 mana); 2 guards for 3 seconds (10 mana, 8-second cooldown); 4 heals; 6 retreats and restores the company.
 - Click a nearby loot label or walk over a drop to collect it. Downed companions recover in camp.
-- Escape closes dialogs. Sound is opt-in from the music button.
+- Escape closes dialogs. Wind and combat sound are opt-in from the Sound button. Settings can soften combat effects; the system reduced-motion preference is honored.
 
 ## Classic presentation
 
-The camp and Blood Moor use a closer hero-following isometric camera, original illustrated tents, town services, foliage and fire, textured ground and detailed directional character sprites. Hero sword/axe attacks have distinct windup and strike poses; the hero and all six companions have short walk cycles. Monsters visibly wind up and strike. The classic stone HUD has illustrated portraits, life/mana globes and labelled actions. Inventory is a side panel with a painted equipment portrait and a directional character preview with Stand, Walk and Attack controls, illustrated slots and side-by-side item comparisons. Sword and axe world sprites switch immediately when equipped and survive reload; elemental weapons add a light accent. All seven weapons have individual inventory illustrations. Nearby drops have clickable name labels. The skill tree shows connected ranks and requirements, with free camp respecs.
+The camp and Blood Moor use a closer hero-following isometric camera, original illustrated tents, town services, foliage and fire, textured ground and detailed directional character sprites. Hero sword/axe attacks have distinct windup and strike poses; the hero and all six companions have short walk cycles. Monsters visibly wind up and strike. Cleave, frost, healing, holy and shadow attacks use original painted effects; hits flash briefly and defeated enemies collapse. Guard stays around the hero for its active duration, and healing effects identify the actual recipient. The classic stone HUD has illustrated portraits, life/mana globes and labelled actions. Inventory is a side panel with a painted equipment portrait and a directional character preview with Stand, Walk and Attack controls, illustrated slots and side-by-side item comparisons. Sword and axe world sprites switch immediately when equipped and survive reload; elemental weapons add a light accent. All seven weapons have individual inventory illustrations. Nearby drops have clickable name labels. The skill tree shows connected ranks and requirements, with free camp respecs.
 
 This is a stylized, original-asset interpretation of the classic game, not a pixel-perfect recreation of Diablo II or Resurrected.
 
@@ -65,6 +65,7 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 - `src/world.js`: rendering, camp, characters, grid navigation and animation.
 - `src/wilderness.js`: authored wilderness scenery.
 - `src/actor-sprites.js` and `src/animation.js`: directional atlases and motion state.
+- `src/combat-effects.js` and `src/combat-audio.js`: pooled effect sprites and opt-in combat cues.
 - `src/scenery.js`: illustrated props, instanced grass and hero occlusion fading.
 - `src/game/combat.js`: rendering-independent battle rules and encounter data.
 - `src/game/save.js`: save validation, migration, repeat hunts and reward transactions.
