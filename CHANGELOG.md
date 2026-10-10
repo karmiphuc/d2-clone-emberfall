@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 — Character motion and illustrated environments
+
+- Added original four-direction sword and axe walk, windup and strike poses, plus walk frames for all six companion roles.
+- Added distinct windup and strike frames for Fallen, Risen and the Ashen Brute, synchronized with combat timing.
+- Added Stand, Walk and Attack controls to the inventory character preview.
+- Fixed held companions remaining in an attack pose after their swing.
+- Replaced major camp props with illustrated tents, forge, stash, waypoint, firepit and benches.
+- Added illustrated Moor rocks, graves, ruined wagon, dead trees, cobbled paths and instanced grass.
+- Fade large scenery when it obscures the hero; preserve original collision footprints and encounter rules.
+- Added motion timing and rendered pose regression coverage.
+- Preserved saved equipment, first-area loot, repeat hunts, levels 1–6 and talents.
+
 ## 0.4.0 — Classic presentation and visible equipment
 
 - Rebuilt the HUD with original illustrated portraits, item/action icons, life/mana globes and dark stone materials.

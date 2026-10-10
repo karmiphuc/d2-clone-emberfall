@@ -6,7 +6,7 @@
 
 A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment and a complete first Blood Moor expedition: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–6, usable skill trees, and six companion specialties.
 
-![Emberfall v0.4 camp and redesigned party](docs/screenshots/camp-v0.4.webp)
+![Emberfall v0.5 camp and animated party](docs/screenshots/camp-v0.5.webp)
 
 ## Downloadable playtest
 
@@ -35,13 +35,13 @@ Open the URL printed by Vite. For a production build, run `npm run build` and `n
 
 ## Classic presentation
 
-The camp and Blood Moor use a closer hero-following isometric camera, original illustrated foliage and fire, textured ground and detailed directional character sprites. The classic stone HUD has illustrated portraits, life/mana globes and labelled actions. Inventory is a side panel with a painted equipment portrait and directional character preview, illustrated slots and side-by-side item comparisons. Sword and axe world sprites switch immediately when equipped and survive reload; elemental weapons add a light accent. All seven weapons have individual inventory illustrations. Nearby drops have clickable name labels. The skill tree shows connected ranks and requirements, with free camp respecs.
+The camp and Blood Moor use a closer hero-following isometric camera, original illustrated tents, town services, foliage and fire, textured ground and detailed directional character sprites. Hero sword/axe attacks have distinct windup and strike poses; the hero and all six companions have short walk cycles. Monsters visibly wind up and strike. The classic stone HUD has illustrated portraits, life/mana globes and labelled actions. Inventory is a side panel with a painted equipment portrait and a directional character preview with Stand, Walk and Attack controls, illustrated slots and side-by-side item comparisons. Sword and axe world sprites switch immediately when equipped and survive reload; elemental weapons add a light accent. All seven weapons have individual inventory illustrations. Nearby drops have clickable name labels. The skill tree shows connected ranks and requirements, with free camp respecs.
 
 This is a stylized, original-asset interpretation of the classic game, not a pixel-perfect recreation of Diablo II or Resurrected.
 
 ## Included
 
-- Real-time 3D camp with procedural geometry, forest, tents, forge, animated fire, cloth, sparks, and lighting.
+- Isometric camp with illustrated tents, forge, stash, waypoint, forest, animated fire, sparks and lighting.
 - Click-to-move A\* paths with obstacle clearance and companion following.
 - Akara's introduction, camp preparation quest, rest, and potion purchases.
 - Charsi's weapon purchase and equipment change.
@@ -54,7 +54,7 @@ After collecting all 12 drops, return to the eastern gate and choose **Start fre
 
 Bram taunts and absorbs damage; Eira heals injured allies; Ilyra fires volleys; Soren slows groups with frost; Aldric protects nearby allies; Nyx flanks and backstabs. Companions share your level and grow in life and damage.
 
-This is an early vertical slice, not a completed Act I. The Den of Evil, remaining campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites with movement bob and attack lean; full walk/attack frame animations are not implemented. No Diablo assets are bundled.
+This is an early vertical slice, not a completed Act I. The Den of Evil, remaining campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites with short authored walk and hero/enemy attack cycles. Companion attacks still use a lean; monster walking uses the idle silhouette. Eight-direction animation and longer, smoother cycles remain unfinished. No Diablo assets are bundled.
 
 ## GitHub Pages
 
@@ -64,6 +64,8 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 
 - `src/world.js`: rendering, camp, characters, grid navigation and animation.
 - `src/wilderness.js`: authored wilderness scenery.
+- `src/actor-sprites.js` and `src/animation.js`: directional atlases and motion state.
+- `src/scenery.js`: illustrated props, instanced grass and hero occlusion fading.
 - `src/game/combat.js`: rendering-independent battle rules and encounter data.
 - `src/game/save.js`: save validation, migration, repeat hunts and reward transactions.
 - `src/game/items.js`: equipment definitions, drops and inventory transactions.

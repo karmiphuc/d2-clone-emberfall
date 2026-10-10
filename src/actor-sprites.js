@@ -1,4 +1,5 @@
 import * as T from "three";
+import { advanceMotion, motionPose } from "./animation.js";
 
 // Original painted, directional figures retain the game's Three.js world,
 // pathfinding and combat roots. Frames are ordered front-right, front-left,
@@ -9,6 +10,25 @@ const sheets = {
   hero: new URL("../public/art/hero-directions.webp", import.meta.url).href,
   a: new URL("../public/art/companions-a.webp", import.meta.url).href,
   b: new URL("../public/art/companions-b.webp", import.meta.url).href,
+};
+const motionSheets = {
+  monsters: [
+    new URL("../public/art/monster-attacks.webp", import.meta.url).href,
+    6,
+  ],
+  sword: [
+    new URL("../public/art/hero-sword-motion.webp", import.meta.url).href,
+    4,
+  ],
+  axe: [new URL("../public/art/hero-axe-motion.webp", import.meta.url).href, 4],
+  a: [
+    new URL("../public/art/companions-a-motion.webp", import.meta.url).href,
+    6,
+  ],
+  b: [
+    new URL("../public/art/companions-b-motion.webp", import.meta.url).href,
+    6,
+  ],
 };
 const figures = {
   Fallen: ["monsters", 0, 3],
@@ -52,6 +72,7 @@ export function equipSprite(actor, weapon) {
   d.weaponId = weapon;
   if (d.characterId === "hero") {
     d.spriteRow = ["iron_axe", "ember_cleaver"].includes(weapon) ? 1 : 0;
+    d.motionKey = d.spriteRow ? "axe" : "sword";
     // Elemental equipment has a restrained, distinct in-world light accent.
     d.weaponLight.color.set(
       weapon === "frost_edge"
@@ -75,6 +96,18 @@ export function createSpriteActor(name, weapon) {
   const actor = new T.Group(),
     body = new T.Group();
   const texture = atlasTexture(sheets[sheet]);
+  const animationMaps = {};
+  const keys =
+    name === "hero"
+      ? ["sword", "axe"]
+      : ["a", "b", "monsters"].includes(sheet)
+        ? [sheet]
+        : [];
+  for (const key of keys) {
+    const [url, count] = motionSheets[key];
+    animationMaps[key] = atlasTexture(url);
+    animationMaps[key].repeat.set(0.25, 1 / count);
+  }
   texture.colorSpace = T.SRGBColorSpace;
   texture.magFilter = T.LinearFilter;
   texture.minFilter = T.LinearFilter;
@@ -111,6 +144,17 @@ export function createSpriteActor(name, weapon) {
     spriteRows: rows,
     weaponLight: light,
     renderStyle: "directional-sprite",
+    moving: false,
+    down: false,
+    motionKey: keys[0],
+    animationMaps,
+    idleMap: texture,
+    activeClip: "idle",
+    activeRow: row,
+    disposeTextures() {
+      texture.dispose();
+      Object.values(animationMaps).forEach((map) => map.dispose());
+    },
   };
   const facing = new T.Vector3(),
     right = new T.Vector3(),
@@ -122,14 +166,55 @@ export function createSpriteActor(name, weapon) {
     const x = facing.dot(right),
       y = facing.dot(up);
     const column = y <= 0 ? (x >= 0 ? 0 : 1) : x < 0 ? 2 : 3;
-    texture.offset.set(column / 4, 1 - (actor.userData.spriteRow + 1) / rows);
+    const data = actor.userData;
+    const pose = motionPose(data, name === "hero" || sheet === "monsters");
+    const motionMap = animationMaps[data.motionKey];
+    const ready = motionMap?.image?.complete;
+    const animated =
+      ready &&
+      (sheet === "monsters" ? pose.clip === "attack" : pose.clip !== "idle");
+    const map = animated ? motionMap : texture;
+    const count = animated ? motionSheets[data.motionKey][1] : rows;
+    const frameRow = animated
+      ? name === "hero"
+        ? pose.row
+        : row * 2 + pose.row - (sheet === "monsters" ? 2 : 0)
+      : data.spriteRow;
+    if (material.map !== map) material.map = map;
+    map.offset.set(column / 4, 1 - (frameRow + 1) / count);
+    const factor =
+      name === "hero"
+        ? 1.08
+        : name === "Risen"
+          ? 1.32
+          : sheet === "monsters"
+            ? 1.24
+            : 1;
+    const renderSize = size * (animated ? factor : 1);
+    if (sprite.scale.x !== renderSize) {
+      sprite.scale.set(renderSize, renderSize, 1);
+      sprite.updateMatrixWorld();
+    }
+    data.activeClip = animated ? pose.clip : "idle";
+    data.activeRow = frameRow;
     actor.userData.spriteFrame = column;
     material.rotation =
       body.rotation.z +
-      (actor.userData.swing > 0
+      (name !== "hero" && actor.userData.swing > 0
         ? Math.sin(actor.userData.swing * 12) * 0.12
         : 0);
   };
   equipSprite(actor, weapon);
   return actor;
+}
+
+export function updateActorMotion(actor, dt, moving = false, down = false) {
+  const d = actor.userData;
+  advanceMotion(d, dt, moving, down);
+  d.body.position.y = down
+    ? 0
+    : moving
+      ? Math.abs(Math.sin(d.phase * Math.PI)) * 0.025
+      : Math.sin(d.phase) * 0.009;
+  d.body.rotation.z = down ? Math.PI / 2 : 0;
 }

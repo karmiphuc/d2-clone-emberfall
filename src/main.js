@@ -128,8 +128,10 @@ let combat = createCombat(state, combatEvent, game.blocked);
 game.setCombat(combat);
 const damageNumbers = [];
 function combatEvent(event) {
+  if (event.type === "enemyAttack")
+    game.animateAttack(event.id, event.target, 0.26);
   if (event.type === "swing") {
-    game.animateAttack(event.id);
+    game.animateAttack(event.id, event.target);
     if (event.target && ["Ilyra", "Eira", "Soren"].includes(event.id))
       game.projectile(event.id, event.target);
     if (event.cleave) game.pulse(0xe4d6a6);
@@ -408,6 +410,7 @@ function itemCard(item, equipped = false) {
 }
 let selectedItem;
 let inspectModel = false;
+let previewMotion = "idle";
 const weaponArtwork = {
   worn_sword: 0,
   tempered_sword: 1,
@@ -445,7 +448,20 @@ function showInventory() {
     "Inventory",
     `
     <div class="inventory-summary"><span>${state.gold} gold <small> · ${state.stash} stashed</small></span><span>${state.inventory.length} / ${BAG_LIMIT} items</span></div>
-    <div class="equipment-stage"><div class="hero-preview"><div class="hero-illustration" role="img" aria-label="The Wanderer holding ${ITEMS[weapon]?.name || "a weapon"}" style="--hx:${((appearance % 4) * 100) / 3}%;--hy:${Math.floor(appearance / 4) * 100}%" ${inspectModel ? "hidden" : ""}></div><canvas id="equipment-preview" aria-label="Directional character preview. Drag to turn." ${inspectModel ? "" : "hidden"}></canvas><button class="preview-toggle" id="preview-toggle">${inspectModel ? "Character portrait" : "Turn character"}</button><span class="preview-caption">${def?.slot === "weapon" ? `Preview: ${def.name}` : "The Wanderer · Level " + levelOf(state)}</span></div><div class="equipped-slots">${Object.entries(
+    <div class="equipment-stage"><div class="hero-preview"><div class="hero-illustration" role="img" aria-label="The Wanderer holding ${ITEMS[weapon]?.name || "a weapon"}" style="--hx:${((appearance % 4) * 100) / 3}%;--hy:${Math.floor(appearance / 4) * 100}%" ${inspectModel ? "hidden" : ""}></div><canvas id="equipment-preview" aria-label="Directional character preview. Drag to turn." ${inspectModel ? "" : "hidden"}></canvas><button class="preview-toggle" id="preview-toggle">${inspectModel ? "Character portrait" : "Turn character"}</button>${
+      inspectModel
+        ? `<div class="preview-motion" role="group" aria-label="Character motion">${[
+            ["idle", "Stand"],
+            ["walk", "Walk"],
+            ["attack", "Attack"],
+          ]
+            .map(
+              ([mode, label]) =>
+                `<button data-preview-motion="${mode}" aria-pressed="${previewMotion === mode}">${label}</button>`,
+            )
+            .join("")}</div>`
+        : ""
+    }<span class="preview-caption">${def?.slot === "weapon" ? `Preview: ${def.name}` : "The Wanderer · Level " + levelOf(state)}</span></div><div class="equipped-slots">${Object.entries(
       state.equipment,
     )
       .map(
@@ -472,6 +488,16 @@ function showInventory() {
       "hero",
       weapon,
     );
+  if (preview) preview.setMotion(previewMotion);
+  content.querySelectorAll("[data-preview-motion]").forEach((button) => {
+    button.onclick = () => {
+      previewMotion = button.dataset.previewMotion;
+      preview?.setMotion(previewMotion);
+      content
+        .querySelectorAll("[data-preview-motion]")
+        .forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    };
+  });
   document.querySelector("#preview-toggle").onclick = () => {
     inspectModel = !inspectModel;
     showInventory();

@@ -21,3 +21,18 @@ companions-b.webp: four facings; Soren, Aldric, Nyx rows.
 npc-directions.webp: four facings; Akara, Charsi, Kashya rows.
 Directional world sprites retain real alpha and a shared boot baseline.
 monsters.webp: four facings; Fallen, Risen, elite Brute rows.
+
+MOTION AND ENVIRONMENT ART — 2026-10-10
+hero-sword-motion.webp and hero-axe-motion.webp: 4 columns x 4 rows,
+384-pixel cells. Rows walk A, walk B, windup, strike.
+companions-a-motion.webp: 4 columns x 6 rows, paired walks for Ilyra, Bram, Eira.
+companions-b-motion.webp: 4 columns x 6 rows, paired walks for Soren, Aldric, Nyx.
+monster-attacks.webp: 4 columns x 6 rows, windup/strike pairs for Fallen,
+Risen and Brute. All motion atlases use the same four facing columns
+and normalized 94-percent boot baseline as their idle counterparts.
+camp-tents.webp: 2x2 cells, healer pavilion, smith awning, rogue tent,
+traveller tent.
+moor-props.webp: 2x2 cells, mossy rocks, grave, ruined wagon, dead oak.
+ground-details.webp: 2x2 cells, firepit, cobblestones, grass, supplies.
+camp-services.webp: 2x2 cells, waypoint, stash, forge, bench.
+Environment cells are 768 pixels square with real alpha.

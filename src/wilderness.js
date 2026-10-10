@@ -1,4 +1,5 @@
 import * as T from "three";
+import { scenery, scatterGrass } from "./scenery.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export function createWilderness(groundMaterial, oakTexture) {
@@ -36,17 +37,10 @@ export function createWilderness(groundMaterial, oakTexture) {
   ground.receiveShadow = true;
   root.add(ground);
   // A ruined road, roadside graves, broken arches and an abandoned fire circle.
-  for (let i = 0; i < 95; i++) {
-    let x = -13 + i * 0.28,
-      z = 7 - Math.sin(i * 0.04) * 8;
-    const o = add(
-      new T.BoxGeometry(0.55, 0.06, 0.45),
-      "#77796a",
-      x + (random() - 0.5) * 1.5,
-      0.01,
-      z + (random() - 0.5) * 2,
-    );
-    o.rotation.y = random() * 2;
+  for (let i = 0; i < 18; i++) {
+    const x = -13 + i * 1.5,
+      z = 7 - Math.sin(i * 0.22) * 8;
+    scenery(root, "details", 1, x, z, 2.8, 1.8, 0.5);
   }
   const obstacles = [];
   for (const [x, z, w, d] of [
@@ -56,8 +50,16 @@ export function createWilderness(groundMaterial, oakTexture) {
     [8, 10, 3, 2],
     [0, 11, 3, 2],
   ]) {
-    const o = add(new T.DodecahedronGeometry(1, 0), "#676e68", x, 0.7, z);
-    o.scale.set(w / 2, 1.5, d / 2);
+    scenery(
+      root,
+      "moor",
+      0,
+      x,
+      z,
+      Math.max(w, d) * 1.4,
+      Math.max(w, d) * 1.1,
+      0.25,
+    );
     obstacles.push({ x, z, w, d });
   }
   for (let i = 0; i < 70; i++) {
@@ -66,17 +68,7 @@ export function createWilderness(groundMaterial, oakTexture) {
     if (Math.abs(x) < 20 && Math.abs(z) < 16) continue;
     if (x + z > 22) continue;
     const h = 3 + random() * 4;
-    add(new T.CylinderGeometry(0.12, 0.4, h, 6), "#464b44", x, h / 2, z);
-    for (let j = 0; j < 3; j++) {
-      const branch = add(
-        new T.CylinderGeometry(0.04, 0.12, 1.8, 5),
-        "#464b44",
-        x + (j % 2 ? -0.5 : 0.5),
-        h * 0.6 + j * 0.5,
-        z,
-      );
-      branch.rotation.z = j % 2 ? 0.7 : -0.7;
-    }
+    if (i % 3 !== 0) scenery(root, "moor", 3, x, z, h * 1.1, h * 1.2);
     if (i % 3 === 0 && oakTexture) {
       const tree = new T.Sprite(
         new T.SpriteMaterial({
@@ -86,6 +78,7 @@ export function createWilderness(groundMaterial, oakTexture) {
           depthWrite: true,
         }),
       );
+      tree.userData.occluder = true;
       tree.center.set(0.58, 0.04);
       tree.position.set(x, 0, z);
       tree.scale.set(6, 6.3, 1);
@@ -100,9 +93,7 @@ export function createWilderness(groundMaterial, oakTexture) {
     [14, -8],
     [12, -12],
   ]) {
-    const grave = add(new T.BoxGeometry(0.55, 1.1, 0.2), "#777e73", x, 0.5, z);
-    grave.rotation.z = (random() - 0.5) * 0.3;
-    add(new T.BoxGeometry(0.95, 0.17, 0.22), "#777e73", x, 0.72, z);
+    scenery(root, "moor", 1, x, z, 1.6, 1.7);
   }
   for (let i = 0; i < 11; i++) {
     const a = (i / 11) * Math.PI * 2;
@@ -134,20 +125,7 @@ export function createWilderness(groundMaterial, oakTexture) {
     0.04,
     10,
   );
-  const grass = new T.InstancedMesh(
-    new T.ConeGeometry(0.09, 0.35, 3),
-    material("#6a7255"),
-    1000,
-  );
-  const dummy = new T.Object3D();
-  for (let i = 0; i < 1000; i++) {
-    dummy.position.set((random() - 0.5) * 43, 0.1, (random() - 0.5) * 34);
-    dummy.rotation.y = random() * 6;
-    dummy.scale.setScalar(0.5 + random());
-    dummy.updateMatrix();
-    grass.setMatrixAt(i, dummy.matrix);
-  }
-  root.add(grass);
+  scatterGrass(root, 230, random);
   // Low dry-stone field boundaries frame the route without blocking the combat path.
   for (let i = 0; i < 35; i++) {
     const x = -18 + i * 0.92;
@@ -163,29 +141,8 @@ export function createWilderness(groundMaterial, oakTexture) {
       b.rotation.y = random();
     }
   }
-  // Ruined wagon, barrels and abandoned supplies by the safe entry.
-  add(new T.BoxGeometry(2.3, 0.14, 1.2), "#54422e", -17, 0.6, 7);
-  for (const z of [6.3, 7.7])
-    for (const x of [-17.7, -16.3]) {
-      const w = add(
-        new T.TorusGeometry(0.48, 0.07, 5, 12),
-        "#493c2c",
-        x,
-        0.45,
-        z,
-      );
-      w.rotation.y = Math.PI / 2;
-    }
-  for (let i = 0; i < 8; i++) {
-    const b = add(
-      new T.BoxGeometry(0.13, 0.15, 1.25),
-      "#695035",
-      -18 + i * 0.28,
-      0.77,
-      7,
-    );
-    b.rotation.y = (random() - 0.5) * 0.2;
-  }
+  // Broken timber and ironwork replace the placeholder wagon.
+  scenery(root, "moor", 2, -17, 7, 4, 3.4, 0.2);
   // Scattered ground clutter gives the Moor its desolate, inhabited history.
   for (let i = 0; i < 85; i++) {
     const x = (random() - 0.5) * 37,

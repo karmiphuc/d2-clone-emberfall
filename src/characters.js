@@ -1,5 +1,9 @@
 import * as T from "three";
-import { createSpriteActor, equipSprite } from "./actor-sprites.js";
+import {
+  createSpriteActor,
+  equipSprite,
+  updateActorMotion,
+} from "./actor-sprites.js";
 
 // Weapons are declared once for world actors and the directional preview.
 const CHARACTER_WEAPONS = {
@@ -61,8 +65,16 @@ export function createCharacterPreview(canvas, id, weapon) {
       lastX = e.clientX;
     }
   };
+  let mode = "idle",
+    previousTime = null,
+    nextAttack = 0;
   return {
     actor,
+    setMotion(value) {
+      mode = ["idle", "walk", "attack"].includes(value) ? value : "idle";
+      actor.userData.swing = 0;
+      nextAttack = 0;
+    },
     render(time) {
       const w = canvas.clientWidth,
         h = canvas.clientHeight;
@@ -78,13 +90,19 @@ export function createCharacterPreview(canvas, id, weapon) {
         camera.lookAt(0, 1.3, 0);
         camera.updateProjectionMatrix();
       }
-      actor.userData.body.position.y = Math.sin(time * 1.3) * 0.009;
+      const dt = previousTime === null ? 0 : Math.min(0.1, time - previousTime);
+      previousTime = time;
+      if (mode === "attack" && time >= nextAttack) {
+        actor.userData.swing = 0.5;
+        nextAttack = time + 1.1;
+      }
+      updateActorMotion(actor, dt, mode === "walk");
       renderer.render(scene, camera);
     },
     dispose() {
+      actor.userData.disposeTextures();
       scene.traverse((o) => {
         if (o.isSprite) {
-          o.material.map?.dispose();
           o.material.dispose();
         }
         if (o.isMesh) {

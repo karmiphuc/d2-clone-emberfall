@@ -305,7 +305,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
           ),
         );
     else hurtEnemy(enemy, damage, "hero");
-    emit({ type: "swing", id: "hero", cleave });
+    emit({ type: "swing", id: "hero", target: enemy.id, cleave });
     return true;
   }
   function refreshStats(restore = false) {
@@ -541,6 +541,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
               distance(enemy, victim) < (enemy.elite ? 3 : 2)
             )
               hitAlly(victim, enemy.damage, enemy.id);
+            emit({ type: "enemyAttack", id: enemy.id, target: enemy.victim });
             enemy.cooldown = enemy.elite ? 1.4 : 1;
           }
           continue;

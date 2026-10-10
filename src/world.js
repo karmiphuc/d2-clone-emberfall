@@ -1,6 +1,8 @@
 import * as T from "three";
 import { createActor, setActorWeapon, createMonster } from "./characters.js";
+import { updateActorMotion } from "./actor-sprites.js";
 import { COMPANIONS } from "./game/companions.js";
+import { scenery, scatterGrass, updateSceneryVisibility } from "./scenery.js";
 import { createWilderness } from "./wilderness.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
@@ -109,8 +111,9 @@ export function createWorld(canvas) {
   }
   // Procedural material: soil grain, worn paths and sparse moss on a shared ground map.
   const tex = document.createElement("canvas");
-  tex.width = tex.height = 1024;
+  tex.width = tex.height = 2048;
   const c = tex.getContext("2d");
+  c.scale(2, 2);
   c.fillStyle = "#535746";
   c.fillRect(0, 0, 1024, 1024);
   for (let i = 0; i < 95000; i++) {
@@ -229,11 +232,9 @@ export function createWorld(canvas) {
     obstacles.push({ x, z, w, d });
   }
   function rock(x, z, s = 1) {
-    const o = mesh(new T.DodecahedronGeometry(s, 0), stone, x, s * 0.3, z);
-    o.scale.set(1, 0.6, 0.8);
-    o.rotation.set(rand(), rand() * 6, rand());
-    return o;
+    return scenery(scene, "moor", 0, x, z, s * 2.2, s * 1.7, 0.3);
   }
+
   // A broken palisade follows the edge of the camp, leaving the eastern road open.
   for (let x = -19; x <= 19; x += 0.7) {
     for (const z of [-15, 15]) {
@@ -277,123 +278,23 @@ export function createWorld(canvas) {
         depthWrite: true,
       }),
     );
+    sprite.userData.occluder = true;
     sprite.center.set(0.58, 0.04);
     sprite.position.set(x, 0, z);
     sprite.scale.set(6.7 * s, 7 * s, 1);
     scene.add(sprite);
   }
-  // Canvas tents, timber frames, stitched seams and rope guy lines.
-  function tent(x, z, w, d, color, rot = 0) {
-    const g = new T.Group();
-    g.position.set(x, 0, z);
-    g.rotation.y = rot;
-    scene.add(g);
-    const fabric = mat(color, { side: T.DoubleSide });
-    const h = w * 0.66;
-    const geo = new T.BufferGeometry();
-    geo.setAttribute(
-      "position",
-      new T.Float32BufferAttribute(
-        [
-          -w / 2,
-          0.15,
-          -d / 2,
-          0,
-          h,
-          -d / 2,
-          -w / 2,
-          0.15,
-          d / 2,
-          0,
-          h,
-          -d / 2,
-          0,
-          h,
-          d / 2,
-          -w / 2,
-          0.15,
-          d / 2,
-          0,
-          h,
-          -d / 2,
-          w / 2,
-          0.15,
-          -d / 2,
-          w / 2,
-          0.15,
-          d / 2,
-          0,
-          h,
-          -d / 2,
-          w / 2,
-          0.15,
-          d / 2,
-          0,
-          h,
-          d / 2,
-        ],
-        3,
-      ),
-    );
-    geo.computeVertexNormals();
-    mesh(geo, fabric, 0, 0, 0, g);
-    const back = new T.BufferGeometry();
-    back.setAttribute(
-      "position",
-      new T.Float32BufferAttribute(
-        [-w / 2, 0.15, -d / 2, w / 2, 0.15, -d / 2, 0, h, -d / 2],
-        3,
-      ),
-    );
-    back.computeVertexNormals();
-    mesh(back, fabric, 0, 0, 0, g);
-    for (const side of [-1, 1]) {
-      const curtain = new T.BufferGeometry();
-      curtain.setAttribute(
-        "position",
-        new T.Float32BufferAttribute(
-          [
-            (side * w) / 2,
-            0.15,
-            d / 2,
-            0,
-            h,
-            d / 2,
-            side * 0.65,
-            0.15,
-            d / 2 + 0.1,
-          ],
-          3,
-        ),
-      );
-      curtain.computeVertexNormals();
-      mesh(curtain, fabric, 0, 0, 0, g);
-      cyl(0.09, 0.12, h + 0.3, wood, 0, h / 2, (side * d) / 2, g);
-      for (const zz of [-d / 2, d / 2]) {
-        beam(
-          v((side * w) / 2, 0.25, zz),
-          v(side * (w / 2 + 1.05), 0.1, zz + 0.6),
-          0.025,
-          rope,
-          g,
-        );
-        cyl(0.06, 0.08, 0.5, wood, side * (w / 2 + 1.05), 0.12, zz + 0.6, g);
-      }
-    }
-    beam(v(0, h, -d / 2 - 0.3), v(0, h, d / 2 + 0.3), 0.1, wood, g);
-    for (let zz = -d / 2 + 0.6; zz < d / 2; zz += 0.85) {
-      beam(v(-w / 2, 0.18, zz), v(0, h + 0.015, zz), 0.013, rope, g);
-      beam(v(0, h + 0.015, zz), v(w / 2, 0.18, zz), 0.013, rope, g);
-    }
-    box(w * 0.6, 0.1, d * 0.8, mat("#504936"), 0, 0.03, 0, g);
+  // Illustrated structures retain the original navigation footprints.
+  function tent(x, z, w, d, cell, rot = 0) {
+    const sprite = scenery(scene, "tents", cell, x, z, w * 1.7, w * 1.7, 0.3);
     obstacle(x, z, rot ? d : w, rot ? w : d);
-    return g;
+    return sprite;
   }
-  tent(-11, -8, 5.2, 5.6, "#675343", 0.1);
-  tent(8, -9, 5.8, 5.5, "#9f8a62", -0.12);
-  tent(-12, 7, 5.2, 5, "#5e6046", 0.25);
-  tent(10, 9, 4.8, 5, "#8e7156", -0.15);
-  tent(-4, -12, 3.4, 3, "#68716a", 0);
+  tent(-11, -8, 5.2, 5.6, 0, 0.1);
+  tent(8, -9, 5.8, 5.5, 1, -0.12);
+  tent(-12, 7, 5.2, 5, 2, 0.25);
+  tent(10, 9, 4.8, 5, 3, -0.15);
+  tent(-4, -12, 3.4, 3, 3);
   function crate(x, z, s = 1) {
     const g = new T.Group();
     g.position.set(x, s / 2, z);
@@ -441,22 +342,8 @@ export function createWorld(canvas) {
     [8, 12],
   ])
     barrel(...p);
-  // Blacksmith work area, glowing forge and weapon rack.
-  box(2.6, 0.75, 1.7, stone, 10, 0.38, -4);
-  box(2.1, 0.13, 1.3, black, 10, 0.82, -4);
-  const coal = mat("#df6a22", { emissive: "#d0440c", emissiveIntensity: 1.3 });
-  for (let i = 0; i < 18; i++)
-    mesh(
-      new T.DodecahedronGeometry(0.16),
-      coal,
-      9.2 + rand() * 1.6,
-      0.93,
-      -4.5 + rand(),
-    );
-  box(0.5, 0.9, 0.6, darkwood, 7, 0.45, -4);
-  box(1.2, 0.25, 0.55, metal, 7, 1, -4);
-  const horn = mesh(new T.ConeGeometry(0.25, 0.7, 4), metal, 7.8, 1, -4);
-  horn.rotation.z = -Math.PI / 2;
+  // Detailed hearth, bellows and tools with the original service footprint.
+  scenery(scene, "services", 2, 9, -4, 5.5, 3.8, 0.3);
   obstacle(9, -4, 4.5, 2);
   const forgeLight = new T.PointLight("#ff873b", 11, 7, 2);
   forgeLight.position.set(10, 1.4, -4);
@@ -488,41 +375,11 @@ export function createWorld(canvas) {
   for (let z of [3.8, 5.2])
     for (let h of [1.1, 1.45]) box(2.8, 0.25, 0.12, wood, 12, h, z);
   obstacle(12, 4.5, 3.4, 2.5);
-  const chest = new T.Group();
-  chest.position.set(8, 0.1, 5);
-  scene.add(chest);
-  box(1.7, 0.8, 1, wood, 0, 0.4, 0, chest);
-  const lid = cyl(0.5, 0.5, 1.7, wood, 0, 0.85, 0, chest, 8);
-  lid.rotation.z = Math.PI / 2;
-  lid.scale.z = 0.8;
-  for (let x of [-0.6, 0.6]) box(0.15, 1.05, 1.05, metal, x, 0.55, 0, chest);
-  box(0.25, 0.25, 0.1, gold, 0, 0.65, 0.56, chest);
+  scenery(scene, "services", 1, 8, 5, 3, 2.8, 0.15);
   obstacle(8, 5, 2, 1.4);
-  // Waypoint circle and standing rune stones.
+  // Rune circle retains its animated activation ring.
   const waypoint = v(-7, 0, 2);
-  cyl(2.1, 2.2, 0.13, stone, -7, 0.045, 2, scene, 12);
-  for (let i = 0; i < 8; i++) {
-    const a = (i * Math.PI) / 4;
-    const s = box(
-      0.5,
-      0.25,
-      0.75,
-      mat("#83908b"),
-      -7 + Math.cos(a) * 1.6,
-      0.17,
-      2 + Math.sin(a) * 1.6,
-    );
-    s.rotation.y = -a;
-    box(
-      0.04,
-      0.015,
-      0.38,
-      mat("#8ee4e0", { emissive: "#3cb0c1", emissiveIntensity: 1.2 }),
-      s.position.x,
-      0.31,
-      s.position.z,
-    );
-  }
+  scenery(scene, "services", 0, -7, 2, 4.8, 4, 0.35);
   const ring = mesh(
     new T.RingGeometry(1.18, 1.22, 48),
     mat("#76c5c4", {
@@ -535,18 +392,8 @@ export function createWorld(canvas) {
     2,
   );
   ring.rotation.x = -Math.PI / 2;
-  // Central campfire: stone ring, charred logs, animated flame clusters and sparks.
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
-    rock(Math.cos(a) * 1.2, Math.sin(a) * 1.2, 0.34);
-  }
-  const ember = mat("#9b4024", { emissive: "#af3916", emissiveIntensity: 0.6 });
-  cyl(0.95, 1, 0.05, ember, 0, 0.04, 0);
-  for (let a of [0, 1.1, 2.2]) {
-    const log = cyl(0.17, 0.21, 1.7, darkwood, 0, 0.24, 0);
-    log.rotation.z = Math.PI / 2;
-    log.rotation.y = a;
-  }
+  // Detailed charred timber and stones beneath the animated fire.
+  scenery(scene, "details", 0, 0, 0, 3.4, 2.4, 0.48);
   const flames = [];
   const fireSprite = new T.Sprite(
     new T.SpriteMaterial({
@@ -570,9 +417,7 @@ export function createWorld(canvas) {
     [2.3, 2.2, -0.6],
     [-1.5, -2.4, 1.5],
   ]) {
-    const l = cyl(0.25, 0.3, 2.1, wood, x, 0.3, z);
-    l.rotation.z = Math.PI / 2;
-    l.rotation.y = rot;
+    scenery(scene, "services", 3, x, z, 2.6, 1.7, 0.2);
   }
   const sparkGeo = new T.BufferGeometry(),
     sparkPos = new Float32Array(150 * 3);
@@ -641,24 +486,7 @@ export function createWorld(canvas) {
   banner(18, -3.3, "#884f46");
   banner(18, 3.3, "#884f46");
   banner(-9, 8, "#8e7756");
-  // Small rocks and grass tufts use instancing to keep the scene lightweight.
-  const grassGeo = new T.ConeGeometry(0.1, 0.4, 3),
-    grass = new T.InstancedMesh(grassGeo, mat("#647357"), 1700);
-  const dummy = new T.Object3D();
-  for (let i = 0; i < 1700; i++) {
-    let x = (rand() - 0.5) * 49,
-      z = (rand() - 0.5) * 43;
-    if (Math.abs(x) < 16 && Math.abs(z) < 12 && rand() < 0.8) {
-      x += (x > 0 ? 1 : -1) * 15;
-    }
-    dummy.position.set(x, 0.12, z);
-    dummy.scale.setScalar(0.5 + rand());
-    dummy.rotation.set(0, rand() * 6, rand() * 0.35);
-    dummy.updateMatrix();
-    grass.setMatrixAt(i, dummy.matrix);
-  }
-  grass.receiveShadow = true;
-  scene.add(grass);
+  scatterGrass(scene, 180, rand, true);
   for (let i = 0; i < 95; i++) {
     const x = (rand() - 0.5) * 45,
       z = (rand() - 0.5) * 36;
@@ -785,6 +613,10 @@ export function createWorld(canvas) {
   const campObstacles = [...obstacles];
   const wilderness = createWilderness(ground.material, oakTexture);
   scene.add(wilderness.root);
+  const sceneryProps = [];
+  scene.traverse((o) => {
+    if (o.userData.occluder) sceneryProps.push(o);
+  });
   const enemyModels = new Map(),
     lootModels = new Map();
   const projectiles = [];
@@ -975,10 +807,10 @@ export function createWorld(canvas) {
       }
       lootModels.clear();
       for (const obj of enemyModels.values()) {
+        obj.userData.disposeTextures?.();
         obj.traverse((o) => {
           if (o.isMesh) o.geometry.dispose();
           if (o.isSprite) {
-            o.material.map?.dispose();
             o.material.dispose();
           }
         });
@@ -1012,10 +844,20 @@ export function createWorld(canvas) {
       scene.add(line);
       projectiles.push({ line, life: 0.17 });
     },
-    animateAttack(id) {
+    animateAttack(id, targetId, duration = 0.5) {
       const actor =
         [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
-      if (actor) actor.userData.swing = 0.5;
+      if (actor) {
+        actor.userData.swing = duration;
+        const target =
+          enemyModels.get(targetId) ||
+          [hero, ...companions][actorNames.indexOf(targetId)];
+        if (target)
+          actor.rotation.y = Math.atan2(
+            target.position.x - actor.position.x,
+            target.position.z - actor.position.z,
+          );
+      }
     },
     moveTo(p) {
       hero.userData.path = route(hero.position, p);
@@ -1118,25 +960,11 @@ export function createWorld(canvas) {
         moving = true;
       }
     }
-    data.phase += dt * (moving ? 10 : 2);
-    data.body.position.y = moving
-      ? Math.abs(Math.sin(data.phase)) * 0.055
-      : Math.sin(data.phase) * 0.015;
-    data.legs.forEach(
-      (l, i) =>
-        (l.rotation.x = moving ? Math.sin(data.phase + i * Math.PI) * 0.5 : 0),
-    );
-    data.arms?.forEach((arm, i) => {
-      arm.rotation.x = moving ? Math.sin(data.phase + i * Math.PI) * 0.3 : 0;
-    });
-    if (data.swing > 0) {
-      data.swing -= dt;
-      data.body.rotation.y = Math.sin(data.swing * 12) * 0.7;
-      if (data.arms) data.arms[1].rotation.x = -Math.sin(data.swing * 7) * 1.7;
-    } else data.body.rotation.y = 0;
+    data.moving = moving;
   }
   let repath = 0;
   api.update = (dt, time, paused) => {
+    updateSceneryVisibility(sceneryProps, hero, camera, dt);
     for (let i = projectiles.length - 1; i >= 0; i--) {
       const p = projectiles[i];
       p.life -= dt;
@@ -1231,7 +1059,8 @@ export function createWorld(canvas) {
         const dir = model.position.clone().sub(prev);
         if (dir.lengthSq() > 0.00001)
           model.rotation.y = Math.atan2(dir.x, dir.z);
-        model.userData.body.position.y = Math.sin(time * 8) * 0.035;
+        model.userData.windup = enemy.windup;
+        updateActorMotion(model, dt, dir.lengthSq() > 0.00001);
         model.userData.body.rotation.z =
           enemy.windup > 0 ? Math.sin(time * 18) * 0.08 : 0;
         if (enemy.windup > 0) model.userData.body.rotation.x = -0.15;
@@ -1266,6 +1095,7 @@ export function createWorld(canvas) {
       }
     }
     walk(hero, dt, 4);
+    updateActorMotion(hero, dt, hero.userData.moving);
     repath -= dt;
     if (!api.hold && repath <= 0) {
       repath = 0.7;
@@ -1309,9 +1139,10 @@ export function createWorld(canvas) {
     }
     companions.forEach((c, i) => {
       const down = api.zone === "moor" && api.combat?.allies[i + 1].hp === 0;
-      c.userData.body.rotation.z = down ? Math.PI / 2 : 0;
+      c.userData.moving = false;
       if (c.visible && !api.hold && !down)
         walk(c, dt, c.userData.companionId === "Nyx" ? 5.4 : 4.2);
+      if (c.visible) updateActorMotion(c, dt, c.userData.moving, down);
     });
   };
   return api;
