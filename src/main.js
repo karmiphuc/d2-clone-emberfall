@@ -64,11 +64,11 @@ app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to mo
 ]
   .map(
     ([id, label, hint], i) =>
-      `<button class="slot" data-action="${id}" title="${label} [${i + 1}] · ${hint}" aria-label="${label} [${i + 1}]">${itemIcon(id)}<kbd>${i + 1}</kbd><span class="slot-label">${label}</span>${id === "heal" ? '<small id="potions">3</small>' : ""}</button>`,
+      `<button class="slot" data-action="${id}" title="${label} [${i + 1}] · ${hint}" aria-label="${label} [${i + 1}]">${itemIcon(id)}<kbd>${i + 1}</kbd><span class="slot-label">${label}</span><span class="slot-state" aria-hidden="true"></span>${id === "heal" ? '<small id="potions">3</small>' : ""}</button>`,
   )
   .join(
     "",
-  )}</div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="loot-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">Close <kbd>Esc</kbd></button><div id="dialog-content"></div></dialog>`;
+  )}</div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="combat-status" aria-label="Combat status" hidden></div><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="loot-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">Close <kbd>Esc</kbd></button><div id="dialog-content"></div></dialog>`;
 const dialog = document.querySelector("dialog"),
   content = document.querySelector("#dialog-content");
 let toastTimer, levelTimer, preview;
@@ -823,8 +823,7 @@ function action(name) {
   }
   if (name === "attack") {
     if (game.zone === "moor") {
-      if (!combat.cleave())
-        toast("Cleave needs a nearby enemy, 8 mana, and a ready blade.");
+      if (!combat.cleave()) toast("Cleave needs a nearby enemy and 8 mana.");
       return;
     }
     game.swing();
@@ -1037,6 +1036,76 @@ function drawMap() {
   ctx.closePath();
   ctx.fill();
 }
+const actionButtons = [...document.querySelectorAll("[data-action]")];
+function updateActionFeedback() {
+  const fighting = game.zone === "moor",
+    cooldown = combat.cooldowns;
+  const tags = {
+    attack: !fighting
+      ? ""
+      : combat.cleaveQueued
+        ? "Queued"
+        : combat.mana < 8
+          ? "8 mana"
+          : "",
+    guard: !fighting
+      ? ""
+      : combat.guard > 0
+        ? `${combat.guard.toFixed(1)}s`
+        : cooldown.guard > 0
+          ? `${Math.ceil(cooldown.guard)}s`
+          : combat.mana < 10
+            ? "10 mana"
+            : "",
+    rally:
+      fighting && state.skills.battleCry && cooldown.rally > 0
+        ? `${Math.ceil(cooldown.rally)}s`
+        : "",
+    heal: !state.potions
+      ? "Empty"
+      : fighting && combat.allies[0].hp >= combat.allies[0].maxHp
+        ? "Full"
+        : "",
+    hold: game.hold ? "Holding" : "",
+    portal: "",
+  };
+  for (const button of actionButtons) {
+    const id = button.dataset.action,
+      tag = tags[id];
+    const text = button.querySelector(".slot-state");
+    if (text.textContent !== tag) text.textContent = tag;
+    button.classList.toggle(
+      "cooling",
+      fighting &&
+        ((id === "guard" && cooldown.guard > 0 && !combat.guard) ||
+          (id === "attack" && combat.mana < 8)),
+    );
+    button.classList.toggle(
+      "active",
+      (id === "guard" && fighting && combat.guard > 0) ||
+        (id === "hold" && game.hold) ||
+        (id === "attack" && combat.cleaveQueued),
+    );
+    if (id === "hold" || id === "guard")
+      button.setAttribute(
+        "aria-pressed",
+        String(id === "hold" ? game.hold : fighting && combat.guard > 0),
+      );
+    const label = button.querySelector(".slot-label").textContent;
+    const accessible = `${label} [${button.querySelector("kbd").textContent}]${tag ? ` · ${tag}` : ""}`;
+    if (button.getAttribute("aria-label") !== accessible)
+      button.setAttribute("aria-label", accessible);
+  }
+  const status = document.querySelector("#combat-status");
+  const parts = [];
+  if (fighting && combat.guard > 0)
+    parts.push(`Guard active · ${Math.ceil(combat.guard)}s`);
+  if (combat.cleaveQueued) parts.push("Cleave queued");
+  if (game.hold) parts.push("Company holding");
+  status.hidden = !parts.length;
+  const summary = parts.join("  /  ");
+  if (status.textContent !== summary) status.textContent = summary;
+}
 const lootLabels = new Map();
 let last = performance.now(),
   accumulator = 0,
@@ -1158,6 +1227,7 @@ function frame(now) {
     el.style.left = `${(p.x * 0.5 + 0.5) * innerWidth}px`;
     el.style.top = `${(-p.y * 0.5 + 0.5) * innerHeight}px`;
   }
+  updateActionFeedback();
   renderer.render(game.scene, camera);
   preview?.render(now / 1000);
 }

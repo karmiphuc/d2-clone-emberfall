@@ -96,3 +96,36 @@ test("expedition reward requires every enemy and is granted once", () => {
   assert.equal(claimReward(s), false);
   assert.equal(s.gold, 340);
 });
+
+test("Cleave queues behind a basic attack, executes once and spends mana only on the strike", () => {
+  const events = [],
+    c = createCombat(freshState(), (event) => events.push(event));
+  c.select("fallen-1");
+  c.tick(1 / 30, positions());
+  assert.ok(c.cooldowns.attack > 0);
+  for (let i = 0; i < 5; i++) assert.equal(c.cleave(), true);
+  assert.equal(c.cleaveQueued, true);
+  assert.equal(c.mana, 60);
+  for (let i = 0; i < 20; i++) c.tick(1 / 30, positions());
+  assert.equal(events.filter((e) => e.type === "swing" && e.cleave).length, 1);
+  assert.equal(c.cleaveQueued, false);
+  assert.ok(c.mana >= 52 && c.mana < 55);
+});
+
+test("canceling movement intent discards queued Cleave without charging mana", () => {
+  const events = [],
+    c = createCombat(freshState(), (event) => events.push(event));
+  c.select("fallen-1");
+  c.tick(1 / 30, positions());
+  c.cleave();
+  c.cancel();
+  assert.equal(c.cleaveQueued, false);
+  for (let i = 0; i < 25; i++) c.tick(1 / 30, positions(-18, 13));
+  assert.equal(c.mana, 60);
+  assert.equal(events.filter((e) => e.type === "swing" && e.cleave).length, 0);
+  assert.equal(c.defend(), true);
+  assert.equal(c.cooldowns.guard, 8);
+  c.tick(1, positions(-18, 13));
+  assert.equal(c.guard, 2);
+  assert.equal(c.cooldowns.guard, 7);
+});

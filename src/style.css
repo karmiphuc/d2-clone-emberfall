@@ -2232,3 +2232,61 @@ dialog {
   position: static;
   padding: 3px 4px;
 }
+
+/* Combat feedback stays on the existing illustrated action buttons. */
+.slot-state {
+  position: absolute;
+  bottom: 17px;
+  left: 2px;
+  right: 2px;
+  z-index: 2;
+  font:
+    10px Inter,
+    sans-serif;
+  color: #f3d38f;
+  background: #16120de8;
+  text-align: center;
+  line-height: 15px;
+}
+.slot-state:empty {
+  display: none;
+}
+.slot.cooling .item-art {
+  opacity: 0.45;
+}
+.slot.active {
+  border-color: #e4c985;
+  box-shadow: inset 0 0 0 1px #b99858;
+}
+#combat-status {
+  position: absolute;
+  bottom: 172px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 12px;
+  border: 1px solid #75613b;
+  background: #16120de8;
+  color: #e9d4a7;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+@media (max-width: 600px) {
+  .slot-state {
+    bottom: 12px;
+    font-size: 8px;
+    line-height: 11px;
+  }
+  #combat-status {
+    bottom: 129px;
+    font-size: 10px;
+    max-width: calc(100vw - 24px);
+    white-space: normal;
+    text-align: center;
+  }
+}
+@media (max-width: 600px) {
+  body:has(#combat-status:not([hidden])) .controls {
+    visibility: hidden;
+  }
+}

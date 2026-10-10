@@ -181,7 +181,8 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     guardCooldown = 0,
     rallyCooldown = 0,
     regroupTime = 0,
-    dead = false;
+    dead = false,
+    queuedCleave = false;
   const hero = allies[0];
   function hurtEnemy(enemy, damage, source) {
     if (enemy.hp <= 0) return;
@@ -336,6 +337,16 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     get guard() {
       return guard;
     },
+    get cleaveQueued() {
+      return queuedCleave;
+    },
+    get cooldowns() {
+      return {
+        attack: hero.cooldown,
+        guard: guardCooldown,
+        rally: rallyCooldown,
+      };
+    },
     get target() {
       return target;
     },
@@ -346,10 +357,12 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       if (enemies.some((e) => e.id === id && e.hp > 0)) target = id;
     },
     cancel() {
+      queuedCleave = false;
       target = null;
       hero.order = null;
     },
     rally() {
+      queuedCleave = false;
       regroupTime = 3;
       if (state.skills.battleCry && rallyCooldown <= 0 && mana >= 15) {
         mana -= 15;
@@ -365,12 +378,22 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       allies.forEach((a) => (a.order = null));
     },
     cleave() {
-      return attack(
-        enemies
-          .filter((e) => e.hp > 0)
-          .sort((a, b) => distance(hero, a) - distance(hero, b))[0],
-        true,
-      );
+      const enemy = enemies
+        .filter((e) => e.hp > 0)
+        .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
+      if (
+        !hero.hp ||
+        mana < 8 ||
+        !enemy ||
+        distance(hero, enemy) > 3.1 + (state.skills.wideArc || 0) * 0.6
+      )
+        return false;
+      if (hero.cooldown > 0) {
+        queuedCleave = true;
+        return true;
+      }
+      queuedCleave = false;
+      return attack(enemy, true);
     },
     defend() {
       if (mana < 10 || guardCooldown > 0 || !hero.hp) return false;
@@ -399,6 +422,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       guardCooldown = 0;
       rallyCooldown = 0;
       dead = false;
+      queuedCleave = false;
       target = null;
       enemies.forEach((e) => {
         e.windup = 0;
@@ -424,6 +448,13 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       guardCooldown = Math.max(0, guardCooldown - dt);
       rallyCooldown = Math.max(0, rallyCooldown - dt);
       regroupTime = Math.max(0, regroupTime - dt);
+      if (queuedCleave && hero.cooldown <= 0) {
+        queuedCleave = false;
+        const nearest = enemies
+          .filter((e) => e.hp > 0)
+          .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
+        attack(nearest, true);
+      }
       const focused = enemies.find((e) => e.id === target && e.hp > 0);
       if (focused) {
         if (distance(hero, focused) > 1.7)

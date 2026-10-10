@@ -42,3 +42,7 @@ The camera follows the hero while preserving the isometric angle. `src/scenery.j
 Combat events carry actor and target IDs. `world.combatVisual` resolves their world positions without changing simulation damage or cooldowns. `src/combat-effects.js` shares eight atlas cells across a reusable pool capped at 64 sprites, with no per-effect lights. Effects age only while gameplay runs, release their slots on expiry, and clear on zone or encounter changes. Ranged trails interpolate source-to-target positions; Guard follows its actor; healing resolves the wounded actor rather than the hero. Enemy death presentation lasts 0.55 seconds while the simulation treats the enemy as defeated immediately.
 
 The reduced-effects setting starts from `prefers-reduced-motion`, softens effect opacity and disables hit flashes. It is session-local. `src/combat-audio.js` creates short filtered-noise and tonal cues only after the player enables Sound, reuses a noise buffer, limits trigger frequency and disconnects completed nodes. Neither system writes new save fields.
+
+## Action intent and HUD state
+
+Cleave can store one pending intent while the shared melee cooldown runs. The simulation resolves it before the next basic attack, checks current range and mana again, and charges only on execution. Repeated input does not stack intents. Manual movement/cancel, regroup and restore clear it. The intent is transient and never persisted. Read-only cooldown and queued-state getters drive compact action-bar feedback; the HUD does not advance timers or change combat rules.

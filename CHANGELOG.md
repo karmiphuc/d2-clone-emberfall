@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 — Responsive actions and readable combat state
+
+- Cleave queues behind the current basic attack, executes once when ready, and spends mana only on execution. Movement, regrouping and retreat cancel the queued action.
+- Added live Guard duration/cooldown, Battle Cry cooldown, queued Cleave, low-mana, potion and hold-state feedback to the existing action bar.
+- Added a compact active-status line with accessible pressed states for Guard and Hold.
+- On narrow screens, active combat status temporarily replaces the generic instruction line to prevent overlap.
+- Added simulation tests for queued-action charging/cancellation and browser coverage for the HUD and responsive controls.
+
 ## 0.6.0 — Combat feedback and companion effects
 
 - Added original painted cleave arcs, impact sparks, frost shards, healing wisps, protection sigils, embers, shadow slashes and holy light.
