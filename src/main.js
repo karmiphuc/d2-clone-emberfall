@@ -368,6 +368,7 @@ document.querySelector("#return-camp").onclick = () => {
 };
 const roster = COMPANIONS;
 function update() {
+  document.querySelector(".minimap").dataset.zone = game.zone;
   game.setEquipment(state.equipment, state.companionEquipment);
   document.querySelector("#potions").textContent = state.potions;
   document.querySelector("#party").innerHTML =

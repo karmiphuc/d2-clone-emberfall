@@ -79,6 +79,12 @@ test("expanded wilderness routes to distant regions and map clicks issue real wa
   expect(
     await page.evaluate(() => window.__camp.game.hero.userData.path.at(-1)?.z),
   ).toBeLessThan(-20);
+  await page.getByRole("button", { name: "Area map", exact: true }).click();
+  await page.evaluate(() => window.__camp.returnToCamp());
+  await expect(page.locator(".minimap")).toHaveAttribute("data-zone", "camp");
+  await expect(
+    page.getByRole("button", { name: "3. Old Burial Ground", exact: true }),
+  ).toBeHidden();
   expect(errors).toEqual([]);
 });
 
