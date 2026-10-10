@@ -59,7 +59,7 @@ All six mercenaries can equip armor, rings and charms. Ilyra uses bows, Bram mac
 
 Bram taunts and absorbs damage; Eira heals injured allies; Ilyra fires volleys; Soren slows groups with frost; Aldric protects nearby allies; Nyx flanks and backstabs. Companions share your level and grow in life and damage.
 
-This is an early vertical slice, not a completed Act I. The remaining Act I campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites, with 16-frame movement and 33/17-frame action playback. Intermediate frames are generated from a smaller set of authored poses; dense authored companion gaits, eight-direction turning and authored death sequences remain unfinished. No Diablo assets are bundled.
+This is an early vertical slice, not a completed Act I. The remaining Act I campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites, with 16-frame hero/monster movement, 24-frame mercenary movement and 33/17-frame action playback. Intermediate frames are generated from a smaller set of authored poses; denser authored foot-contact poses, eight-direction turning and authored death sequences remain unfinished. No Diablo assets are bundled.
 
 ## GitHub Pages
 
@@ -84,8 +84,10 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 
 ## Next milestone
 
-Prioritize character motion and combat presentation: longer, consistently alternating hero/companion gaits, eight-facing movement and authored death animation. Blood Moor now spans 84×68 units, with ten outer regions and 72 enemies. The twelve old-road enemies remain the early hunt objective; outer packs offer additional loot and patrol around graveyards, ruins, abandoned camps and a lost caravan. Press M or MAP to enlarge the area map, then click to issue a walking route. Refreshing a completed road hunt resets the whole Moor. The remaining Act I route, deeper skills and companion tactics remain on the roadmap.
+Prioritize character motion and combat presentation: clearer foot planting and denser gait poses, eight-facing movement and authored death animation. Blood Moor now spans 84×68 units, with ten outer regions and 72 enemies. The twelve old-road enemies remain the early hunt objective; outer packs offer additional loot and patrol around graveyards, ruins, abandoned camps and a lost caravan. Press M or MAP to enlarge the area map, then click to issue a walking route. Refreshing a completed road hunt resets the whole Moor. The remaining Act I route, deeper skills and companion tactics remain on the roadmap.
 
 ## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/ARCHITECTURE.md) and the [chapter roadmap](PLAN.md). Browser tests run before every deployment. Development test hooks are excluded from production builds.
+
+Mercenary walking sources are four-phase sheets plus separate opposite-step contacts. `RIFE_MODEL=/path/to/rife49.onnx python scripts/build-companion-gaits.py` replaces only the two mercenary walking atlases after the general sequence/variant bake. Their 24 frames, four facings and three variation banks use 1152×6912 textures. Runtime atlases live in `assets/` so Vite hashes their URLs; a returning tester cannot mix a cached 16-frame atlas with 24-frame playback. Individual role stride lengths track distance travelled. Formation updates preserve useful routes, ease arrival, and follow combat engagement/orders.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.18.0 — Mercenary movement
+
+- Rebuilt all six mercenary walks from original four-phase poses and separate step contacts, with 24-frame playback and three coherent variations.
+- Removed stray cell fragments before pose alignment and preserved stable surface opacity and exposure.
+- Added role-specific stride lengths, gradual turning, acceleration, catch-up pace and arrival braking.
+- Updated formation goals more frequently while retaining useful routes; arrival hysteresis prevents repeated tiny walk restarts.
+- Let actual combat engagement stop movement only when a target is in range with a clear line of attack, while pursuit orders take priority.
+- Extended foreground scenery fading to visible mercenaries, keeping their bodies readable in crowded areas.
+- Added all-role movement, turning, arrival and Hold coverage, and hashed the new gait atlas URLs for cache-safe deployment.
+
 ## 0.17.0 — A larger, populated Blood Moor
 
 - Expanded the playable Moor to 84×68 units, over five times its previous area.

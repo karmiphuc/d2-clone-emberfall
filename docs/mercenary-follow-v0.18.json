@@ -1,0 +1,68 @@
+[
+  {
+    "id": "Ilyra",
+    "travel": 12.744923539236302,
+    "movingTicks": 250,
+    "falseIdle": 0,
+    "maxTurn": 0.10000000000000009,
+    "idle": true,
+    "drift": 0,
+    "heldTravel": 0,
+    "gaitFrames": 24
+  },
+  {
+    "id": "Bram",
+    "travel": 11.533950748745903,
+    "movingTicks": 196,
+    "falseIdle": 0,
+    "maxTurn": 0.10000000000000009,
+    "idle": true,
+    "drift": 0,
+    "heldTravel": 0,
+    "gaitFrames": 24
+  },
+  {
+    "id": "Eira",
+    "travel": 12.774524634209357,
+    "movingTicks": 208,
+    "falseIdle": 0,
+    "maxTurn": 0.10000000000000009,
+    "idle": true,
+    "drift": 0,
+    "heldTravel": 0,
+    "gaitFrames": 24
+  },
+  {
+    "id": "Soren",
+    "travel": 13.020935950686537,
+    "movingTicks": 242,
+    "falseIdle": 0,
+    "maxTurn": 0.10000000000000009,
+    "idle": true,
+    "drift": 0,
+    "heldTravel": 0,
+    "gaitFrames": 24
+  },
+  {
+    "id": "Aldric",
+    "travel": 11.533950748745903,
+    "movingTicks": 196,
+    "falseIdle": 0,
+    "maxTurn": 0.10000000000000009,
+    "idle": true,
+    "drift": 0,
+    "heldTravel": 0,
+    "gaitFrames": 24
+  },
+  {
+    "id": "Nyx",
+    "travel": 11.384353966478129,
+    "movingTicks": 202,
+    "falseIdle": 0,
+    "maxTurn": 0.10000000000000009,
+    "idle": true,
+    "drift": 0,
+    "heldTravel": 0,
+    "gaitFrames": 24
+  }
+]

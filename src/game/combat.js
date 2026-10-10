@@ -621,6 +621,7 @@ export function createCombat(
         ally.cooldown = Math.max(0, ally.cooldown - dt);
         ally.specialCooldown = Math.max(0, (ally.specialCooldown || 0) - dt);
         ally.order = null;
+        ally.engaged = false;
       }
       if (dead) return;
       if (pendingStrike) {
@@ -734,6 +735,7 @@ export function createCombat(
             };
           continue;
         }
+        ally.engaged = true;
         if (ally.cooldown > 0) continue;
         ally.cooldown = spec.cooldown * gear.cooldownMultiplier;
         if (ally.specialCooldown <= 0 && ally.id === "Ilyra") {

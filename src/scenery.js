@@ -63,23 +63,25 @@ export function scenery(
 
 // Fade only foreground props overlapping the hero, preserving readable combat
 // while leaving their collision footprints and pathfinding intact.
-const focus = new T.Vector3(),
-  position = new T.Vector3(),
+const position = new T.Vector3(),
   cameraSpace = new T.Vector3();
 export function updateSceneryVisibility(props, hero, camera, dt) {
-  focus
-    .copy(hero.position)
-    .addScaledVector(T.Object3D.DEFAULT_UP, 1)
-    .project(camera);
-  const heroDepth = cameraSpace
-    .copy(hero.position)
-    .applyMatrix4(camera.matrixWorldInverse).z;
+  const party = Array.isArray(hero) ? hero : [hero];
+  const focuses = party.map((actor) => ({
+    point: actor.position
+      .clone()
+      .addScaledVector(T.Object3D.DEFAULT_UP, 1)
+      .project(camera),
+    depth: cameraSpace
+      .copy(actor.position)
+      .applyMatrix4(camera.matrixWorldInverse).z,
+  }));
   const viewW = camera.right - camera.left,
     viewH = camera.top - camera.bottom;
   for (const sprite of props) {
     if (!sprite.userData.occluder || !sprite.visible || !sprite.parent.visible)
       continue;
-    if (sprite.position.distanceToSquared(hero.position) > 32 * 32) {
+    if (sprite.position.distanceToSquared(party[0].position) > 32 * 32) {
       sprite.material.opacity = 1;
       sprite.material.depthWrite = true;
       continue;
@@ -91,11 +93,13 @@ export function updateSceneryVisibility(props, hero, camera, dt) {
     position.project(camera);
     const w = sprite.scale.x / viewW,
       h = sprite.scale.y / viewH;
-    const overlaps =
-      depth > heroDepth &&
-      Math.abs(focus.x - position.x) < w * 0.8 &&
-      focus.y > position.y - h * sprite.center.y * 2 &&
-      focus.y < position.y + h * (1 - sprite.center.y) * 2;
+    const overlaps = focuses.some(
+      ({ point, depth: actorDepth }) =>
+        depth > actorDepth &&
+        Math.abs(point.x - position.x) < w * 0.8 &&
+        point.y > position.y - h * sprite.center.y * 2 &&
+        point.y < position.y + h * (1 - sprite.center.y) * 2,
+    );
     sprite.material.opacity = T.MathUtils.lerp(
       sprite.material.opacity,
       overlaps ? 0.3 : 1,

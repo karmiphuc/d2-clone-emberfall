@@ -37,13 +37,11 @@ const motionSheets = {
     sequences.monsters * 3,
   ],
   a: [
-    new URL("../public/art/companions-a-walk-sequence.webp", import.meta.url)
-      .href,
+    new URL("../assets/companions-a-walk-sequence.webp", import.meta.url).href,
     sequences.a * 3,
   ],
   b: [
-    new URL("../public/art/companions-b-walk-sequence.webp", import.meta.url)
-      .href,
+    new URL("../assets/companions-b-walk-sequence.webp", import.meta.url).href,
     sequences.b * 3,
   ],
 };
@@ -214,8 +212,11 @@ export function createSpriteActor(name, weapon) {
         : 1,
     walkVariant: 0,
     attackVariant: 0,
-    gaitFrames: 16,
-    strideLength: name === "Fallen" ? 1.6 : name === "Brute" ? 2.8 : 2.4,
+    gaitFrames: companion ? sequences[sheet] : 16,
+    strideLength:
+      { Ilyra: 2.65, Bram: 2.6, Eira: 2.4, Soren: 2.45, Aldric: 2.5, Nyx: 2.9 }[
+        name
+      ] || (name === "Fallen" ? 1.6 : name === "Brute" ? 2.8 : 2.4),
     detailedMotion: name === "hero",
     attackDuration: 0.55,
     attackWindup: 0.16,
@@ -254,7 +255,8 @@ export function createSpriteActor(name, weapon) {
     right = new T.Vector3(),
     up = new T.Vector3();
   sprite.onBeforeRender = (_renderer, _scene, camera) => {
-    facing.set(Math.sin(actor.rotation.y), 0, Math.cos(actor.rotation.y));
+    const yaw = actor.userData.renderYaw ?? actor.rotation.y;
+    facing.set(Math.sin(yaw), 0, Math.cos(yaw));
     right.setFromMatrixColumn(camera.matrixWorld, 0);
     up.setFromMatrixColumn(camera.matrixWorld, 1);
     const x = facing.dot(right),
@@ -295,7 +297,7 @@ export function createSpriteActor(name, weapon) {
       name === "hero" || sheet === "monsters" || companion,
     );
     const sequenceCount =
-      sample.clip === "walk" ? 16 : name === "hero" ? 33 : 17;
+      sample.clip === "walk" ? data.gaitFrames : name === "hero" ? 33 : 17;
     const displayRow = animated
       ? name === "hero" || monsterRun
         ? sample.row
@@ -350,6 +352,7 @@ export function createSpriteActor(name, weapon) {
 
 export function updateActorMotion(actor, dt, moving = false, down = false) {
   const d = actor.userData;
+  d.renderYaw = undefined;
   d.renderPhase = undefined;
   d.renderSwing = undefined;
   d.previousPhase = d.phase;
@@ -393,6 +396,11 @@ export function updateActorMotion(actor, dt, moving = false, down = false) {
 
 export function presentActor(actor, alpha, dt) {
   const d = actor.userData;
+  const yawDelta = Math.atan2(
+    Math.sin(actor.rotation.y - (d.previousYaw ?? actor.rotation.y)),
+    Math.cos(actor.rotation.y - (d.previousYaw ?? actor.rotation.y)),
+  );
+  d.renderYaw = (d.previousYaw ?? actor.rotation.y) + yawDelta * alpha;
   d.renderPosition.lerpVectors(d.simulationPosition, actor.position, alpha);
   if (d.simulationPosition.distanceToSquared(actor.position) > 1)
     d.renderPosition.copy(actor.position);

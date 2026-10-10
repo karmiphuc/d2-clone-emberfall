@@ -19,7 +19,8 @@ entries=[
 ]
 ranges=[]; core_min=255; seams=[]
 for filename,key,actors in entries:
-    rgba=np.array(Image.open(ROOT/'public/art'/filename).convert('RGBA'))
+    directory = ROOT/'assets' if filename.startswith('companions-') and 'walk' in filename else ROOT/'public/art'
+    rgba=np.array(Image.open(directory/filename).convert('RGBA'))
     cell=meta['heroCell' if filename.startswith('hero-') else 'otherCell'];count=meta[key]
     assert rgba.shape==(cell*count*actors,cell*4*meta['variants'],4),filename
     for actor in range(actors):

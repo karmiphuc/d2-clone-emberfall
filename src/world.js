@@ -1,6 +1,12 @@
 import { gridRoute } from "./grid-route.js";
 import { MOOR_BOUNDS, LOCAL_BOUNDS } from "./game/moor.js";
 import { stepWaypoints } from "./waypoint-motion.js";
+import {
+  turnToward,
+  companionPace,
+  needsFollowRoute,
+  formationDepth,
+} from "./companion-follow.js";
 import { beginAttackVariant } from "./action-variants.js";
 import { createRenderBudget } from "./render-budget.js";
 import { createDungeon } from "./dungeon.js";
@@ -830,7 +836,9 @@ export function createWorld(canvas) {
             ),
           );
         c.userData.path = [];
+        c.userData.follow = null;
       });
+      formationHeading = hero.rotation.y;
       cameraFocus.copy(hero.position);
       api.updateCamera(1);
       repath = 0;
@@ -1010,7 +1018,10 @@ export function createWorld(canvas) {
       hero.userData.path = [];
     },
     regroup() {
-      companions.forEach((c) => (c.userData.path = []));
+      companions.forEach((c) => {
+        c.userData.path = [];
+        c.userData.follow = null;
+      });
       repath = 0;
     },
     returnHome() {
@@ -1133,11 +1144,15 @@ export function createWorld(canvas) {
     if (data.path.length) {
       const step = stepWaypoints(person.position, data.path, speed * dt);
       moving = moving || step.moving;
-      if (step.heading !== null) person.rotation.y = step.heading;
+      if (step.heading !== null)
+        person.rotation.y = data.companionId
+          ? turnToward(person.rotation.y, step.heading, dt * 6)
+          : step.heading;
     }
     data.moving = moving;
   }
   let repath = 0;
+  let formationHeading = hero.rotation.y;
   api.update = (dt, time, paused) => {
     if (!paused)
       for (const actor of [
@@ -1145,9 +1160,16 @@ export function createWorld(canvas) {
         ...companions,
         ...residents.map((r) => r.actor),
         ...enemyModels.values(),
-      ])
+      ]) {
         actor.userData.simulationPosition.copy(actor.position);
-    updateSceneryVisibility(sceneryProps, hero, camera, dt);
+        actor.userData.previousYaw = actor.rotation.y;
+      }
+    updateSceneryVisibility(
+      sceneryProps,
+      [hero, ...companions.filter((c) => c.visible)],
+      camera,
+      dt,
+    );
     if (api.zone === "den") dungeon.update(time);
     const marked =
       api.zone !== "camp" &&
@@ -1325,52 +1347,65 @@ export function createWorld(canvas) {
     if (api.zone !== "camp" && api.combat?.preparing) hero.userData.path = [];
     walk(hero, dt, 4);
     updateActorMotion(hero, dt, hero.userData.moving);
+    if (hero.userData.moving)
+      formationHeading = turnToward(
+        formationHeading,
+        hero.rotation.y,
+        dt * 2.5,
+      );
     repath -= dt;
+    const visibleCompanions = companions.filter((c) => c.visible);
     if (!api.hold && repath <= 0) {
-      repath = 0.7;
+      repath = 0.18;
       companions.forEach((comp, i) => {
         if (!comp.visible) return;
+        const d = comp.userData;
+        const follow = (d.follow ||= { speed: 0, settled: false });
         const ally = api.zone !== "camp" ? api.combat?.allies[i + 1] : null;
         if (ally && !ally.hp) {
-          comp.userData.path = [];
+          d.path = [];
+          follow.speed = 0;
           return;
         }
-        if (ally?.order) {
-          comp.userData.path = route(
-            comp.position,
-            v(ally.order.x, 0, ally.order.z),
-          );
+        const pursuing = !!ally?.order;
+        if (ally?.engaged) {
+          d.path = [];
+          follow.goal = null;
           return;
         }
-        if (
-          api.zone !== "camp" &&
-          api.combat?.enemies.some(
-            (e) =>
-              e.hp > 0 &&
-              Math.hypot(e.x - comp.position.x, e.z - comp.position.z) <
-                COMPANIONS[actorNames[i + 1]].range,
-          )
-        ) {
-          comp.userData.path = [];
-          return;
-        }
-        const formationIndex = companions
-          .filter((c) => c.visible)
-          .indexOf(comp);
-        const offset = v((formationIndex - 1) * 1.65, 0, 2).applyAxisAngle(
-          v(0, 1, 0),
-          hero.rotation.y - Math.PI,
-        );
-        const target = hero.position.clone().add(offset);
-        if (comp.position.distanceTo(target) > 1.1)
-          comp.userData.path = route(comp.position, target);
+        const index = visibleCompanions.indexOf(comp);
+        const offset = v(
+          (index - (visibleCompanions.length - 1) / 2) * 1.8,
+          0,
+          formationDepth(d.companionId),
+        ).applyAxisAngle(v(0, 1, 0), formationHeading - Math.PI);
+        const target = pursuing
+          ? v(ally.order.x, 0, ally.order.z)
+          : hero.position.clone().add(offset);
+        follow.hasPath = d.path.length > 0;
+        if (needsFollowRoute(follow, comp.position, target, pursuing)) {
+          d.path = route(comp.position, target);
+          follow.goal = target.clone();
+        } else if (follow.settled) d.path = [];
       });
     }
     companions.forEach((c, i) => {
-      const down = api.zone !== "camp" && api.combat?.allies[i + 1].hp === 0;
+      const ally = api.zone !== "camp" ? api.combat?.allies[i + 1] : null;
+      const down = ally?.hp === 0;
+      if (ally?.engaged) c.userData.path = [];
       c.userData.moving = false;
+      const follow = (c.userData.follow ||= { speed: 0, settled: false });
+      const end = c.userData.path.at(-1);
+      const gap = end ? c.position.distanceTo(end) : 0;
+      follow.speed = companionPace(
+        c.userData.companionId,
+        gap,
+        follow.speed,
+        dt,
+      );
       if (c.visible && !api.hold && !down && c.userData.swing <= 0)
-        walk(c, dt, c.userData.companionId === "Nyx" ? 5.4 : 4.2);
+        walk(c, dt, follow.speed);
+      else follow.speed = 0;
       if (c.visible) updateActorMotion(c, dt, c.userData.moving, down);
     });
   };

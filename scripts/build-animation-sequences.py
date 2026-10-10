@@ -57,6 +57,11 @@ def tween(a,b,t):
     rgb/=np.maximum(alpha,1/255)
     return np.clip(np.concatenate([rgb,alpha],axis=2)*255,0,255).astype(np.uint8)
 
+def sequence_path(name):
+    directory = ROOT/"assets" if name.startswith("companions-") and "walk" in name else ART
+    directory.mkdir(exist_ok=True)
+    return directory/name
+
 def bake(name,characters,steps,loop):
     count=(len(characters[0][0]) if loop else len(characters[0][0])-1)*steps+(0 if loop else 1)
     if os.environ.get('SKIP_HERO') and name.startswith('hero-'): return count
@@ -69,8 +74,8 @@ def bake(name,characters,steps,loop):
                     image=tween(a,b,sub/steps)
                     out.paste(Image.fromarray(image), (col*SIZE,(actor*count+segment*steps+sub)*SIZE))
             if not loop:out.paste(Image.fromarray(keys[-1]),(col*SIZE,(actor*count+count-1)*SIZE))
-    out.save(ART/name,quality=88,method=4)
-    print(f'{name}: {count} frames x {len(characters)} characters, {(ART/name).stat().st_size:,} bytes',flush=True)
+    out.save(sequence_path(name),quality=88,method=4)
+    print(f'{name}: {count} frames x {len(characters)} characters, {sequence_path(name).stat().st_size:,} bytes',flush=True)
     return count
 
 def main():

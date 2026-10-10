@@ -48,7 +48,7 @@ entries = [
 metrics=[]
 for filename,key,actors,action,idle,idle_rows,idle_offset in entries:
     count=meta[key]
-    source=Image.open(Path(os.environ.get('BASE_SEQUENCE_DIR',str(ART)))/filename).convert('RGBA')
+    source=Image.open(Path(os.environ['BASE_SEQUENCE_DIR'])/filename if os.environ.get('BASE_SEQUENCE_DIR') else base.sequence_path(filename)).convert('RGBA')
     original_cell=source.height//(count*actors)
     size=128 if filename.startswith('hero-') else 96
     atlas=Image.new('RGBA',(size*12,size*count*actors))
@@ -93,8 +93,8 @@ for filename,key,actors,action,idle,idle_rows,idle_offset in entries:
                     luminances.append(float(exposure(f)@np.array([.2126,.7152,.0722])))
                     atlas.paste(Image.fromarray(f),((variant*4+col)*size,(actor*count+r)*size))
                 metrics.append({'atlas':filename,'actor':actor,'facing':col,'variant':variant,'lumaRange':round(max(luminances)-min(luminances),3),'opaqueInteriorMin':round(min(opaque),3)})
-    atlas.save(ART/filename,quality=85,method=4)
-    print(f'{filename}: {atlas.width}x{atlas.height}, {(ART/filename).stat().st_size:,} bytes',flush=True)
+    atlas.save(base.sequence_path(filename),quality=85,method=4)
+    print(f'{filename}: {atlas.width}x{atlas.height}, {base.sequence_path(filename).stat().st_size:,} bytes',flush=True)
 meta.update(variants=3,heroCell=128,otherCell=96,consistency='opaque interiors and per-facing diffuse exposure')
 (ROOT/'src/animation-sequence-data.json').write_text(json.dumps(meta,indent=2)+'\n')
 Path('/tmp/emberfall-v15-consistency.json').write_text(json.dumps(metrics,indent=2)+'\n')
