@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0 — Longer animation sequences
+
+- Replaced runtime optical-flow deformation with 16-frame movement sequences, 33-frame hero attacks and 17-frame companion/monster attacks, sampled continuously between neighboring frames.
+- Added original hero passing steps and downstroke/follow-through poses for swords and axes; attacks now progress through additional poses and finish at the standing guard.
+- Removed the hero's deliberate contact freeze and moved selection rings with the interpolated character roots.
+- Added gradual adaptive scene resolution for sustained slow frames, with native-resolution UI and a lower character-preview pixel cap.
+- Added regression coverage for the full attack sequence, exact contact frame, frame-rate adaptation and the absence of runtime motion-vector requests.
+
 ## 0.13.0 — Continuous motion and equipped mercenaries
 
 - Added fractional render interpolation for character movement, attack presentation, projectiles and effects; cached static scenery shadows.

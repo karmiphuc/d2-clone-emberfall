@@ -111,9 +111,12 @@ test("facing stays stable near a quadrant edge but turns decisively", () => {
 });
 
 test("continuous pose samples meet at stride and attack boundaries without resetting", async () => {
-  const { motionFrames } = await import("../../src/animation.js");
-  const a = motionFrames({ moving: true, phase: 0.999, gaitFrames: 2 }, true),
-    b = motionFrames({ moving: true, phase: 1, gaitFrames: 2 }, true);
+  const { sequenceFrames } = await import("../../src/animation.js");
+  const a = sequenceFrames(
+      { moving: true, phase: 15.999, gaitFrames: 16 },
+      true,
+    ),
+    b = sequenceFrames({ moving: true, phase: 16, gaitFrames: 16 }, true);
   assert.equal(a.next, b.row);
   assert.ok(a.mix > 0.99);
   assert.equal(b.mix, 0);
@@ -122,9 +125,34 @@ test("continuous pose samples meet at stride and attack boundaries without reset
     attackDuration: 0.55,
     attackWindup: 0.16,
   };
-  const before = motionFrames({ ...base, swing: 0.39001 }, true),
-    contact = motionFrames({ ...base, swing: 0.39 }, true);
+  const before = sequenceFrames({ ...base, swing: 0.39001 }, true),
+    contact = sequenceFrames({ ...base, swing: 0.39 }, true);
   assert.equal(before.next, contact.row);
   assert.ok(before.mix > 0.99);
   assert.ok(contact.mix < 1e-8);
+});
+
+test("a complete hero swing progresses monotonically through 33 sprite frames and meets contact exactly", async () => {
+  const { sequenceFrames } = await import("../../src/animation.js");
+  const base = {
+    detailedMotion: true,
+    attackDuration: 0.55,
+    attackWindup: 0.16,
+  };
+  let previous = -1;
+  const frames = new Set();
+  for (let i = 0; i < 550; i++) {
+    const sample = sequenceFrames({ ...base, swing: 0.55 - i / 1000 }, true);
+    const position = sample.row + sample.mix;
+    assert.ok(position >= previous - 1e-8);
+    previous = position;
+    frames.add(sample.row);
+    frames.add(sample.next);
+  }
+  assert.equal(frames.size, 33);
+  const hit = sequenceFrames({ ...base, swing: 0.39 }, true);
+  assert.equal(hit.row, 12);
+  assert.ok(hit.mix < 1e-8);
+  const end = sequenceFrames({ ...base, swing: 0.001 }, true);
+  assert.equal(end.next, 32);
 });

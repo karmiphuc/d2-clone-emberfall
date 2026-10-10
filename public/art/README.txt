@@ -67,3 +67,9 @@ Longer hero walk experiments failed alternating-foot review and are not bundled.
 MERCENARY EQUIPMENT AND MOTION DATA — v0.13
 merc-weapons.webp: original generated 4x2 transparent atlas, 384-pixel cells. Row-major: hunting bow, frost bow, iron mace, oath hammer, renewal staff, glacial staff, paired steel daggers, Nightfang daggers. Source exec-cece6670-5e70-4942-99de-056f0e5cd9b1.png retained in /workspace/generated_images; resized and converted to WebP for distribution.
 motion-flow.bin: numerical bidirectional optical-flow vectors derived from existing original character movement/attack atlases by scripts/build-motion-flow.py. Layout and frame pairs are recorded in src/motion-flow-data.json. No replacement character artwork or extracted game assets are included.
+
+
+LONGER SPRITE SEQUENCES — v0.14
+hero-sword/axe-passing.webp, hero-sword/axe-passing-opposite.webp: original generated passing-step poses. Accepted top-row sources exec-f872d657-9fa3-4a00-97a7-7879b33089eb.png and exec-8ce21598-e2c1-4843-8178-96b6ce0a9a08.png; opposite sources exec-5b69f8a7-e539-48fd-a31f-6268286165a7.png and exec-4438f420-b448-4e85-80e4-ef2351ca0fed.png. The redundant second rows of the passing sheets are not used.
+hero-sword/axe-downstroke.webp: original generated four-facing pre-contact and post-contact poses, sources exec-96ac80a0-7c08-4a40-a25f-b8da08cc1c6e.png and exec-352e8196-cee9-4c06-b0e8-8bac435bd64d.png.
+*-walk-sequence.webp: 16-frame baked gait per character/facing. hero-*-attack-sequence.webp: 33 frames; companions-*-attack-sequence.webp and monster-attack-sequence.webp: 17 per character. Generated offline by scripts/build-animation-sequences.py using RIFE interpolation of the original artwork. No inference model runs or downloads in the game. Original generated PNG sources remain in /workspace/generated_images. The v0.13 runtime motion-vector binary is removed from this version.

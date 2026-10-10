@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("render interpolation moves figures between physics ticks and samples intermediate silhouettes", async ({
+test("render interpolation moves figures between physics ticks and plays longer intermediate sprite sequences", async ({
   page,
 }) => {
   const errors = [];
@@ -32,11 +32,16 @@ test("render interpolation moves figures between physics ticks and samples inter
     d.swing = 0;
     d.renderSwing = 0;
     const phases = [];
-    for (const phase of [0.25, 0.5, 0.75]) {
+    for (const phase of [1.25, 4.5, 8.75]) {
       d.phase = d.renderPhase = phase;
       g.renderer.render(g.scene, g.camera);
       g.renderer.render(g.scene, g.camera);
-      phases.push({ mix: d.blendMix, flow: d.flowActive });
+      phases.push({
+        mix: d.blendMix,
+        sequence: d.sequenceActive,
+        frame: d.sequenceFrame,
+        count: d.sequenceLength,
+      });
     }
     return { samples, phases };
   });
@@ -47,9 +52,12 @@ test("render interpolation moves figures between physics ticks and samples inter
     );
   expect(distances.every((d) => d > 0.001)).toBe(true);
   expect(Math.max(...distances)).toBeLessThan(0.06);
-  expect(result.phases.every((p) => p.flow && p.mix > 0 && p.mix < 1)).toBe(
-    true,
-  );
+  expect(
+    result.phases.every(
+      (p) => p.sequence && p.count === 16 && p.mix > 0 && p.mix < 1,
+    ),
+  ).toBe(true);
+  expect(new Set(result.phases.map((p) => p.frame)).size).toBe(3);
   expect(errors).toEqual([]);
 });
 
@@ -88,4 +96,48 @@ test("the hero attacks in-range threats without selection and keeps retreat inpu
     window.__camp.game.hero.position.toArray(),
   );
   expect(Math.hypot(end[0] - start[0], end[2] - start[2])).toBeGreaterThan(0.3);
+});
+
+test("hero attacks advance through a full sprite sequence without a two-pose reset", async ({
+  page,
+}) => {
+  const fields = [];
+  page.on("request", (r) => {
+    if (r.url().endsWith(".bin")) fields.push(r.url());
+  });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.waitForFunction(() => !!window.__camp);
+  await page.getByRole("button", { name: "Controls", exact: true }).click();
+  const result = await page.evaluate(() => {
+    const g = window.__camp.game,
+      d = g.hero.userData;
+    g.renderer.setPixelRatio(0.5);
+    g.renderer.shadowMap.enabled = false;
+    g.stop();
+    g.animateAttack("hero");
+    const samples = [];
+    for (let i = 0; i < 66; i++) {
+      d.swing = d.renderSwing = 0.55 - i / 120;
+      d.moving = false;
+      d.renderDt = 1 / 120;
+      g.renderer.render(g.scene, g.camera);
+      samples.push(d.sequenceFrame);
+    }
+    d.swing = d.renderSwing = 0.39;
+    g.renderer.render(g.scene, g.camera);
+    return {
+      samples,
+      contact: d.sequenceFrame,
+      height: d.animationMaps.swordStrike.image.height,
+      count: d.sequenceLength,
+    };
+  });
+  expect(new Set(result.samples).size).toBeGreaterThan(24);
+  expect(
+    result.samples.every((v, i) => i === 0 || v >= result.samples[i - 1]),
+  ).toBe(true);
+  expect(result.contact).toBe(12);
+  expect(result.count).toBe(33);
+  expect(result.height).toBe(33 * 160);
+  expect(fields).toEqual([]);
 });

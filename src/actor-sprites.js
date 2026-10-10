@@ -1,8 +1,9 @@
 import * as T from "three";
+import sequences from "./animation-sequence-data.json";
 import {
   advanceMotion,
   motionPose,
-  motionFrames,
+  sequenceFrames,
   facingColumn,
 } from "./animation.js";
 import { createMotionMaterial } from "./sprite-motion-material.js";
@@ -22,50 +23,59 @@ const sheets = {
 };
 const motionSheets = {
   sword: [
-    new URL("../public/art/hero-sword-motion.webp", import.meta.url).href,
-    4,
+    new URL("../public/art/hero-sword-walk-sequence.webp", import.meta.url)
+      .href,
+    sequences.sword,
   ],
-  axe: [new URL("../public/art/hero-axe-motion.webp", import.meta.url).href, 4],
+  axe: [
+    new URL("../public/art/hero-axe-walk-sequence.webp", import.meta.url).href,
+    sequences.axe,
+  ],
   monsters: [
-    new URL("../public/art/monster-attacks.webp", import.meta.url).href,
-    6,
+    new URL("../public/art/monster-attack-sequence.webp", import.meta.url).href,
+    sequences.monsters * 3,
   ],
   a: [
-    new URL("../public/art/companions-a-motion.webp", import.meta.url).href,
-    6,
+    new URL("../public/art/companions-a-walk-sequence.webp", import.meta.url)
+      .href,
+    sequences.a * 3,
   ],
   b: [
-    new URL("../public/art/companions-b-motion.webp", import.meta.url).href,
-    6,
+    new URL("../public/art/companions-b-walk-sequence.webp", import.meta.url)
+      .href,
+    sequences.b * 3,
   ],
 };
 motionSheets.aAttack = [
-  new URL("../public/art/companions-a-attacks.webp", import.meta.url).href,
-  6,
+  new URL("../public/art/companions-a-attack-sequence.webp", import.meta.url)
+    .href,
+  sequences.aAttack * 3,
 ];
 motionSheets.bAttack = [
-  new URL("../public/art/companions-b-attacks.webp", import.meta.url).href,
-  6,
+  new URL("../public/art/companions-b-attack-sequence.webp", import.meta.url)
+    .href,
+  sequences.bAttack * 3,
 ];
 motionSheets.swordStrike = [
-  new URL("../public/art/hero-sword-strikes.webp", import.meta.url).href,
-  6,
+  new URL("../public/art/hero-sword-attack-sequence.webp", import.meta.url)
+    .href,
+  sequences.swordStrike,
 ];
 motionSheets.axeStrike = [
-  new URL("../public/art/hero-axe-strikes.webp", import.meta.url).href,
-  6,
+  new URL("../public/art/hero-axe-attack-sequence.webp", import.meta.url).href,
+  sequences.axeStrike,
 ];
 motionSheets.FallenRun = [
-  new URL("../public/art/fallen-run.webp", import.meta.url).href,
-  4,
+  new URL("../public/art/fallen-walk-sequence.webp", import.meta.url).href,
+  sequences.FallenRun,
 ];
 motionSheets.RisenRun = [
-  new URL("../public/art/risen-run.webp", import.meta.url).href,
-  4,
+  new URL("../public/art/risen-walk-sequence.webp", import.meta.url).href,
+  sequences.RisenRun,
 ];
 motionSheets.BruteRun = [
-  new URL("../public/art/brute-run.webp", import.meta.url).href,
-  4,
+  new URL("../public/art/brute-walk-sequence.webp", import.meta.url).href,
+  sequences.BruteRun,
 ];
 const figures = {
   Fallen: ["monsters", 0, 3],
@@ -81,14 +91,6 @@ const figures = {
   Akara: ["npc", 0, 3],
   Charsi: ["npc", 1, 3],
   Kashya: ["npc", 2, 3],
-};
-const attackScale = {
-  Ilyra: 1.04,
-  Bram: 1,
-  Eira: 1.06,
-  Soren: 1,
-  Aldric: 1.033,
-  Nyx: 1.058,
 };
 // Each atlas shares one image source/GPU allocation across its actors.
 const atlasCache = new Map();
@@ -205,7 +207,7 @@ export function createSpriteActor(name, weapon) {
     weaponSlot: new T.Group(),
     weaponId: null,
     phase: 0,
-    gaitFrames: sheet === "monsters" ? 4 : 2,
+    gaitFrames: 16,
     strideLength: name === "Fallen" ? 1.6 : name === "Brute" ? 2.8 : 2.4,
     detailedMotion: name === "hero",
     attackDuration: 0.55,
@@ -276,7 +278,7 @@ export function createSpriteActor(name, weapon) {
         ? pose.row
         : row * 2 + pose.row - (sheet === "monsters" || companionAttack ? 2 : 0)
       : data.spriteRow;
-    const sample = motionFrames(
+    const sample = sequenceFrames(
       {
         ...data,
         phase: data.renderPhase ?? data.phase,
@@ -284,27 +286,21 @@ export function createSpriteActor(name, weapon) {
       },
       name === "hero" || sheet === "monsters" || companion,
     );
+    const sequenceCount =
+      sample.clip === "walk" ? 16 : name === "hero" ? 33 : 17;
+    const displayRow = animated
+      ? name === "hero" || monsterRun
+        ? sample.row
+        : row * sequenceCount + sample.row
+      : data.spriteRow;
     const nextRow = animated
       ? name === "hero" || monsterRun
         ? sample.next
-        : row * 2 +
-          sample.next -
-          (sheet === "monsters" || companionAttack ? 2 : 0)
+        : row * sequenceCount + sample.next
       : data.spriteRow;
     if (material.map !== map) material.map = map;
-    map.offset.set(column / 4, 1 - (frameRow + 1) / count);
-    const factor =
-      richHero || monsterRun
-        ? 1
-        : companionAttack
-          ? attackScale[name]
-          : name === "hero"
-            ? 1.08
-            : name === "Risen"
-              ? 1.32
-              : sheet === "monsters"
-                ? 1.24
-                : 1;
+    map.offset.set(column / 4, 1 - (displayRow + 1) / count);
+    const factor = 1;
     const renderSize = size * 1.4;
     sprite.userData.frameScale = animated ? factor : 1;
     if (sprite.scale.x !== renderSize) {
@@ -312,14 +308,7 @@ export function createSpriteActor(name, weapon) {
       sprite.updateMatrixWorld();
     }
     data.activeClip = animated ? pose.clip : "idle";
-    data.activeRow = frameRow;
-    const displayRow = animated
-      ? name === "hero" || monsterRun
-        ? sample.row
-        : row * 2 +
-          sample.row -
-          (sheet === "monsters" || companionAttack ? 2 : 0)
-      : data.spriteRow;
+    data.activeRow = pose.clip === "walk" ? displayRow : frameRow;
     const blended = motionMaterial.sample({
       map,
       key: animated ? motionKey : "idle",
@@ -333,7 +322,9 @@ export function createSpriteActor(name, weapon) {
       dt: data.renderDt,
     });
     data.blendMix = blended.mix;
-    data.flowActive = blended.flow;
+    data.sequenceFrame = sample.row;
+    data.sequenceLength = sequenceCount;
+    data.sequenceActive = blended.sequence;
     actor.userData.spriteFrame = column;
     material.rotation = body.rotation.z;
   };

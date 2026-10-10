@@ -7,7 +7,7 @@ export function visibleSpriteHit(hit) {
   if (!hit.object.isSprite || !map || !source?.complete || !hit.uv) return true;
   let mask = masks.get(source);
   if (!mask) {
-    const scale = Math.min(1, 512 / Math.max(source.width, source.height));
+    const scale = Math.min(1, 2048 / Math.max(source.width, source.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(source.width * scale));
     canvas.height = Math.max(1, Math.round(source.height * scale));

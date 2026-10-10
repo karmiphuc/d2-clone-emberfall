@@ -33,7 +33,7 @@ export function createCharacterPreview(canvas, id, weapon) {
     alpha: true,
     antialias: true,
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
   const scene = new T.Scene();
@@ -100,6 +100,7 @@ export function createCharacterPreview(canvas, id, weapon) {
         nextAttack = time + 1.1;
       }
       updateActorMotion(actor, dt, mode === "walk");
+      actor.userData.renderDt = dt;
       renderer.render(scene, camera);
     },
     dispose() {

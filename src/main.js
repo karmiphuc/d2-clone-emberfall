@@ -1162,59 +1162,65 @@ const help = () =>
   );
 document.querySelector("#help").onclick = help;
 document.querySelector("#settings").onclick = () =>
-  modal("Camp settings", "<p>Adjust the scene for your device.</p>", [
-    {
-      label: game.low ? "Enable detailed shadows" : "Use performance mode",
-      run: () => {
-        game.low = !game.low;
-        renderer.shadowMap.enabled = !game.low;
-        renderer.shadowMap.needsUpdate = true;
-        renderer.setPixelRatio(Math.min(devicePixelRatio, game.low ? 1 : 1.75));
-        dialog.close();
-        toast(
-          game.low ? "Performance mode enabled." : "Detailed shadows enabled.",
-        );
+  modal(
+    "Camp settings",
+    "<p>Rendering resolution adjusts to your device while UI text stays sharp.</p>",
+    [
+      {
+        label: game.low ? "Enable detailed shadows" : "Use performance mode",
+        run: () => {
+          game.low = !game.low;
+          renderer.shadowMap.enabled = !game.low;
+          renderer.shadowMap.needsUpdate = true;
+          game.resetRenderBudget();
+          dialog.close();
+          toast(
+            game.low
+              ? "Performance mode enabled."
+              : "Detailed shadows enabled.",
+          );
+        },
       },
-    },
-    {
-      label: game.reducedEffects
-        ? "Use full combat effects"
-        : "Reduce combat effects",
-      run: () => {
-        game.reducedEffects = !game.reducedEffects;
-        dialog.close();
-        toast(
-          game.reducedEffects
-            ? "Combat effects softened."
-            : "Full combat effects enabled.",
-        );
+      {
+        label: game.reducedEffects
+          ? "Use full combat effects"
+          : "Reduce combat effects",
+        run: () => {
+          game.reducedEffects = !game.reducedEffects;
+          dialog.close();
+          toast(
+            game.reducedEffects
+              ? "Combat effects softened."
+              : "Full combat effects enabled.",
+          );
+        },
       },
-    },
-    {
-      label: "Reset camp progress…",
-      run: () =>
-        modal(
-          "Begin again?",
-          "<p>This removes your locally saved purchases, recruitment choices, and camp quest progress.</p>",
-          [
-            {
-              label: "Reset this playtest",
-              run: () => {
-                state = freshState();
-                combat = createCombat(state, combatEvent, game.blocked);
-                game.setCombat(combat);
-                refreshEnemyLabels();
-                update();
-                returnToCamp();
-                dialog.close();
-                toast("A new journey begins.");
+      {
+        label: "Reset camp progress…",
+        run: () =>
+          modal(
+            "Begin again?",
+            "<p>This removes your locally saved purchases, recruitment choices, and camp quest progress.</p>",
+            [
+              {
+                label: "Reset this playtest",
+                run: () => {
+                  state = freshState();
+                  combat = createCombat(state, combatEvent, game.blocked);
+                  game.setCombat(combat);
+                  refreshEnemyLabels();
+                  update();
+                  returnToCamp();
+                  dialog.close();
+                  toast("A new journey begins.");
+                },
               },
-            },
-            { label: "Keep my progress", run: () => dialog.close() },
-          ],
-        ),
-    },
-  ]);
+              { label: "Keep my progress", run: () => dialog.close() },
+            ],
+          ),
+      },
+    ],
+  );
 let audio;
 document.querySelector("#sound").onclick = async () => {
   if (!audio) {
@@ -1429,6 +1435,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
+  if (!document.hidden) game.adaptPerformance(dt);
   accumulator += dialog.open || document.hidden ? 0 : dt;
   while (accumulator >= 1 / 30) {
     simulationTime += 1 / 30;

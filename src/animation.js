@@ -51,61 +51,6 @@ export function motionPose(data, attackFrames = false) {
   return { clip: "idle", row: 0 };
 }
 
-// A continuous sample between authored poses; gameplay still uses discrete
-// contact events. The renderer warps corresponding pixels before blending.
-export function motionFrames(data, attackFrames = false) {
-  const pose = motionPose(data, attackFrames);
-  if (pose.clip === "walk") {
-    const phase = data.phase || 0;
-    return {
-      ...pose,
-      next: (pose.row + 1) % (data.gaitFrames || 2),
-      mix: phase - Math.floor(phase),
-    };
-  }
-  if (pose.clip === "attack" && data.detailedMotion) {
-    const duration = data.attackDuration || 0.55,
-      windup = data.attackWindup ?? 0.16;
-    const recovery = duration - windup;
-    const times = [
-      0,
-      windup * 0.5,
-      windup,
-      windup + recovery * 0.2,
-      windup + recovery * 0.47,
-      windup + recovery * 0.76,
-      duration,
-    ];
-    const elapsed = duration - data.swing;
-    const row = pose.row;
-    return {
-      ...pose,
-      next: Math.min(5, row + 1),
-      mix:
-        row === 5
-          ? 0
-          : Math.max(
-              0,
-              Math.min(
-                1,
-                (elapsed - times[row]) / (times[row + 1] - times[row]),
-              ),
-            ),
-    };
-  }
-  if (
-    pose.clip === "attack" &&
-    data.attackSequence === "release-recover" &&
-    pose.row === 2
-  )
-    return {
-      ...pose,
-      next: 3,
-      mix: Math.max(0, Math.min(1, (0.26 - data.swing) / 0.13)),
-    };
-  return { ...pose, next: pose.row, mix: 0 };
-}
-
 // Hysteresis prevents left/right pose chatter along a quadrant boundary.
 export function facingColumn(x, y, previous) {
   let right = x >= 0,
@@ -115,4 +60,64 @@ export function facingColumn(x, y, previous) {
     if (Math.abs(y) < 0.14) back = previous >= 2;
   }
   return back ? (right ? 3 : 2) : right ? 0 : 1;
+}
+
+// Baked sprite sequences contain the intermediate silhouettes already. Sampling
+// adjacent frames is cheap and keeps presentation continuous above atlas cadence.
+export function sequenceFrames(data, attackFrames = false) {
+  const pose = motionPose(data, attackFrames);
+  let position = 0,
+    count = 1;
+  if (pose.clip === "walk") {
+    count = data.gaitFrames || 16;
+    position = (data.phase || 0) % count;
+  } else if (pose.clip === "attack" && data.detailedMotion) {
+    count = 33;
+    const duration = data.attackDuration || 0.55,
+      windup = data.attackWindup ?? 0.16;
+    const recovery = duration - windup;
+    const times = [
+      0,
+      windup * 0.5,
+      windup * 0.78,
+      windup,
+      windup + recovery * 0.1,
+      windup + recovery * 0.2,
+      windup + recovery * 0.47,
+      windup + recovery * 0.76,
+      duration,
+    ];
+    const elapsed = Math.max(0, duration - data.swing);
+    let segment = 0;
+    while (segment < 7 && elapsed >= times[segment + 1]) segment++;
+    position = Math.min(
+      32,
+      segment * 4 +
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (elapsed - times[segment]) / (times[segment + 1] - times[segment]),
+          ),
+        ) *
+          4,
+    );
+  } else if (pose.clip === "attack") {
+    count = 17;
+    position =
+      data.windup > 0
+        ? 0
+        : Math.min(
+            16,
+            Math.max(0, 1 - data.swing / (data.attackDuration || 0.26)) * 16,
+          );
+  }
+  const row = Math.floor(position);
+  return {
+    clip: pose.clip,
+    row,
+    next:
+      pose.clip === "walk" ? (row + 1) % count : Math.min(count - 1, row + 1),
+    mix: position - row,
+  };
 }

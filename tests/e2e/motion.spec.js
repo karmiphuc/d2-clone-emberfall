@@ -78,7 +78,8 @@ test("walk and sword/axe attacks render separate poses, including held companion
       monsterRows: [...monsterRows].sort(),
     };
   });
-  expect(result.rows).toEqual([0, 1]);
+  expect(result.rows.length).toBeGreaterThan(8);
+  expect(result.rows.every((row) => row >= 0 && row < 16)).toBe(true);
   expect(result.idle).toBe("idle");
   for (const attack of [result.sword, result.axe]) {
     expect(attack.windup).toEqual({ row: 0, clip: "attack", map: true });

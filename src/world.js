@@ -1,3 +1,4 @@
+import { createRenderBudget } from "./render-budget.js";
 import { createDungeon } from "./dungeon.js";
 import { denWalkable, DEN_GATE } from "./game/den.js";
 import * as T from "three";
@@ -19,7 +20,8 @@ export function createWorld(canvas) {
     antialias: true,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  const renderBudget = createRenderBudget(Math.min(devicePixelRatio, 1.25));
+  renderer.setPixelRatio(renderBudget.ratio);
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
@@ -772,6 +774,19 @@ export function createWorld(canvas) {
     enemyModels,
     blocked,
     route: (a, b) => route(v(a.x, 0, a.z), v(b.x, 0, b.z)),
+    resetRenderBudget() {
+      renderer.setPixelRatio(
+        renderBudget.reset(Math.min(devicePixelRatio, api.low ? 1 : 1.25)),
+      );
+    },
+    adaptPerformance(dt) {
+      // Respect direct renderer overrides used by captures/development tools.
+      if (Math.abs(renderer.getPixelRatio() - renderBudget.ratio) > 0.001)
+        return;
+      const ratio = renderBudget.tick(dt);
+      if (Math.abs(renderer.getPixelRatio() - ratio) > 0.001)
+        renderer.setPixelRatio(ratio);
+    },
     updateCamera(dt) {
       cameraFocus.lerp(
         hero.position.clone().add(hero.userData.renderOffset),
@@ -910,8 +925,7 @@ export function createWorld(canvas) {
           target.userData.recoilStrength =
             event.source === "hero" ? 0.22 : 0.12;
           target.userData.recoilTime = 0.22;
-          target.userData.impactHold = 0.04;
-          if (event.source === "hero") actor.userData.impactHold = 0.045;
+          target.userData.impactHold = 0.018;
         }
         const kind =
           event.source === "Soren"
@@ -1377,6 +1391,14 @@ export function createWorld(canvas) {
   api.present = (alpha, dt) => {
     for (const actor of [hero, ...companions, ...enemyModels.values()])
       if (actor.visible) presentActor(actor, alpha, dt);
+    const h = hero.userData;
+    select.position.set(h.shadow.position.x, 0.035, h.shadow.position.z);
+    const marked = api.combat?.enemies.find(
+      (e) => e.hp > 0 && e.id === (api.hoveredEnemy || api.combat.target),
+    );
+    const displayed =
+      marked && enemyModels.get(marked.id)?.userData.renderPosition;
+    if (displayed) targetRing.position.set(displayed.x, 0.04, displayed.z);
     effects.present(alpha, api.reducedEffects);
   };
   return api;

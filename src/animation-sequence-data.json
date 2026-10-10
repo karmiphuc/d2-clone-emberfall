@@ -1,0 +1,16 @@
+{
+  "interpolator": "RIFE 4.9 ONNX",
+  "modelSha256": "76e4cef9ab42fa7dd4e8f6e4aba47462051e3faa969e4bca6479784fbab0ac6f",
+  "sword": 16,
+  "swordStrike": 33,
+  "axe": 16,
+  "axeStrike": 33,
+  "a": 16,
+  "aAttack": 17,
+  "b": 16,
+  "bAttack": 17,
+  "FallenRun": 16,
+  "RisenRun": 16,
+  "BruteRun": 16,
+  "monsters": 17
+}
