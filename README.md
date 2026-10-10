@@ -4,7 +4,7 @@
 
 **[Play the latest build](https://karmiphuc.github.io/d2-clone-emberfall/)** · [Report a playtest bug](https://github.com/karmiphuc/d2-clone-emberfall/issues/new/choose)
 
-A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment and a complete first Blood Moor expedition: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–6, usable skill trees, and six companion specialties.
+A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment, a complete first Blood Moor expedition, and a connected Den of Evil dungeon: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–6, usable skill trees, and six companion specialties.
 
 ![Emberfall v0.8 camp at dusk](docs/screenshots/camp-v0.8.webp)
 
@@ -52,9 +52,11 @@ Enter the eastern gate to fight 12 enemies, including the Ashen Brute. Clear the
 
 After collecting all 12 drops, return to the eastern gate and choose **Start fresh hunt**. Progress, equipment, talents and recruitment choices carry over. Four clears reach the level-6 playtest cap; enemy scaling stops after hunt 4. Each enemy guarantees an equipment drop. The 60-slot bag automatically sells overflow drops. Change equipment and talents in camp.
 
+The northeastern cleft in the Moor leads to the **Den of Evil** (recommended level 3): three connected chambers, 11 creatures including the Gravewarden, and a one-time 175 gold / 3 potion bounty from Akara. The entrance label approaches and enters the cave; the exit returns to the Moor. Dungeon kills and loot survive retreats/reloads independently of repeat Moor hunts. Living dungeon enemies reset when changing areas. The Den stays clear once completed.
+
 Bram taunts and absorbs damage; Eira heals injured allies; Ilyra fires volleys; Soren slows groups with frost; Aldric protects nearby allies; Nyx flanks and backstabs. Companions share your level and grow in life and damage.
 
-This is an early vertical slice, not a completed Act I. The Den of Evil, remaining campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites with short authored walk and hero/enemy attack cycles. Companion attacks use short release/recovery pairs; monster walking uses the idle silhouette. Eight-direction animation and longer, smoother cycles remain unfinished. No Diablo assets are bundled.
+This is an early vertical slice, not a completed Act I. The remaining Act I campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites with short authored walk and hero/enemy attack cycles. Companion attacks use short release/recovery pairs; monster walking uses the idle silhouette. Eight-direction animation and longer, smoother cycles remain unfinished. No Diablo assets are bundled.
 
 ## GitHub Pages
 
@@ -64,6 +66,7 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 
 - `src/world.js`: rendering, camp, characters, grid navigation and animation.
 - `src/wilderness.js`: authored wilderness scenery.
+- `src/dungeon.js` and `src/game/den.js`: cave presentation, connected footprint, encounters and bounty.
 - `src/actor-sprites.js` and `src/animation.js`: directional atlases and motion state.
 - `src/combat-effects.js` and `src/combat-audio.js`: pooled effect sprites and opt-in combat cues.
 - `src/scenery.js`: illustrated props, instanced grass and hero occlusion fading.
@@ -78,7 +81,7 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 
 ## Next milestone
 
-Den of Evil: connected dungeon rooms, a clear objective, quest rewards and return portals. Then expand skills, equipment and companion tactics before adding the remaining Act I campaign.
+Expand the remaining Act I route and quests, then deepen skills, equipment and companion tactics. Longer character animation cycles and dungeon wall variety remain visual priorities.
 
 ## Development
 

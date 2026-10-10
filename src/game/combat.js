@@ -144,11 +144,13 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     order: null,
   }));
   let stats = heroStats(state);
+  let encounters = ENCOUNTERS,
+    progress = state;
   const areaScale = 1 + Math.min(state.run, 3) * 0.22;
   const enemies = ENCOUNTERS.map((e) => ({
     ...e,
     maxHp: Math.round(e.hp * areaScale),
-    hp: state.defeated.includes(e.id) ? 0 : Math.round(e.hp * areaScale),
+    hp: progress.defeated.includes(e.id) ? 0 : Math.round(e.hp * areaScale),
     damage: Math.round(e.damage * (1 + Math.min(state.run, 3) * 0.12)),
     slow: 0,
     taunted: 0,
@@ -159,19 +161,19 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     engaged: false,
   }));
   const drops = enemies
-    .filter((e) => e.hp === 0 && !state.lootTaken.includes(e.id))
+    .filter((e) => e.hp === 0 && !progress.lootTaken.includes(e.id))
     .map((e) => ({
       id: e.id,
-      x: state.dropLocations[e.id]?.x ?? e.x,
-      z: state.dropLocations[e.id]?.z ?? e.z,
+      x: progress.dropLocations[e.id]?.x ?? e.x,
+      z: progress.dropLocations[e.id]?.z ?? e.z,
       gold: e.gold,
       elite: e.elite,
       item:
-        state.dropItems[e.id] ||
+        progress.dropItems[e.id] ||
         lootItem(
           state,
           e.id,
-          ENCOUNTERS.findIndex((a) => a.id === e.id),
+          encounters.findIndex((a) => a.id === e.id),
           e.elite,
         ),
     }));
@@ -184,6 +186,20 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     dead = false,
     queuedCleave = false,
     queuedTarget = null;
+  let enemyRoute = null;
+  const clearLine = (a, b) => {
+    if (!enemyRoute) return true;
+    const steps = Math.ceil(distance(a, b) / 0.3);
+    for (let i = 1; i < steps; i++)
+      if (
+        blocked(
+          a.x + ((b.x - a.x) * i) / steps,
+          a.z + ((b.z - a.z) * i) / steps,
+        )
+      )
+        return false;
+    return true;
+  };
   const hero = allies[0];
   function hurtEnemy(enemy, damage, source) {
     if (enemy.hp <= 0) return;
@@ -204,9 +220,9 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
     });
     if (!enemy.hp) {
       enemy.windup = 0;
-      if (!state.defeated.includes(enemy.id)) {
-        state.defeated.push(enemy.id);
-        state.dropLocations[enemy.id] = { x: enemy.x, z: enemy.z };
+      if (!progress.defeated.includes(enemy.id)) {
+        progress.defeated.push(enemy.id);
+        progress.dropLocations[enemy.id] = { x: enemy.x, z: enemy.z };
         const oldLevel = levelOf(state);
         state.xp = Math.min(
           LEVEL_XP.at(-1),
@@ -219,10 +235,10 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         const item = lootItem(
           state,
           enemy.id,
-          ENCOUNTERS.findIndex((e) => e.id === enemy.id),
+          encounters.findIndex((e) => e.id === enemy.id),
           enemy.elite,
         );
-        state.dropItems[enemy.id] = item;
+        progress.dropItems[enemy.id] = item;
         drops.push({
           id: enemy.id,
           x: enemy.x,
@@ -234,7 +250,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         emit({
           type: "kill",
           id: enemy.id,
-          complete: state.defeated.length === ENCOUNTERS.length,
+          complete: progress.defeated.length === encounters.length,
         });
       }
       if (target === enemy.id) target = null;
@@ -290,6 +306,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         (cleave ? 3.1 + (state.skills.wideArc || 0) * 0.6 : 2)
     )
       return false;
+    if (!clearLine(hero, enemy)) return false;
     if (cleave && mana < 8) return false;
     hero.cooldown = cleave ? 0.8 : 0.55;
     if (cleave) mana -= 8;
@@ -301,6 +318,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         .filter(
           (e) =>
             e.hp > 0 &&
+            clearLine(hero, e) &&
             distance(hero, e) < 3.1 + (state.skills.wideArc || 0) * 0.6,
         )
         .forEach((e) =>
@@ -329,6 +347,55 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
   }
   refreshStats(true);
   const api = {
+    setArea(nextEncounters, nextProgress, navigate = null) {
+      encounters = nextEncounters;
+      progress = nextProgress;
+      enemyRoute = navigate;
+      const scale = nextProgress === state ? areaScale : 1;
+      enemies.splice(
+        0,
+        enemies.length,
+        ...encounters.map((e) => ({
+          ...e,
+          maxHp: Math.round(e.hp * scale),
+          hp: progress.defeated.includes(e.id) ? 0 : Math.round(e.hp * scale),
+          damage: Math.round(
+            e.damage *
+              (nextProgress === state ? 1 + Math.min(state.run, 3) * 0.12 : 1),
+          ),
+          slow: 0,
+          taunted: 0,
+          taunter: null,
+          cooldown: 0,
+          windup: 0,
+          victim: null,
+          engaged: false,
+        })),
+      );
+      drops.splice(
+        0,
+        drops.length,
+        ...enemies
+          .filter((e) => !e.hp && !progress.lootTaken.includes(e.id))
+          .map((e) => ({
+            id: e.id,
+            x: progress.dropLocations[e.id]?.x ?? e.x,
+            z: progress.dropLocations[e.id]?.z ?? e.z,
+            gold: e.gold,
+            elite: e.elite,
+            item:
+              progress.dropItems[e.id] ||
+              lootItem(
+                state,
+                e.id,
+                encounters.findIndex((a) => a.id === e.id),
+                e.elite,
+              ),
+          })),
+      );
+      api.cancel();
+      allies.forEach((a) => (a.order = null));
+    },
     refreshStats,
     get stats() {
       return stats;
@@ -396,6 +463,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
       if (!hero.hp || mana < 8 || !enemy) return false;
       const inRange =
+        clearLine(hero, enemy) &&
         distance(hero, enemy) <= 3.1 + (state.skills.wideArc || 0) * 0.6;
       if (!targetId && !inRange) return false;
       if (targetId) target = targetId;
@@ -470,6 +538,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
               .sort((a, b) => distance(hero, a) - distance(hero, b))[0];
         const inRange =
           nearest &&
+          clearLine(hero, nearest) &&
           distance(hero, nearest) <= 3.1 + (state.skills.wideArc || 0) * 0.6;
         if (!nearest || mana < 8 || inRange || !queuedTarget) {
           queuedCleave = false;
@@ -479,7 +548,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       }
       const focused = enemies.find((e) => e.id === target && e.hp > 0);
       if (focused) {
-        if (distance(hero, focused) > 1.7)
+        if (distance(hero, focused) > 1.7 || !clearLine(hero, focused))
           hero.order = { x: focused.x, z: focused.z };
         if (!queuedCleave) attack(focused);
       }
@@ -530,7 +599,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
           ally.specialCooldown = 6;
           emit({ type: "special", id: ally.id, name: "Challenge" });
         }
-        if (distance(ally, enemy) > spec.range) {
+        if (distance(ally, enemy) > spec.range || !clearLine(ally, enemy)) {
           if (!holding)
             ally.order = {
               x: enemy.x + (ally.id === "Nyx" ? 1 : 0),
@@ -542,7 +611,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         ally.cooldown = spec.cooldown;
         if (ally.specialCooldown <= 0 && ally.id === "Ilyra") {
           near
-            .filter((e) => distance(e, ally) <= 7)
+            .filter((e) => distance(e, ally) <= 7 && clearLine(ally, e))
             .slice(0, 3)
             .forEach((e) => {
               hurtEnemy(e, spec.damage + bonus, ally.id);
@@ -553,7 +622,10 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
         } else if (ally.specialCooldown <= 0 && ally.id === "Soren") {
           const center = { x: enemy.x, z: enemy.z };
           enemies
-            .filter((e) => e.hp > 0 && distance(e, center) < 3.5)
+            .filter(
+              (e) =>
+                e.hp > 0 && distance(e, center) < 3.5 && clearLine(ally, e),
+            )
             .forEach((e) => {
               e.slow = 3;
               hurtEnemy(e, 14 + bonus, ally.id);
@@ -610,6 +682,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             if (
               victim?.active &&
               victim.hp > 0 &&
+              clearLine(enemy, victim) &&
               distance(enemy, victim) < (enemy.elite ? 3 : 2)
             )
               hitAlly(victim, enemy.damage, enemy.id);
@@ -629,16 +702,28 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
             .sort((a, b) => distance(a, enemy) - distance(b, enemy))[0];
         if (!victim) continue;
         const dist = distance(enemy, victim);
-        if (dist > 8 && !enemy.engaged) continue;
+        if (!enemy.engaged && (dist > 8 || !clearLine(enemy, victim))) continue;
         enemy.engaged = true;
-        if (dist > 1.45) {
+        if (dist > 1.45 || !clearLine(enemy, victim)) {
+          let destination = victim;
+          if (enemyRoute && !clearLine(enemy, victim)) {
+            enemy.routeTimer = (enemy.routeTimer || 0) - dt;
+            if (enemy.routeTimer <= 0 || !enemy.route?.length) {
+              enemy.route = enemyRoute(enemy, victim);
+              enemy.routeTimer = 0.7;
+            }
+            while (enemy.route.length && distance(enemy, enemy.route[0]) < 0.3)
+              enemy.route.shift();
+            destination = enemy.route[0] || enemy;
+          }
+          const travelDistance = Math.max(0.01, distance(enemy, destination));
           const dx =
-              ((victim.x - enemy.x) / dist) *
+              ((destination.x - enemy.x) / travelDistance) *
               enemy.speed *
               dt *
               (enemy.slow > 0 ? 0.45 : 1),
             dz =
-              ((victim.z - enemy.z) / dist) *
+              ((destination.z - enemy.z) / travelDistance) *
               enemy.speed *
               dt *
               (enemy.slow > 0 ? 0.45 : 1);
@@ -653,13 +738,13 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
       for (let i = drops.length - 1; i >= 0; i--) {
         const d = drops[i];
         if (distance(hero, d) < 2) {
-          if (!state.lootTaken.includes(d.id)) {
-            state.lootTaken.push(d.id);
-            delete state.dropLocations[d.id];
+          if (!progress.lootTaken.includes(d.id)) {
+            progress.lootTaken.push(d.id);
+            delete progress.dropLocations[d.id];
             state.gold += d.gold;
             if (d.elite) state.charm = true;
             const result = addLoot(state, d.item);
-            delete state.dropItems[d.id];
+            delete progress.dropItems[d.id];
             if (
               d.item.itemId === "ashen_charm" &&
               !state.equipment.charm &&
@@ -671,7 +756,7 @@ export function createCombat(state, emit = () => {}, blocked = () => false) {
               );
               refreshStats();
             }
-            if (state.lootTaken.length % 3 === 0) state.potions++;
+            if (progress.lootTaken.length % 3 === 0) state.potions++;
             emit({
               type: "loot",
               gold: d.gold,

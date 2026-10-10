@@ -1,3 +1,4 @@
+import { DEN_ENCOUNTERS, freshDen, denWalkable } from "./den.js";
 import { ENCOUNTERS } from "./combat.js";
 import { COMPANIONS } from "./companions.js";
 import { ITEMS, starterEquipment, BAG_LIMIT } from "./items.js";
@@ -8,6 +9,7 @@ const services = ["Charsi", "Kashya", "Stash"],
 export function freshState() {
   return {
     version: 2,
+    den: freshDen(),
     gold: 240,
     potions: 3,
     quest: false,
@@ -104,6 +106,43 @@ export function normalizeSave(raw) {
     if (!result.lootTaken.includes(id)) {
       const drop = item(raw.dropItems?.[id]);
       if (drop) result.dropItems[id] = drop;
+    }
+  }
+  const den = raw.den;
+  if (den && typeof den === "object") {
+    const allowed = DEN_ENCOUNTERS.map((e) => e.id);
+    result.den.entered = den.entered === true;
+    result.den.defeated = [
+      ...new Set(
+        (Array.isArray(den.defeated) ? den.defeated : []).filter((id) =>
+          allowed.includes(id),
+        ),
+      ),
+    ];
+    result.den.lootTaken = [
+      ...new Set(
+        (Array.isArray(den.lootTaken) ? den.lootTaken : []).filter((id) =>
+          result.den.defeated.includes(id),
+        ),
+      ),
+    ];
+    result.den.rewardClaimed =
+      den.rewardClaimed === true &&
+      result.den.defeated.length === allowed.length;
+    for (const id of result.den.defeated) {
+      if (result.den.lootTaken.includes(id)) continue;
+      const p = den.dropLocations?.[id];
+      if (
+        p &&
+        Number.isFinite(p.x) &&
+        Number.isFinite(p.z) &&
+        Math.abs(p.x) <= 20 &&
+        Math.abs(p.z) <= 16 &&
+        denWalkable(p.x, p.z)
+      )
+        result.den.dropLocations[id] = { x: p.x, z: p.z };
+      const drop = item(den.dropItems?.[id]);
+      if (drop) result.den.dropItems[id] = drop;
     }
   }
   for (const [key, talent] of Object.entries(TALENTS)) {

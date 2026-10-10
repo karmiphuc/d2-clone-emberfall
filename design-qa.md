@@ -1,41 +1,35 @@
-# v0.10 talent and backpack review
+# v0.11 connected dungeon review
 
-Scope: clearer build planning and loot browsing within the existing playable camp/Blood Moor slice. The [v0.9 review](docs/qa-v0.9.md) records the preceding companion combat pass. Full Act I and complete Diablo II fidelity remain unfinished.
+Scope: an authored Den of Evil connected to the existing Blood Moor. [Previous review](docs/qa-v0.10.md). The rest of Act I is unfinished.
 
-## Visual target and evidence
+## Evidence and visual target
 
-The established Wrought Iron direction, existing stone inventory panel and pre-change skill screen are the references. The new original `public/art/talents.webp` atlas was opened and inspected: nine distinct bronze-framed painted emblems, with no labels embedded in the image.
+The existing Wrought Iron camp/HUD, painted characters and combat effects remain the reference. New original cave artwork uses the same muted, textured isometric direction. The transparent 2×2 cave atlas was opened and inspected before integration. It contains a limestone wall, entrance, ritual altar and stalagmite/bone cluster.
 
-- [Desktop skill comparison](docs/screenshots/skills-comparison-v0.10.webp): matching fresh level-1 state and 1440 × 900 viewport, before/after opening Skills.
-- [Phone skill comparison](docs/screenshots/skills-mobile-comparison-v0.10.webp): matching state at 390 × 844. The new default Combat skills branch shows all three tiers with a readable inspector.
-- [Final desktop tree](docs/screenshots/skills-v0.10.webp) and [phone tree](docs/screenshots/skills-mobile-v0.10.webp).
-- [Populated backpack](docs/screenshots/inventory-loot-v0.10.webp), [filtered/sorted weapons](docs/screenshots/inventory-filtered-v0.10.webp), and [phone backpack](docs/screenshots/inventory-mobile-v0.10.webp). These use a clearly staged level-3 save containing 14 existing item definitions to inspect a representative loot collection.
-
-Both combined comparisons and final captures were opened and inspected. Local Playwright/Chromium supplies browser verification; the cloud browser connector remains unavailable. Production verification is separate from the development fixture captures.
+Local Playwright/Chromium supplies browser screenshots; the cloud browser connector remains unavailable. The initial clear-test screenshot exposed an overly dark floor and repetitive reused Moor rubble. Subsequent desktop, phone and journal captures were opened and inspected after replacing that art and increasing cave fill lighting.
 
 ## Findings and resolutions
 
-1. **P2, resolved — skill descriptions crowd every node.** Replaced nine repeated text panels with compact connected nodes and one selected-talent inspector. Current and next-rank effects, prerequisites, point cost and camp restrictions remain explicit. Inspecting a talent does not spend points.
-2. **P2, resolved — mobile tree requires tiny text and hides its final tier.** Branch buttons show one complete three-tier path at a time on narrow screens. Desktop retains all three paths. The inspector uses readable text; the close and respec controls remain reachable.
-3. **P2, resolved — reused equipment icons weaken skill identity.** Added original heart, gauntlet, battered shield, crossed blades, sweeping sword, executioner's axe, mana chalice, fortress shield and war-horn emblems. Learned/locked/selected states remain distinguishable through ranks, borders and action availability.
-4. **P2, resolved — initial new controls use browser-white styling.** The first capture exposed missing button backgrounds on branch and quick-learn controls. Applied the existing dark bronze palette and recaptured desktop and phone layouts.
-5. **P2, resolved — larger backpacks lack browsing controls.** Added category counts/filters, newest/level/value sorting and visible level badges. Sorting retains the selected item; category changes select a matching item. Empty categories give a recovery instruction. The existing comparison, equip/sell actions and dynamic weapon preview remain functional.
-6. **P3 — short labels remain compact.** Level/rank badges and quick-learn labels are smaller than inspector text. The larger inspect controls and detail panel carry the full explanation. Drag-and-drop inventory placement remains outside this slice.
-
-No unresolved P0/P1/P2 issues remain within this release's scope.
+1. **P2, resolved — first cave looks like repeated rubble in a black void.** Added original cave walls, entrance, altar and stalagmites. Raised floor/ambient illumination while retaining dark rock outside the traversable footprint and warm torch pools.
+2. **P2, resolved — hostile-area controls and labels assume the Moor.** Both hostile areas now display enemy/loot labels, action feedback, attacks and retreat. The cave has its own title, objective and minimap footprint; entrance/exit labels support normal approach and nearby E interaction.
+3. **P2, resolved — attacks could cross dungeon walls.** Dungeon melee/cleave and ranged attacks require clear line of sight. Engaged enemies use the shared route function around blocked passages. Hero and companion movement use the existing clearance-aware A\*.
+4. **P2, resolved — shared encounter progress would mix two areas.** Added validated dungeon-local kills, drops and a one-time reward. Area switching preserves party life/mana; camp restores them. Moor hunt resets leave the dungeon untouched.
+5. **P3 — authored wall segments repeat.** The three chambers use a limited original prop kit and a fixed layout. Further shape/prop variety and procedural generation remain future work. The Gravewarden reuses the existing elite creature artwork.
 
 ## Fidelity surfaces
 
-- **Typography:** classical tree/character headings with readable sans-serif effects and requirements. Mobile moves detail text out of narrow columns.
-- **Spacing/layout:** compact nodes and an adjacent desktop inspector; one complete branch plus inspector on phone. Backpack controls fit above the existing icon grid without horizontal overflow.
-- **Colors/tokens:** dark stone, bronze borders, gold selection and restrained green next-rank improvements match the established inventory/HUD palette.
-- **Image quality:** nine original framed icons replace semantically unrelated equipment icons. They remain legible at node and inspector sizes.
-- **Copy/content:** current/next rank, required level/talent, point cost, filtered empty states and camp-only changes are explicit. The work does not introduce new talents or alter progression formulas.
+- **Typography:** existing classical location/dialog headings and readable body text; short cave subtitle fits phone widths.
+- **Spacing/layout:** existing desktop/phone HUD; dungeon journal fits a 390 × 844 viewport without horizontal overflow.
+- **Colors/tokens:** cool grey limestone, dark earth and warm torchlight; shared bronze UI controls.
+- **Image quality:** original transparent cave illustrations, existing directional characters and pooled combat effects; no extracted Diablo assets.
+- **Copy/content:** dungeon enemy count, clear objective, recommended level, retreat persistence, reward and claimed state are explicit.
 
 ## Verification
 
-Focused browser checks passed for inspecting without spending, real training and prerequisites, keyboard selection, mobile branches, free respec, camp restrictions, filters/sorting, comparison, selling, equipped weapon appearance and reload persistence. Superseded skill styles were removed; talent presentation now has its own module and stylesheet.
+Focused end-to-end play passed: approach the cave from the Moor, clear all 11 enemies, retreat/reload before collecting all loot, return to collect it, exit through the cave mouth, claim the Akara bounty and reject a duplicate claim. Unit coverage verifies old-save defaults, invalid progress rejection, area isolation, retained party vitals and attacks blocked by a wall.
 
-Full regression passed: 27 unit tests and 14 browser tests (41 total), including repeated expeditions through level six. Production desktop/mobile checks trained Weapon Mastery, inspected mobile branches, purchased and equipped gear through Charsi, filtered/sorted the backpack and confirmed equipment after reload. No page errors, missing assets or horizontal overflow were observed; the development hook is absent. The standalone package trained the same talent with no external image requests. Production screenshots were opened and inspected. Formatting and build/package checks passed. GitHub deployment is verified separately after publishing.
+Full regression passed: 31 unit tests and 15 browser tests (46 total). After tightening queued Cleave across walls and dungeon drop validation, all unit tests and the dungeon/targeting browser checks passed again. A production check used a compatible level-three old-save fixture and normal controls to walk camp → Moor → Den → Moor → camp, inspect the journal on desktop/phone, and confirm dungeon entry persisted after reload. No page errors, missing assets or horizontal overflow were observed; the development hook is absent. The standalone build trained a talent with zero external image requests. Build/package, formatting and diff checks passed. Deployment is verified separately after publishing.
+
+Final production evidence: [dungeon entrance](docs/screenshots/den-v0.11.webp), [phone journal](docs/screenshots/den-journal-mobile-v0.11.webp). Both were opened and inspected.
 
 final result: passed

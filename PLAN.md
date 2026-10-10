@@ -1,17 +1,16 @@
 # Chapter I implementation plan
 
-## Current milestone: repeatable first-area progression
+## Current milestone: connected Den of Evil
 
-Playable camp, party movement and town services. Built with Three.js, original procedural environment/character geometry and a DOM interface. One player-controlled warrior and three recruitable companions. Device-local persistence; desktop-first controls. Blood Moor now includes an authored 12-enemy encounter, elite, companion combat, persistent drops, defeat recovery and a one-time camp reward. The first area supports repeat hunts, levels 1–6, 27 equipment types, three warrior talent branches, and six recruitable companion specialties.
+Playable camp, Blood Moor and an authored three-chamber Den of Evil. One warrior plus three of six recruitable companions; original painted character/environment art; device-local persistence. The Moor has 12 enemies and repeat hunts, levels 1–6, 27 equipment types and nine talents. The Den adds eleven creatures, the Gravewarden, separate persistent loot and a one-time Akara bounty. Its fixed footprint drives navigation, wall-aware attacks and the minimap. Area changes preserve party vitals; camp restores them.
 
-## Next: Den of Evil vertical slice
+## Next: expand the chapter route
 
-1. Extract fixed-step simulation, collision and navigation from rendering.
-2. Build Blood Moor connected to the camp, keeping existing services and party state.
-3. Add melee hit timing, enemy perception and pathing, damage, death, drops, pickup and equipment.
-4. Give the scout, shield mercenary and adept one signature ability each; test hazard avoidance and focus-target commands.
-5. Add Den of Evil with authored entrance, generated connected rooms, clear objective, reward and return portal.
-6. Validate a continuous 30–45 minute town/exploration/combat/reward session before expanding content.
+1. Extend the wilderness toward Burial Grounds and create a distinct boss/quest loop.
+2. Expand companion tactics and add longer, smoother character animation cycles.
+3. Add dungeon wall/room variety and richer encounter placement.
+4. Continue extracting scene/navigation responsibilities before larger maps.
+5. Validate a continuous 30–45 minute session and real-device performance before widening the campaign.
 
 ## Full chapter sequence
 
@@ -23,8 +22,8 @@ Three hero archetypes; companion talents and equipment; item rarity and affixes;
 
 ## Risks to resolve early
 
-Companion navigation through doors; combat readability with four allies; browser performance under enemy and effect load; procedural connectivity; save migrations. Current polygonal art is a prototype visual direction, not a recreation of Diablo II's final asset quality.
+Companion navigation through doors; combat readability with four allies; browser performance under enemy and effect load; procedural connectivity; save migrations. Current four-facing painted art and short animation cycles remain an interpretation of the classic visual direction, not a reproduction of Diablo II's asset quality.
 
 ## Done means
 
-A fresh save can complete all six quests through Andariel, with working optional areas, durable progress, reliable party navigation and balanced hero/companion combinations. The camp-only prototype does not yet satisfy this chapter completion criterion.
+A fresh save can complete all six quests through Andariel, with working optional areas, durable progress, reliable party navigation and balanced hero/companion combinations. The current camp/Moor/Den slice does not yet satisfy this chapter completion criterion.

@@ -56,3 +56,5 @@ lance, healing mote and divine bolt; runtime rotates along flight direction.
 talents.webp: 3x3 opaque 512-pixel icons, row-major Vitality, Iron Skin,
 Last Stand, Weapon Mastery, Wide Arc, Executioner, Battle Flow, Bulwark,
 Battle Cry. Original bronze-framed painted emblems on dark stone.
+
+cave-props.webp: original generated transparent 2x2 atlas: limestone wall, cave entrance, ritual altar and stalagmite/bone cluster. Generated source retained at /workspace/generated_images/exec-662ab44e-0722-4018-a9fc-562a53fb02c9.png; converted to WebP for distribution.

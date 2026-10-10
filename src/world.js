@@ -1,3 +1,5 @@
+import { createDungeon } from "./dungeon.js";
+import { denWalkable, DEN_GATE } from "./game/den.js";
 import * as T from "three";
 import { createActor, setActorWeapon, createMonster } from "./characters.js";
 import { updateActorMotion } from "./actor-sprites.js";
@@ -608,6 +610,18 @@ export function createWorld(canvas) {
   const campObstacles = [...obstacles];
   const wilderness = createWilderness(ground.material, oakTexture);
   scene.add(wilderness.root);
+  const dungeon = createDungeon();
+  scene.add(dungeon.root);
+  scenery(
+    wilderness.root,
+    "cave",
+    1,
+    DEN_GATE.x,
+    DEN_GATE.z - 1,
+    5.5,
+    5.2,
+    0.1,
+  );
   const sceneryProps = [];
   scene.traverse((o) => {
     if (o.userData.occluder) sceneryProps.push(o);
@@ -625,6 +639,7 @@ export function createWorld(canvas) {
     COUNT = Math.floor((MAX - MIN) / STEP) + 1;
   function blocked(x, z) {
     return (
+      (api.zone === "den" && !denWalkable(x, z, 0.3)) ||
       x < MIN ||
       x > MAX ||
       z < -14 ||
@@ -754,6 +769,7 @@ export function createWorld(canvas) {
     combat: null,
     enemyModels,
     blocked,
+    route: (a, b) => route(v(a.x, 0, a.z), v(b.x, 0, b.z)),
     updateCamera(dt) {
       cameraFocus.lerp(hero.position, Math.min(1, dt * 7));
       camera.position.copy(cameraFocus).add(cameraOffset);
@@ -769,12 +785,17 @@ export function createWorld(canvas) {
       api.zone = zone;
       campObjects.forEach((o) => (o.visible = zone === "camp"));
       wilderness.root.visible = zone === "moor";
-      enemyModels.forEach((o) => (o.visible = zone === "moor"));
-      lootModels.forEach((o) => (o.visible = zone === "moor"));
+      dungeon.root.visible = zone === "den";
+      enemyModels.forEach((o) => (o.visible = zone !== "camp"));
+      lootModels.forEach((o) => (o.visible = zone !== "camp"));
       obstacles.splice(
         0,
         obstacles.length,
-        ...(zone === "camp" ? campObstacles : wilderness.obstacles),
+        ...(zone === "camp"
+          ? campObstacles
+          : zone === "den"
+            ? []
+            : wilderness.obstacles),
       );
       ambient.color.set(zone === "camp" ? "#8195ac" : "#708796");
       ambient.groundColor.set(zone === "camp" ? "#2f332e" : "#222d2d");
@@ -782,6 +803,13 @@ export function createWorld(canvas) {
       sun.color.set(zone === "camp" ? "#b6c0cf" : "#879eaa");
       sun.intensity = zone === "camp" ? 1.55 : 1.4;
       scene.background.set(zone === "camp" ? "#1e2223" : "#202b30");
+      if (zone === "den") {
+        ambient.color.set("#788791");
+        ambient.intensity = 1.25;
+        ambient.groundColor.set("#292421");
+        sun.intensity = 1.15;
+        scene.background.set("#080c0f");
+      }
       scene.fog.color.copy(scene.background);
       api.stop();
       hero.position.set(zone === "camp" ? 0 : -14, 0, zone === "camp" ? 5 : 10);
@@ -832,7 +860,7 @@ export function createWorld(canvas) {
         scene.add(obj);
         obj.userData.enemyId = enemy.id;
         if (enemy.elite) obj.scale.setScalar(1.25);
-        obj.visible = api.zone === "moor" && enemy.hp > 0;
+        obj.visible = api.zone !== "camp" && enemy.hp > 0;
         enemyModels.set(enemy.id, obj);
       }
     },
@@ -1007,7 +1035,7 @@ export function createWorld(canvas) {
     ray.setFromCamera(pointer, camera);
   }
   function pickEnemy() {
-    if (api.zone !== "moor" || !api.combat) return null;
+    if (api.zone === "camp" || !api.combat) return null;
     const living = [...enemyModels.values()].filter(
       (o) =>
         o.visible &&
@@ -1091,8 +1119,9 @@ export function createWorld(canvas) {
   let repath = 0;
   api.update = (dt, time, paused) => {
     updateSceneryVisibility(sceneryProps, hero, camera, dt);
+    if (api.zone === "den") dungeon.update(time);
     const marked =
-      api.zone === "moor" &&
+      api.zone !== "camp" &&
       api.combat?.enemies.find(
         (e) => e.hp > 0 && e.id === (api.hoveredEnemy || api.combat.target),
       );
@@ -1161,7 +1190,7 @@ export function createWorld(canvas) {
       if (!blocked(hero.position.x, nz)) hero.position.z = nz;
       hero.rotation.y = Math.atan2(d.x, d.z);
     }
-    if (api.zone === "moor" && api.combat) {
+    if (api.zone !== "camp" && api.combat) {
       api.combat.tick(
         dt,
         [hero, ...companions].map((o, i) => ({
@@ -1242,7 +1271,7 @@ export function createWorld(canvas) {
       repath = 0.7;
       companions.forEach((comp, i) => {
         if (!comp.visible) return;
-        const ally = api.zone === "moor" ? api.combat?.allies[i + 1] : null;
+        const ally = api.zone !== "camp" ? api.combat?.allies[i + 1] : null;
         if (ally && !ally.hp) {
           comp.userData.path = [];
           return;
@@ -1255,7 +1284,7 @@ export function createWorld(canvas) {
           return;
         }
         if (
-          api.zone === "moor" &&
+          api.zone !== "camp" &&
           api.combat?.enemies.some(
             (e) =>
               e.hp > 0 &&
@@ -1279,7 +1308,7 @@ export function createWorld(canvas) {
       });
     }
     companions.forEach((c, i) => {
-      const down = api.zone === "moor" && api.combat?.allies[i + 1].hp === 0;
+      const down = api.zone !== "camp" && api.combat?.allies[i + 1].hp === 0;
       c.userData.moving = false;
       if (c.visible && !api.hold && !down)
         walk(c, dt, c.userData.companionId === "Nyx" ? 5.4 : 4.2);

@@ -19,7 +19,7 @@ Save data is device-local. Maintain compatibility with the `emberfall-camp-v1` s
 
 The frame loop advances gameplay in 1/30-second steps, capped to avoid large jumps when the tab resumes. Dialogs pause simulation. Combat receives plain actor positions and emits presentation events; no Three.js objects enter the save. Reload restores the party at camp while keeping defeated enemies, drop locations, purchases and rewards. Living enemies currently reset to full health on reload.
 
-The current scene/navigation module still owns movement and presentation together. Extract reusable navigation before adding the dungeon. Continuous performance tests on integrated GPUs and real mobile devices are still needed; software-rendered browser tests verify behavior, not a target frame rate.
+The current scene/navigation module still owns movement and presentation together. The same A\* route function now serves dungeon party movement and enemy pursuit around solid cave walls; further extraction from `world.js` remains a cleanup opportunity. Continuous performance tests on integrated GPUs and real mobile devices are still needed; software-rendered browser tests verify behavior, not a target frame rate.
 
 ## Progression boundaries
 
@@ -60,3 +60,11 @@ Right-click skill targeting can retain an explicit enemy ID while approaching. T
 `src/skill-tree.js` renders the existing nine talents as compact connected paths and a selected-talent inspector. `src/skill-tree.css` owns this layout. Mobile shows one branch at a time, with all three tiers visible; desktop shows every branch. Node selection is separate from learning, supports arrow-key navigation and retains focus across training. Rank previews describe the existing simulation formulas; progression and camp-only training/respec rules remain in `src/game/progression.js` and the modal handlers.
 
 Backpack filters and sort order are transient presentation state. They operate on a copied inventory array and never reorder the saved inventory. Changing category chooses a matching item; sorting retains the current selection. Equipping and selling still use the shared item functions and refresh world equipment through the existing update path. No new save fields are added.
+
+## Connected dungeon areas
+
+`src/game/den.js` defines three chambers joined by two passages, enemy IDs and the one-time bounty. The shared footprint drives collision, cave scenery placement and the minimap. `src/dungeon.js` owns cave lighting and original wall/entrance/altar/stalagmite art. Geometry outside the footprint is instanced; large wall props reuse the existing hero-occlusion fading.
+
+`combat.setArea()` replaces area enemies/drops while retaining party life, mana and cooldowns. Main selects either the existing top-level Moor progress or `state.den`. Changing hostile areas resets living enemies, cancels attack intent and rebuilds actor/loot presentation; kills and rolled drops persist. Camp still restores the company. Dungeon attacks check line of sight, and engaged enemies use the shared route function when walls block direct pursuit. The Moor retains its original movement and combat behavior.
+
+The optional `den` object keeps save schema 2 and the existing key compatible. Normalization validates dungeon IDs, claimed rewards and item uniqueness across both areas. A Moor hunt reset never resets Den progress. The dungeon is a single authored clear, without a repeat/reset action yet.

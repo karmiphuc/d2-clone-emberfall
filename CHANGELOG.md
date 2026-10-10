@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0 — Beneath the Blood Moor
+
+- Added a connected Den of Evil dungeon with three chambers, eleven creatures, the Gravewarden and a one-time Akara bounty.
+- Added original cave entrance, limestone wall, altar and stalagmite illustrations, torchlight and a dungeon minimap.
+- Added physical entrance/exit labels and nearby E interaction, retaining town retreat and existing Moor hunts.
+- Separated dungeon kills and uncollected loot from Moor progress while preserving party life/mana on area changes.
+- Added wall-aware dungeon attacks and enemy routing through passages.
+- Added save migration/validation and end-to-end dungeon clear, return, reload and reward coverage.
+
 ## 0.10.0 — Readable talent paths and loot browsing
 
 - Rebuilt the skill tree around compact connected talent nodes, nine original icons and a selected-talent inspector with current/next-rank effects.

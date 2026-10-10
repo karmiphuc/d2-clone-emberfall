@@ -1,6 +1,7 @@
 import * as T from "three";
 
 const urls = {
+  cave: new URL("../public/art/cave-props.webp", import.meta.url).href,
   services: new URL("../public/art/camp-services.webp", import.meta.url).href,
   details: new URL("../public/art/ground-details.webp", import.meta.url).href,
   tents: new URL("../public/art/camp-tents.webp", import.meta.url).href,
