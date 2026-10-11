@@ -88,6 +88,6 @@ Prioritize character motion and combat presentation: clearer foot planting and d
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/ARCHITECTURE.md) and the [chapter roadmap](PLAN.md). Browser tests run before every deployment. Development test hooks are excluded from production builds.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/ARCHITECTURE.md), the approved [art direction](docs/ART_DIRECTION.md) and the [chapter roadmap](PLAN.md). Browser tests run before every deployment. Development test hooks are excluded from production builds.
 
-Mercenary walking sources are four-phase sheets plus separate opposite-step contacts. `RIFE_MODEL=/path/to/rife49.onnx python scripts/build-companion-gaits.py` replaces only the two mercenary walking atlases after the general sequence/variant bake. Their 24 frames, four facings and three variation banks use 1152×6912 textures. Runtime atlases live in `assets/` so Vite hashes their URLs; a returning tester cannot mix a cached 16-frame atlas with 24-frame playback. Individual role stride lengths track distance travelled. Formation updates preserve useful routes, ease arrival, and follow combat engagement/orders.
+The hero, all six mercenaries and current enemy archetypes use sprites rendered from coherent skeletal rigs. The [rigged pipeline](scripts/rigged/README.md) documents pinned licensed sources, equipment binding, action sampling, planted-foot correction and exact-root atlas packing. Runtime atlases live in `assets/` so Vite hashes their URLs. Stride playback tracks displacement; formation updates preserve useful routes, ease arrival and follow combat orders. Earlier painted-sheet and RIFE scripts remain historical tooling and are not the production direction.

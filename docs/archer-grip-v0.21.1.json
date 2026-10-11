@@ -1,0 +1,511 @@
+{
+  "version": "0.21.1",
+  "sourceRevision": "00d4ca3a20718345d9f8d8ebad865ce52da05be9",
+  "atlas": "assets/rigged/ilyra.webp",
+  "sha256": "822af8bbcba73670cb2c13c8f5e559b0fd3f0f2876a17261400110f1b0a6b220",
+  "bodyComparison": {
+    "matchedBodyChannels": 81,
+    "differences": [],
+    "baselineRevision": "ac0cea957a0b40c3aa7a1fd3e78edc7192c6eb55"
+  },
+  "units": "unscaled source model",
+  "rejectionThreshold": 0.035,
+  "maximumGripDistance": 0.015092638800505114,
+  "samples": [
+    {
+      "clip": "idle",
+      "phase": 0,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.03125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.0625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.09375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.15625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.1875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.21875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.25,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.28125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.3125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.34375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.40625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.4375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.46875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.5,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.53125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.5625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.59375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.65625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.6875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.71875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.75,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.78125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.8125,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.84375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.90625,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.9375,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 0.96875,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "idle",
+      "phase": 1,
+      "gripDistance": 0.01509263552210779
+    },
+    {
+      "clip": "walk",
+      "phase": 0,
+      "gripDistance": 0.01509263425480213
+    },
+    {
+      "clip": "walk",
+      "phase": 0.03125,
+      "gripDistance": 0.015092634424560842
+    },
+    {
+      "clip": "walk",
+      "phase": 0.0625,
+      "gripDistance": 0.015092634575014535
+    },
+    {
+      "clip": "walk",
+      "phase": 0.09375,
+      "gripDistance": 0.015092634689014188
+    },
+    {
+      "clip": "walk",
+      "phase": 0.125,
+      "gripDistance": 0.01509263475710775
+    },
+    {
+      "clip": "walk",
+      "phase": 0.15625,
+      "gripDistance": 0.015092634973941152
+    },
+    {
+      "clip": "walk",
+      "phase": 0.1875,
+      "gripDistance": 0.015092635330866461
+    },
+    {
+      "clip": "walk",
+      "phase": 0.21875,
+      "gripDistance": 0.015092635801980338
+    },
+    {
+      "clip": "walk",
+      "phase": 0.25,
+      "gripDistance": 0.015092636365037883
+    },
+    {
+      "clip": "walk",
+      "phase": 0.28125,
+      "gripDistance": 0.015092635857698385
+    },
+    {
+      "clip": "walk",
+      "phase": 0.3125,
+      "gripDistance": 0.015092635380781589
+    },
+    {
+      "clip": "walk",
+      "phase": 0.34375,
+      "gripDistance": 0.015092634934821384
+    },
+    {
+      "clip": "walk",
+      "phase": 0.375,
+      "gripDistance": 0.015092634525243747
+    },
+    {
+      "clip": "walk",
+      "phase": 0.40625,
+      "gripDistance": 0.015092634755251915
+    },
+    {
+      "clip": "walk",
+      "phase": 0.4375,
+      "gripDistance": 0.015092634825022697
+    },
+    {
+      "clip": "walk",
+      "phase": 0.46875,
+      "gripDistance": 0.01509263472992203
+    },
+    {
+      "clip": "walk",
+      "phase": 0.5,
+      "gripDistance": 0.0150926344670015
+    },
+    {
+      "clip": "walk",
+      "phase": 0.53125,
+      "gripDistance": 0.015092634996465324
+    },
+    {
+      "clip": "walk",
+      "phase": 0.5625,
+      "gripDistance": 0.015092635900883519
+    },
+    {
+      "clip": "walk",
+      "phase": 0.59375,
+      "gripDistance": 0.015092637171157003
+    },
+    {
+      "clip": "walk",
+      "phase": 0.625,
+      "gripDistance": 0.015092638800505114
+    },
+    {
+      "clip": "walk",
+      "phase": 0.65625,
+      "gripDistance": 0.015092637179009372
+    },
+    {
+      "clip": "walk",
+      "phase": 0.6875,
+      "gripDistance": 0.015092636124718915
+    },
+    {
+      "clip": "walk",
+      "phase": 0.71875,
+      "gripDistance": 0.015092635627072382
+    },
+    {
+      "clip": "walk",
+      "phase": 0.75,
+      "gripDistance": 0.015092635675881401
+    },
+    {
+      "clip": "walk",
+      "phase": 0.78125,
+      "gripDistance": 0.015092635102214397
+    },
+    {
+      "clip": "walk",
+      "phase": 0.8125,
+      "gripDistance": 0.015092634563099479
+    },
+    {
+      "clip": "walk",
+      "phase": 0.84375,
+      "gripDistance": 0.015092634063508498
+    },
+    {
+      "clip": "walk",
+      "phase": 0.875,
+      "gripDistance": 0.015092633607405436
+    },
+    {
+      "clip": "walk",
+      "phase": 0.90625,
+      "gripDistance": 0.015092633933732677
+    },
+    {
+      "clip": "walk",
+      "phase": 0.9375,
+      "gripDistance": 0.015092634149932513
+    },
+    {
+      "clip": "walk",
+      "phase": 0.96875,
+      "gripDistance": 0.015092634255857895
+    },
+    {
+      "clip": "walk",
+      "phase": 1,
+      "gripDistance": 0.01509263425480213
+    },
+    {
+      "clip": "attack",
+      "phase": 0,
+      "gripDistance": 0.015092636841628555
+    },
+    {
+      "clip": "attack",
+      "phase": 0.03125,
+      "gripDistance": 0.015092636295290639
+    },
+    {
+      "clip": "attack",
+      "phase": 0.0625,
+      "gripDistance": 0.01509263588963227
+    },
+    {
+      "clip": "attack",
+      "phase": 0.09375,
+      "gripDistance": 0.015092635605790043
+    },
+    {
+      "clip": "attack",
+      "phase": 0.125,
+      "gripDistance": 0.015092635445320114
+    },
+    {
+      "clip": "attack",
+      "phase": 0.15625,
+      "gripDistance": 0.015092635409466525
+    },
+    {
+      "clip": "attack",
+      "phase": 0.1875,
+      "gripDistance": 0.015092635499134996
+    },
+    {
+      "clip": "attack",
+      "phase": 0.21875,
+      "gripDistance": 0.015092635714866668
+    },
+    {
+      "clip": "attack",
+      "phase": 0.25,
+      "gripDistance": 0.015092636076734188
+    },
+    {
+      "clip": "attack",
+      "phase": 0.28125,
+      "gripDistance": 0.0150926357006003
+    },
+    {
+      "clip": "attack",
+      "phase": 0.3125,
+      "gripDistance": 0.015092635420662399
+    },
+    {
+      "clip": "attack",
+      "phase": 0.34375,
+      "gripDistance": 0.01509263521724661
+    },
+    {
+      "clip": "attack",
+      "phase": 0.375,
+      "gripDistance": 0.015092635090440907
+    },
+    {
+      "clip": "attack",
+      "phase": 0.40625,
+      "gripDistance": 0.015092635040155306
+    },
+    {
+      "clip": "attack",
+      "phase": 0.4375,
+      "gripDistance": 0.01509263506610631
+    },
+    {
+      "clip": "attack",
+      "phase": 0.46875,
+      "gripDistance": 0.015092635167799226
+    },
+    {
+      "clip": "attack",
+      "phase": 0.5,
+      "gripDistance": 0.015092635360294983
+    },
+    {
+      "clip": "attack",
+      "phase": 0.53125,
+      "gripDistance": 0.01509263519851736
+    },
+    {
+      "clip": "attack",
+      "phase": 0.5625,
+      "gripDistance": 0.01509263515801713
+    },
+    {
+      "clip": "attack",
+      "phase": 0.59375,
+      "gripDistance": 0.015092635221299494
+    },
+    {
+      "clip": "attack",
+      "phase": 0.625,
+      "gripDistance": 0.015092635386339823
+    },
+    {
+      "clip": "attack",
+      "phase": 0.65625,
+      "gripDistance": 0.015092635650794465
+    },
+    {
+      "clip": "attack",
+      "phase": 0.6875,
+      "gripDistance": 0.0150926360120008
+    },
+    {
+      "clip": "attack",
+      "phase": 0.71875,
+      "gripDistance": 0.015092636466972134
+    },
+    {
+      "clip": "attack",
+      "phase": 0.75,
+      "gripDistance": 0.015092637027398569
+    },
+    {
+      "clip": "attack",
+      "phase": 0.78125,
+      "gripDistance": 0.015092636553261507
+    },
+    {
+      "clip": "attack",
+      "phase": 0.8125,
+      "gripDistance": 0.01509263615307003
+    },
+    {
+      "clip": "attack",
+      "phase": 0.84375,
+      "gripDistance": 0.015092635812658317
+    },
+    {
+      "clip": "attack",
+      "phase": 0.875,
+      "gripDistance": 0.015092635534649719
+    },
+    {
+      "clip": "attack",
+      "phase": 0.90625,
+      "gripDistance": 0.01509263533875066
+    },
+    {
+      "clip": "attack",
+      "phase": 0.9375,
+      "gripDistance": 0.015092635254183076
+    },
+    {
+      "clip": "attack",
+      "phase": 0.96875,
+      "gripDistance": 0.015092635308226366
+    },
+    {
+      "clip": "attack",
+      "phase": 1,
+      "gripDistance": 0.01509263552210779
+    }
+  ]
+}

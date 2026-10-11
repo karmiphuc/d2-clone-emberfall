@@ -86,6 +86,12 @@ try {
       resolve(stage, role + "-contact-probe.json"),
       JSON.stringify(await page.evaluate(() => window.contactTrace()), null, 2),
     );
+    const weaponTrace = await page.evaluate(() => window.weaponTrace());
+    if (weaponTrace.length)
+      await writeFile(
+        resolve(stage, role + "-weapon-probe.json"),
+        JSON.stringify(weaponTrace, null, 2),
+      );
     const review = resolve(stage, "review");
     await mkdir(review, { recursive: true });
     for (const [clip, phase] of [

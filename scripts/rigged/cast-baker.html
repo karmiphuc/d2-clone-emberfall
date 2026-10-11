@@ -358,6 +358,39 @@
         }
         return trace;
       };
+      window.weaponTrace = () => {
+        if (profile.style !== "bow") return [];
+        const bowMeshes = Object.values(meshes).filter((mesh) => {
+          let owner = mesh;
+          while (owner && owner.name !== "shortbow") owner = owner.parent;
+          return !!owner;
+        });
+        if (!bowMeshes.length) throw Error("Missing bow geometry");
+        const trace = [];
+        for (const clip of ["idle", "walk", "attack"])
+          for (let frame = 0; frame <= 32; frame++) {
+            rawPose(clip, frame / 32);
+            const grip = point("Off");
+            let distance = Infinity;
+            for (const mesh of bowMeshes)
+              for (
+                let vertex = 0;
+                vertex < mesh.geometry.attributes.position.count;
+                vertex++
+              ) {
+                const position = mesh
+                  .getVertexPosition(vertex, new T.Vector3())
+                  .applyMatrix4(mesh.matrixWorld);
+                distance = Math.min(distance, position.distanceTo(grip));
+              }
+            if (distance > 0.035)
+              throw Error(
+                "Detached bow: " + clip + " " + frame + " " + distance,
+              );
+            trace.push({ clip, phase: frame / 32, gripDistance: distance });
+          }
+        return trace;
+      };
       window.review = async (role) => {
         await load(role);
         return {

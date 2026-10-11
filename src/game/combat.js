@@ -832,23 +832,36 @@ export function createCombat(
         if (!victim) continue;
         const dist = distance(enemy, victim);
         if (!enemy.engaged && (dist > 8 || !clearLine(enemy, victim))) {
-          // Optional packs patrol locally instead of standing in identical frozen poses.
+          // Fixed destinations and deliberate pauses prevent near-goal walk/idle chatter.
           if (enemy.patrol) {
             const home = encounters.find((e) => e.id === enemy.id);
-            enemy.roamTime = (enemy.roamTime || 0) + dt;
-            const a = enemy.roamTime * 0.18 + encounters.indexOf(home);
-            const tx = home.x + Math.cos(a) * 1.1,
-              tz = home.z + Math.sin(a) * 1.1;
+            if ((enemy.patrolPause || 0) > 0) {
+              enemy.patrolPause = Math.max(0, enemy.patrolPause - dt);
+              continue;
+            }
+            if (!enemy.patrolGoal) {
+              const step = enemy.patrolStep || 0,
+                a = encounters.indexOf(home) + step * 2.4;
+              enemy.patrolGoal = {
+                x: home.x + Math.cos(a) * 1.1,
+                z: home.z + Math.sin(a) * 1.1,
+              };
+            }
+            const { x: tx, z: tz } = enemy.patrolGoal;
             const d = Math.hypot(tx - enemy.x, tz - enemy.z);
-            if (d > 0.12) {
-              const travel = Math.min(d, dt * 0.45);
+            if (d > 0.04) {
+              const travel = Math.min(d, dt * Math.min(enemy.speed, 0.9));
               const x = enemy.x + ((tx - enemy.x) / d) * travel;
               const z = enemy.z + ((tz - enemy.z) / d) * travel;
               if (!blocked(x, z)) {
                 enemy.x = x;
                 enemy.z = z;
+                continue;
               }
             }
+            enemy.patrolGoal = null;
+            enemy.patrolStep = (enemy.patrolStep || 0) + 1;
+            enemy.patrolPause = 1.4 + (encounters.indexOf(home) % 4) * 0.2;
           }
           continue;
         }

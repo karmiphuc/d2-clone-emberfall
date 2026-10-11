@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.21.1 — Stable patrols and an attached bow
+
+- Record the approved rig-rendered art direction, class identities, animation workflow and visual acceptance checks for future work.
+- Replace drifting patrol goals with fixed local destinations and deliberate pauses, eliminating repeated idle/walk switching near the goal. Blocked creatures pause before choosing another destination; nearby threats still trigger combat immediately.
+- Fix Ilyra's floating bow by exporting one off-hand skin and preserving the source string deformation through sampled shape keys. Add a grip-contact check to the asset baker.
+- Add patrol behavior and runtime idle stability regression coverage. Allow twenty minutes for the expanded deployment test job; the previous full browser suite took over twelve minutes.
+
 ## 0.21.0 — A rigged company and creatures
 
 - Extend coherent skeletal sprite animation to Ilyra, Eira, Soren, Aldric and Nyx, with distinct outfits, palettes and attached bow, staff, sword/shield and paired daggers.

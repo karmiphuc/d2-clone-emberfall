@@ -1,0 +1,35 @@
+# Emberfall art direction
+
+Approved baseline: **v0.20 hero/Bram pilot and v0.21 full cast**. The player explicitly approved this look and animation quality. Future character work should extend this approach. Changes that replace the baseline need a reviewed, in-game comparison before they become the default.
+
+## Visual identity
+
+Use a grounded, dark isometric fantasy world: weathered cloth, leather, muted metal, readable silhouettes and restrained elemental accents. Preserve the current camp, Blood Moor, ornate inventory panels and life/mana orbs as the visual context. Characters should remain readable against those backgrounds at normal game scale.
+
+Role identity comes from silhouette, equipment, posture and a controlled palette. Ilyra uses green leather and a bow; Bram uses heavy pale armor, shield and mace; Eira uses ivory robes and a warm staff crystal; Soren uses blue robes and an icy crystal; Aldric uses gold armor, pale cloth and sword/shield; Nyx uses plum leather and paired daggers. Enemies use distinct anatomy: small red Fallen, ragged Risen, a stocky horned Ashen Brute and an armored skeletal Gravewarden.
+
+Bosses should look substantial beside the hero without obscuring combat. Judge proportions inside the game, including elite scale, rather than from isolated source renders.
+
+## Character and animation production
+
+Use coherent skeletal poses rendered into directional sprites with the reproducible [rigged pipeline](../scripts/rigged/README.md). Outfit, weapon and body movement must share the same rig or an explicitly verified attachment. Inspect both hands, the weapon grip, string/draw motion, feet and complete weapon arcs before accepting a set.
+
+Keep camera scale, light, exposure and ground origin fixed across every action belonging to an actor. Crop transparent margins without resizing the remaining pixels. Packed frame metadata must retain exact root offsets, and the renderer must apply current-frame transforms before drawing. No frame should clip feet, cloth or weapons.
+
+Preserve sixteen hero facings and at least eight facings for companions and creatures. The baseline uses 48 walk samples for the party/Fallen, 64 for the Brute and 96 for slow undead; hero attacks use 33 samples, companion release/recovery uses 17, and enemy windup/death uses 33. These counts are reference values, not proof of smoothness: review actual playback, transitions and silhouettes.
+
+Walking follows displacement and calibrated stride, with supporting-foot correction where appropriate. Elite scaling also scales the stride. Keep continuous loops and gradual facing changes. Idle should remain a stable, intentional pose; patrols need sustained walks and deliberate pauses rather than repeated tiny starts and stops. Different attack variants must be complete, coherent actions selected at action boundaries.
+
+Attacks need readable anticipation, contact, follow-through and recovery. Synchronize contact with gameplay damage/projectile events. Avoid idle flashes between phases, changing body size, lighting flicker, disconnected equipment and generic movement layered over an already animated gait. Creature deaths use authored rig poses.
+
+## Acceptance and reference material
+
+Review the changed actor in camp or its combat area at normal scale. Capture walking, stopping, idle, turning, attacks and equipment changes across multiple facings. For enemies, include windup, damage, recovery and death. Test several copies together so shared resources cannot corrupt individual poses. Check an unengaged patrol over multiple walk/pause cycles.
+
+Use a moving ground reference to inspect foot contact, then review the real scene. Check consistent opacity and lighting, attached weapon grips, stable idle silhouettes and smooth action boundaries. Frame counts and automated tests supplement this visual review; they do not replace it or establish device performance.
+
+References: [v0.21 camp](screenshots/rigged-company-v0.21.png), [full-cast runtime reel](screenshots/rigged-company-v0.21.webm), [atlas calibration](rigged-company-v0.21.json), [v0.21 QA](qa-v0.21.md). The reel is captured at 30 fps and uses controlled actions; it is a presentation reference rather than a gameplay timing or hardware benchmark.
+
+The v0.21.1 [bow and patrol fixes](qa-v0.21.1.md) refine this baseline: attached bow geometry, preserved string motion and stable idle pauses are required going forward. Use its corrected archer and patrol reels when reviewing those behaviors.
+
+Retain source revisions, licenses, dependency hashes and rebuild instructions. See [third-party attribution](../THIRD_PARTY.md). New asset sources must have clear permission for their intended distribution.
