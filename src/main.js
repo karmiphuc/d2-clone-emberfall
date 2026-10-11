@@ -11,6 +11,11 @@ import {
   DEN_ROOMS,
   claimDenReward,
 } from "./game/den.js";
+import {
+  attackWarning,
+  combatFocus,
+  createCombatFocus,
+} from "./combat-focus.js";
 import { skillTreeMarkup } from "./skill-tree.js";
 import { createCombatAudio } from "./combat-audio.js";
 import * as THREE from "three";
@@ -88,6 +93,9 @@ app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to mo
   )}</div><nav class="bar-menu"><button id="character">CHARACTER <kbd>C</kbd></button><button id="inventory">INVENTORY <kbd>I</kbd></button><button id="journal">JOURNAL <kbd>J</kbd></button><button id="party-menu">PARTY <kbd>P</kbd></button><button id="skills-menu">SKILLS <kbd>K</kbd></button><button id="map-menu" aria-label="Area map" aria-expanded="false">MAP <kbd>M</kbd></button></nav></div><div class="orb-wrap"><div class="orb blue">60 / 60</div><div class="orb-label">MANA</div></div></footer><button id="return-camp" class="return-camp" hidden>Return to camp [6]</button><div id="combat-status" aria-label="Combat status" hidden></div><div id="target-info" class="target-info" hidden></div><div id="combat-labels" class="labels"></div><div id="loot-labels" class="labels"></div><div id="damage-numbers" class="labels"></div><div class="toast" role="status" id="toast"></div><div class="level-up" id="level-up" role="status" hidden></div><dialog id="dialog" aria-labelledby="dialog-title"><button class="close" aria-label="Close dialog">Close <kbd>Esc</kbd></button><div id="dialog-content"></div></dialog>`;
 const dialog = document.querySelector("dialog"),
   content = document.querySelector("#dialog-content");
+const updateCombatFocus = createCombatFocus(
+  document.querySelector("#target-info"),
+);
 let toastTimer, levelTimer, preview;
 function clearPreview() {
   preview?.dispose();
@@ -243,7 +251,7 @@ function refreshEnemyLabels() {
     const el = document.createElement("button");
     el.className = "enemy-label" + (enemy.elite ? " elite" : "");
     el.setAttribute("aria-label", `Attack ${enemy.name} ${enemy.id}`);
-    el.innerHTML = `<span>${enemy.name}</span><i><b></b></i>`;
+    el.innerHTML = `<span>${enemy.name}</span><i><b></b></i><em class="enemy-warning" aria-hidden="true"><b></b></em>`;
     el.onclick = () => {
       pending = null;
       combat.select(enemy.id);
@@ -1592,17 +1600,21 @@ function frame(now) {
     enemy.label.querySelector("b").style.width =
       `${(enemy.hp / enemy.maxHp) * 100}%`;
     enemy.label.classList.toggle("winding", enemy.windup > 0);
+    enemy.label.querySelector(".enemy-warning b").style.width =
+      `${attackWarning(enemy) * 100}%`;
     enemy.label.classList.toggle("chilled", enemy.slow > 0);
     enemy.label.classList.toggle("hovered", game.hoveredEnemy === enemy.id);
     enemy.label.classList.toggle("selected", combat.target === enemy.id);
   }
-  const focused = combat.enemies.find(
-    (e) => e.id === combat.target && e.hp > 0,
+  updateCombatFocus(
+    combatFocus(
+      combat.enemies,
+      game.hoveredEnemy,
+      combat.target,
+      hero.position,
+    ),
+    game.zone === "camp",
   );
-  const targetInfo = document.querySelector("#target-info");
-  targetInfo.hidden = !focused || game.zone === "camp";
-  if (focused)
-    targetInfo.textContent = `${focused.name} · ${Math.ceil(focused.hp)} / ${focused.maxHp}`;
   document.querySelector(".orb.red").textContent =
     `${Math.ceil(combat.allies[0].hp)} / ${combat.allies[0].maxHp}`;
   document.querySelector(".orb.blue").textContent =

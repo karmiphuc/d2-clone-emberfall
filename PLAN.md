@@ -2,12 +2,12 @@
 
 ## Current milestone: connected Den of Evil
 
-Playable camp, Blood Moor and an authored three-chamber Den of Evil. One warrior plus three of six recruitable companions; original painted character/environment art; device-local persistence. The Moor has 12 enemies and repeat hunts, levels 1–6, 27 equipment types and nine talents. The Den adds eleven creatures, the Gravewarden, separate persistent loot and a one-time Akara bounty. Its fixed footprint drives navigation, wall-aware attacks and the minimap. Area changes preserve party vitals; camp restores them.
+Playable camp, Blood Moor and an authored three-chamber Den of Evil. One warrior plus three of six recruitable companions; licensed rig-rendered heroes and creatures with original environment art; device-local persistence. The Moor spans 84 × 68 units, ten regions and 72 enemies (twelve on the main hunt), with repeat hunts, levels 1–6, 35 item types and nine talents. The Den adds eleven creatures, the Gravewarden, separate persistent loot and a one-time Akara bounty. Its fixed footprint drives navigation, wall-aware attacks and the minimap. Area changes preserve party vitals; camp restores them.
 
 ## Next: expand the chapter route
 
 1. Extend the wilderness toward Burial Grounds and create a distinct boss/quest loop.
-2. Expand companion tactics and add longer, smoother character animation cycles.
+2. Expand companion tactics and build on the approved coherent skeletal animation cycles.
 3. Add dungeon wall/room variety and richer encounter placement.
 4. Continue extracting scene/navigation responsibilities before larger maps.
 5. Validate a continuous 30–45 minute session and real-device performance before widening the campaign.
@@ -22,7 +22,7 @@ Three hero archetypes; companion talents and equipment; item rarity and affixes;
 
 ## Risks to resolve early
 
-Companion navigation through doors; combat readability with four allies; browser performance under enemy and effect load; procedural connectivity; save migrations. Current four-facing painted art and short animation cycles remain an interpretation of the classic visual direction, not a reproduction of Diablo II's asset quality.
+Companion navigation through doors; combat readability with four allies; browser performance under enemy and effect load; procedural connectivity; save migrations. Preserve the approved art direction: sixteen hero facings, eight companion/creature facings, displacement-calibrated walk cycles and authored windup/contact/recovery actions. The combat focus panel now exposes nearby engaged elites, health, attack victims and existing status effects. Full chapter progression and sustained real-device performance remain unfinished.
 
 ## Done means
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.21.2 — Readable combat focus
+
+- Add a framed creature health panel with elite identity, current life and chilled/taunted states. Hover inspection preserves your selected attack target; nearby engaged elites remain readable during automatic attacks.
+- Show the intended attack victim and an amber warning bar synchronized to each existing enemy windup, both in the panel and above the creature. No flashing or changes to damage timing.
+- Fit the panel beside party cards on mobile and below the entry toast; retain accessible health progress values.
+- Add regression coverage for inspection priority, hidden/dead/distant creatures, warning timing, death cleanup and camp return. Update the chapter plan to match the current rigged cast and expanded Moor.
+
 ## 0.21.1 — Stable patrols and an attached bow
 
 - Record the approved rig-rendered art direction, class identities, animation workflow and visual acceptance checks for future work.
