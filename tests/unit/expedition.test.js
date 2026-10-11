@@ -141,6 +141,19 @@ test("ember callers release visible bolts before damage", () => {
   c.tick(0.22, heroAt(0, 5));
   assert.ok(c.allies[0].hp < c.allies[0].maxHp);
   assert.ok(e.cooldown > 0);
+  Object.assign(e, {
+    elite: true,
+    hp: 100,
+    cooldown: 0,
+    windup: 0,
+    recovery: 0,
+  });
+  const beforeRage = c.allies[0].hp;
+  c.tick(0.01, heroAt(0, 5));
+  assert.equal(e.enraged, true);
+  c.tick(0.71, heroAt(0, 5));
+  c.tick(0.22, heroAt(0, 5));
+  assert.equal(beforeRage - c.allies[0].hp, Math.round(e.damage * 1.12));
 });
 
 test("named boss trophies differ and high-level items introduce meaningful haste and sustain", () => {

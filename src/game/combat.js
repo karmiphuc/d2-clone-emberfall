@@ -967,7 +967,12 @@ export function createCombat(
                   0.65)
             ) {
               if (enemy.behavior === "ember")
-                launch(enemy, victim, enemy.damage, "enemy");
+                launch(
+                  enemy,
+                  victim,
+                  enemy.damage * (enemy.enraged ? 1.12 : 1),
+                  "enemy",
+                );
               else
                 hitAlly(
                   victim,

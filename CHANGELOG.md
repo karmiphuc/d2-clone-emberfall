@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.22.1 — Preserve legacy quest-boss clears
+## 0.22.1 — Quest-boss persistence and ranged enrage
 
 - Suppress already-cleared quest bosses when an older repeat hunt erased its population deaths. Permanent migrated quest credit now restores the boss death/collected slot without generating a second trophy. Add save/combat regression coverage.
+- Apply the enrage damage bonus to boss ember projectiles at launch, so the displayed ranged-boss status affects combat as it does for melee bosses.
 
 ## 0.22.0 — A living Moor and boss hunts
 
