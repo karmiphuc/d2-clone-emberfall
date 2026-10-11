@@ -205,6 +205,21 @@ export function normalizeSave(raw) {
       if (drop) result.den.dropItems[id] = drop;
     }
   }
+  // Pre-ledger hunts reset every road foe, including the already-cleared quest
+  // boss. Permanent credit must also suppress that legacy population slot.
+  for (const [progress, encounters] of [
+    [result, ENCOUNTERS],
+    [result.den, DEN_ENCOUNTERS],
+  ])
+    for (const encounter of encounters)
+      if (
+        encounter.questBoss &&
+        questKills(progress).includes(encounter.id) &&
+        !progress.defeated.includes(encounter.id)
+      ) {
+        progress.defeated.push(encounter.id);
+        progress.lootTaken.push(encounter.id);
+      }
   for (const [key, talent] of Object.entries(TALENTS)) {
     if (
       levelOf(result) < talent.level ||

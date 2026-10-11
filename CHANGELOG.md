@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.1 — Preserve legacy quest-boss clears
+
+- Suppress already-cleared quest bosses when an older repeat hunt erased its population deaths. Permanent migrated quest credit now restores the boss death/collected slot without generating a second trophy. Add save/combat regression coverage.
+
 ## 0.22.0 — A living Moor and boss hunts
 
 - Expand the Moor to 112 enemies: ranged Embercallers, fast raiders, armored champions and six named roaming bosses with distinct trophies. Preserve the approved rig atlases and weapon attachments.

@@ -11,8 +11,8 @@ test("collected enemies respawn offscreen with fresh rewards while quest bosses 
         "emberfall-camp-v1",
         JSON.stringify({
           version: 2,
-          defeated: ["brute"],
-          lootTaken: ["brute"],
+          run: 2,
+          rewardClaimed: true,
         }),
       );
   });

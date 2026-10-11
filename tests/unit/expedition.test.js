@@ -66,6 +66,13 @@ test("old saves migrate clears and respawning populations cannot revoke or repea
   });
   assert.ok(CORE_ENCOUNTERS.every((e) => questKills(legacy).includes(e.id)));
   assert.equal(claimReward(legacy), false);
+  const legacyCombat = createCombat(legacy);
+  assert.equal(legacyCombat.enemies.find((e) => e.id === "brute").hp, 0);
+  assert.equal(
+    legacyCombat.drops.some((e) => e.id === "brute"),
+    false,
+  );
+  assert.equal(normalizeSave(legacy).defeated.includes("brute"), true);
   assert.doesNotThrow(() =>
     normalizeSave({ version: 2, defeated: 123, den: { defeated: 123 } }),
   );
