@@ -7,7 +7,8 @@ test("packed character frames preserve scale and complete directional actions wi
     for (const set of Object.values(actor.sets)) {
       const atlas = set.frames;
       assert.equal(atlas.directions, actor.directions);
-      assert.equal(atlas.unitsPerPixel, 0.02625);
+      assert.equal(atlas.unitsPerPixel, actor.size / 256);
+      assert.ok(atlas.stride > 0.5 && atlas.stride < 6);
       assert.ok(Math.abs(atlas.stride - actor.stride) < 0.00001);
       assert.ok(atlas.height <= 8192);
       const occupied = [];
@@ -16,7 +17,13 @@ test("packed character frames preserve scale and complete directional actions wi
         for (const frames of directions) {
           assert.equal(
             frames.length,
-            clip === "walk" ? 48 : clip === "attack" ? actor.attackFrames : 1,
+            clip === "walk"
+              ? actor.walkFrames
+              : clip === "attack"
+                ? actor.attackFrames
+                : clip === "idle"
+                  ? 1
+                  : 33,
           );
           for (const f of frames) {
             assert.ok(f.w > 4 && f.h > 4 && f.w < 256 && f.h < 256);

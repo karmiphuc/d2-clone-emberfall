@@ -1,4 +1,8 @@
-import { RIGGED_SPRITES, directionFrame } from "./rigged-sprites.js";
+import {
+  RIGGED_SPRITES,
+  directionFrame,
+  riggedClipSample,
+} from "./rigged-sprites.js";
 import { renderedActionVariant } from "./action-variants.js";
 import * as T from "three";
 import sequences from "./animation-sequence-data.json";
@@ -81,6 +85,7 @@ const figures = {
   Fallen: ["monsters", 0, 3],
   Risen: ["monsters", 1, 3],
   Brute: ["monsters", 2, 3],
+  Gravewarden: ["monsters", 2, 3],
   hero: ["hero", 0, 2],
   Ilyra: ["a", 0, 3],
   Bram: ["a", 1, 3],
@@ -118,6 +123,8 @@ export function equipSprite(actor, weapon) {
   const d = actor.userData;
   d.weaponId = weapon;
   if (d.characterId !== "hero") {
+    if (d.characterId === "Aldric")
+      d.motionKey = ITEMS[weapon]?.weaponType === "mace" ? "bMace" : "b";
     const element = ITEMS[weapon]?.element;
     d.weaponLight.color.set(
       element === "frost"
@@ -175,13 +182,19 @@ export function createSpriteActor(name, weapon) {
   if (sheet === "monsters") keys.push(`${name}Run`);
   for (const key of keys) {
     if (rigged) {
-      const base = key.replace(/Strike$|Attack$/, "");
+      const base = key.endsWith("Run")
+        ? "monsters"
+        : key.replace(/Strike$|Attack$/, "");
       animationMaps[key] = riggedMaps[base].map;
       continue;
     }
     const [url, count] = motionSheets[key];
     animationMaps[key] = atlasTexture(url);
     animationMaps[key].repeat.set(1 / (4 * sequences.variants), 1 / count);
+  }
+  if (name === "Aldric") {
+    animationMaps.bMace = riggedMaps.bMace.map;
+    animationMaps.bMaceAttack = riggedMaps.bMace.map;
   }
   texture.colorSpace = T.SRGBColorSpace;
   texture.magFilter = T.LinearFilter;
@@ -210,8 +223,8 @@ export function createSpriteActor(name, weapon) {
   const shadowMap = atlasTexture(shadowUrl);
   const shadow = new T.Mesh(
     new T.PlaneGeometry(
-      (rigged ? 2.75 : size) * 0.65,
-      (rigged ? 2.75 : size) * 0.5,
+      (rigged ? rigged.shadowSize || 2.75 : size) * 0.65,
+      (rigged ? rigged.shadowSize || 2.75 : size) * 0.5,
     ),
     new T.MeshBasicMaterial({
       map: shadowMap,
@@ -304,6 +317,7 @@ export function createSpriteActor(name, weapon) {
       ...data,
       phase: data.renderPhase ?? data.phase,
       swing: data.renderSwing ?? data.swing,
+      windup: data.renderWindup ?? data.windup,
     };
     const pose = motionPose(
       renderData,
@@ -313,15 +327,16 @@ export function createSpriteActor(name, weapon) {
       const set = riggedMaps[data.motionKey],
         map = set.map,
         frames = set.frames;
-      const clip = map.image?.complete ? pose.clip : "idle";
       const sample = sequenceFrames(renderData, true);
+      const packed = riggedClipSample(renderData, pose, sample, frames);
+      const clip = map.image?.complete ? packed.clip : "idle";
       const column = directionFrame(
         yaw,
         Math.atan2(-right.z, right.x),
         rigged.directions,
         data.riggedFacing,
       );
-      const displayRow = clip === "idle" ? 0 : sample.row;
+      const displayRow = clip === "idle" ? 0 : packed.row;
       const frame = frames.clips[clip][column][displayRow];
       data.riggedFacing = column;
       map.repeat.set(frame.w / frames.width, frame.h / frames.height);
@@ -343,12 +358,13 @@ export function createSpriteActor(name, weapon) {
       // Refresh the world matrix before Three.js uploads this draw’s transform.
       sprite.updateMatrixWorld(true);
       sprite.userData.frameScale = 0;
-      data.activeClip = clip;
+      data.riggedClip = clip;
+      data.activeClip = clip === "windup" ? "attack" : clip;
       data.activeRow =
         clip === "walk"
           ? displayRow
-          : clip === "attack"
-            ? companion
+          : clip === "attack" || clip === "windup"
+            ? companion || sheet === "monsters"
               ? row * 2 + pose.row - 2
               : pose.row
             : data.spriteRow;
@@ -447,6 +463,7 @@ export function updateActorMotion(actor, dt, moving = false, down = false) {
   d.renderYaw = undefined;
   d.renderPhase = undefined;
   d.renderSwing = undefined;
+  d.renderWindup = undefined;
   d.previousPhase = d.phase;
   d.previousSwing = d.swing;
   d.previousPosePosition.copy(d.posePosition);
@@ -516,5 +533,11 @@ export function presentActor(actor, alpha, dt) {
     0,
     d.previousSwing + (d.swing - d.previousSwing) * alpha,
   );
+  const previousWindup = d.previousWindup || 0,
+    windup = d.windup || 0;
+  d.renderWindup =
+    (!previousWindup && windup > 0) || (d.swing > 0 && !windup)
+      ? windup
+      : Math.max(0, previousWindup + (windup - previousWindup) * alpha);
   d.renderDt = dt;
 }

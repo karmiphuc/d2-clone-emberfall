@@ -84,7 +84,7 @@ test("rigged actions stay coherent while legacy variants preserve atlas picking"
   expect(
     result.others.every(
       (a) =>
-        (a.character === "Bram" ? a.count === 1 : a.count === 3) &&
+        (a.rigged ? a.count === 1 : a.count === 3) &&
         a.samples.every(
           (s) =>
             s.shown === s.variant &&

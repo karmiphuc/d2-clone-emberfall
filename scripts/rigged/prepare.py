@@ -15,10 +15,23 @@ files += [('textures/' + name, stage / 'textures' / name) for name in [
     'leather.jpg', 'wood.png', 'HairFur.png', 'cloudy_mountains.jpg',
 ]]
 
+if '--cast' in sys.argv:
+    files += [(f'characters/{name}/{name}.blend', stage / (name + '.blend')) for name in ['heroine','goblin','zombie','skeleton','minotaur']]
+    files += [(name, stage / 'textures' / Path(name).name) for name in [
+        'tilesets/dungeon/textures/pine_green.jpg',
+        'characters/minotaur/textures/minotaur_muscle_normal.png',
+        *[f'textures/Paper001_4K-JPG/Paper001_4K_{channel}.jpg' for channel in ['Color','NormalGL','Roughness','Displacement']],
+    ]]
+
 def download(entry):
     source, target = entry
     if not target.exists():
-        data = urllib.request.urlopen(BASE + source, timeout=60).read()
+        try:
+            data = urllib.request.urlopen(BASE + source, timeout=60).read()
+        except urllib.error.HTTPError as error:
+            if error.code != 404: raise
+            # Non-LFS texture files are served by GitHub's raw endpoint.
+            data = urllib.request.urlopen(f'https://raw.githubusercontent.com/flareteam/flare-game-art-src/{REVISION}/art_src_hd/' + source, timeout=60).read()
         if data.startswith(b'version https://git-lfs'): raise RuntimeError('Received an LFS pointer instead of source data')
         target.write_bytes(data)
     return {'file': source, 'sha256': hashlib.sha256(target.read_bytes()).hexdigest()}

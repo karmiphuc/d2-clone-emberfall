@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.21.0 — A rigged company and creatures
+
+- Extend coherent skeletal sprite animation to Ilyra, Eira, Soren, Aldric and Nyx, with distinct outfits, palettes and attached bow, staff, sword/shield and paired daggers.
+- Add separate rigs for Fallen, Risen, Ashen Brute and Gravewarden; the dungeon boss now has its own armored undead silhouette.
+- Give enemies animated warning windups, contact/recovery actions and authored deaths, synchronized with existing combat events.
+- Use eight facings and calibrated 48-frame walks; Brute uses 64 samples, and slow Risen/Gravewarden walks use 96. Scale elite stride calibration with their larger bodies.
+- Add Aldric’s mace weapon geometry alongside his sword set for world and inventory equipment previews.
+- Preserve the approved hero/Bram atlases, party size, combat balance, levels, loot and navigation.
+- Expand the reproducible licensed asset pipeline and attribution for the full cast.
+
 ## 0.20.0 — Rigged animation pilot
 
 - Replace hero and Bram movement with sprites rendered from a coherent skeletal rig, sampled into 48-frame alternating gaits.

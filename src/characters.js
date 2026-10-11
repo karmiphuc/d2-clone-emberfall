@@ -125,7 +125,13 @@ export function createCharacterPreview(canvas, id, weapon) {
 
 export function createMonster(enemy) {
   return createSpriteActor(
-    enemy.elite ? "Brute" : enemy.name === "Fallen" ? "Fallen" : "Risen",
+    enemy.name === "Gravewarden"
+      ? "Gravewarden"
+      : enemy.elite
+        ? "Brute"
+        : enemy.name === "Fallen"
+          ? "Fallen"
+          : "Risen",
     "monster_weapon",
   );
 }

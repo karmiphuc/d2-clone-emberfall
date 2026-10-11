@@ -1,0 +1,15 @@
+# v0.21 — The rigged company and creatures
+
+The approved hero and Bram assets are retained. All five remaining mercenaries now use the same rig-to-sprite pipeline, with their own silhouettes and equipment: Ilyra's green leather and bow, Eira's ivory robes and sun staff, Soren's blue robes and frost staff, Aldric's gold armor and sword/shield, and Nyx's plum leather and paired daggers. Aldric's mace equipment switches to a second rendered weapon set.
+
+Fallen, Risen, Ashen Brute and Gravewarden use distinct goblin, zombie, minotaur and armored skeleton sources. The Brute is stockier and larger than the hero; the Gravewarden has a separate undead identity in the Den. Creature windups progress into the contact pose, then release/recovery follows. Authored death poses replace the former generic settling motion while retaining the existing fade.
+
+The hero keeps sixteen facings; every other rigged actor uses eight. Mercenary and Fallen walks have 48 samples, Brute has 64, and the slow Risen/Gravewarden walks have 96. Enemy windups/deaths have 33 samples; release/recovery has 17. Camera scale, root and lighting stay fixed within each actor's action set. Packed rectangles preserve exact ground offsets, and current-frame transforms are updated before rendering.
+
+Stride playback follows actual displacement. Elite size scaling also scales the calibrated stride. Human and goblin stance intervals use supporting-toe IK; the Brute keeps the minotaur source's hoof constraints. These checks do not prove perfect foot locking during turns or measure hardware frame rates.
+
+[Camp review](screenshots/rigged-company-v0.21.png) shows the full cast positioned for inspection; the playable party still contains the hero and three companions. [Runtime reel](screenshots/rigged-company-v0.21.webm) shows controlled walking over a moving ground reference, followed by windup, release and creature death poses. It uses the actual sprite renderer, with scenery and UI hidden, and is captured at 30 frames per second. It does not measure gameplay attack frequency; companion damage remains synchronized with the existing instantaneous release events.
+
+Local validation includes 71 unit tests and thirteen focused browser checks. They cover all six roles following/turning/settling/Hold, attack and projectile presentation, hero contact and recovery, auto-attacking, packed frame bounds, current-frame transforms, Brute windup-to-damage timing and death, Gravewarden selection in the Den, and Aldric's mace/sword equipment switch. Production and standalone smoke tests check equipment persistence, mobile layout, Blood Moor combat and map navigation. The full suite and Pages publication are gated by GitHub Actions.
+
+[Asset metadata](rigged-company-v0.21.json) records each atlas's directions, clip counts, calibrated stride and scale. [Attribution](../THIRD_PARTY.md) and [rebuild instructions](../scripts/rigged/README.md) cover the pinned CC BY 3.0 source rigs and adaptations. The game displays the source and license links in Settings.

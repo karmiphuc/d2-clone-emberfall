@@ -870,7 +870,11 @@ export function createWorld(canvas) {
         obj.position.set(enemy.x, 0, enemy.z);
         scene.add(obj);
         obj.userData.enemyId = enemy.id;
-        if (enemy.elite) obj.scale.setScalar(1.25);
+        if (enemy.elite) {
+          obj.scale.setScalar(1.25);
+          if (obj.userData.walkStrideDistance)
+            obj.userData.walkStrideDistance *= 1.25;
+        }
         obj.visible = api.zone !== "camp" && enemy.hp > 0;
         enemyModels.set(enemy.id, obj);
       }
@@ -991,6 +995,12 @@ export function createWorld(canvas) {
         [hero, ...companions][actorNames.indexOf(id)] || enemyModels.get(id);
       if (actor) {
         beginAttackVariant(actor.userData, duration === 0);
+        if (duration === 0) {
+          actor.userData.windupDuration =
+            api.combat?.enemies.find((e) => e.id === id)?.windup || 0.5;
+          actor.userData.previousWindup = 0;
+          actor.userData.renderWindup = undefined;
+        }
         actor.userData.swing = duration;
         actor.userData.previousSwing = duration;
         actor.userData.renderSwing = undefined;
@@ -1303,16 +1313,19 @@ export function createWorld(canvas) {
             : api.combat.target === enemy.id
               ? 0.08
               : 0;
+        model.userData.previousWindup = model.userData.windup || 0;
         model.userData.windup = enemy.windup;
         updateActorMotion(model, dt, dir.lengthSq() > 0.00001);
         if (dying) {
           const t = 1 - model.userData.deathTime / 1.2;
           const settle = Math.min(1, t * 3);
-          model.userData.body.rotation.z = settle * 0.25;
+          const authoredDeath =
+            model.userData.riggedMaps?.monsters?.frames.clips.death;
+          model.userData.body.rotation.z = authoredDeath ? 0 : settle * 0.25;
           model.userData.sprite.material.opacity =
             1 - Math.max(0, (t - 0.45) / 0.55);
           model.userData.shadow.material.opacity = 0.6 * (1 - t);
-          model.userData.body.position.y = -settle * 0.5;
+          model.userData.body.position.y = authoredDeath ? 0 : -settle * 0.5;
           model.userData.posePosition.copy(model.userData.body.position);
         }
       }

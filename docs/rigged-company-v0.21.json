@@ -1,0 +1,209 @@
+{
+  "sourceRevision": "00d4ca3a20718345d9f8d8ebad865ce52da05be9",
+  "rootPixel": [128, 192],
+  "actors": [
+    {
+      "name": "Ilyra",
+      "weapon": "a",
+      "atlas": "ilyra.webp",
+      "bytes": 754294,
+      "directions": 8,
+      "stride": 2.987842533074956,
+      "unitsPerPixel": 0.030624999999999996,
+      "dimensions": [2048, 1408],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    },
+    {
+      "name": "Eira",
+      "weapon": "a",
+      "atlas": "eira.webp",
+      "bytes": 692040,
+      "directions": 8,
+      "stride": 2.987842533074956,
+      "unitsPerPixel": 0.034999999999999996,
+      "dimensions": [2048, 1152],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    },
+    {
+      "name": "Soren",
+      "weapon": "b",
+      "atlas": "soren.webp",
+      "bytes": 643356,
+      "directions": 8,
+      "stride": 3.5763522636062763,
+      "unitsPerPixel": 0.034999999999999996,
+      "dimensions": [2048, 1152],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    },
+    {
+      "name": "Aldric",
+      "weapon": "b",
+      "atlas": "aldric.webp",
+      "bytes": 1064746,
+      "directions": 8,
+      "stride": 3.5763522636062763,
+      "unitsPerPixel": 0.030624999999999996,
+      "dimensions": [2048, 1664],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    },
+    {
+      "name": "Aldric",
+      "weapon": "bMace",
+      "atlas": "aldricmace.webp",
+      "bytes": 1036556,
+      "directions": 8,
+      "stride": 3.5763522636062763,
+      "unitsPerPixel": 0.030624999999999996,
+      "dimensions": [2048, 1536],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    },
+    {
+      "name": "Nyx",
+      "weapon": "b",
+      "atlas": "nyx.webp",
+      "bytes": 619814,
+      "directions": 8,
+      "stride": 2.987842533074956,
+      "unitsPerPixel": 0.030624999999999996,
+      "dimensions": [2048, 1280],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    },
+    {
+      "name": "Fallen",
+      "weapon": "monsters",
+      "atlas": "fallen.webp",
+      "bytes": 1143972,
+      "directions": 8,
+      "stride": 1.4105042495038949,
+      "unitsPerPixel": 0.031484375,
+      "dimensions": [2048, 1536],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17,
+        "windup": 33,
+        "death": 33
+      }
+    },
+    {
+      "name": "Risen",
+      "weapon": "monsters",
+      "atlas": "risen.webp",
+      "bytes": 2125906,
+      "directions": 8,
+      "stride": 3.558801147390993,
+      "unitsPerPixel": 0.028437499999999998,
+      "dimensions": [2048, 3328],
+      "clips": {
+        "idle": 1,
+        "walk": 96,
+        "attack": 17,
+        "windup": 33,
+        "death": 33
+      }
+    },
+    {
+      "name": "Brute",
+      "weapon": "monsters",
+      "atlas": "brute.webp",
+      "bytes": 2072362,
+      "directions": 8,
+      "stride": 1.0913179151055161,
+      "unitsPerPixel": 0.0359375,
+      "dimensions": [2048, 3200],
+      "clips": {
+        "idle": 1,
+        "walk": 64,
+        "attack": 17,
+        "windup": 33,
+        "death": 33
+      }
+    },
+    {
+      "name": "Gravewarden",
+      "weapon": "monsters",
+      "atlas": "gravewarden.webp",
+      "bytes": 3480990,
+      "directions": 8,
+      "stride": 2.075636270879402,
+      "unitsPerPixel": 0.02734375,
+      "dimensions": [2048, 5504],
+      "clips": {
+        "idle": 1,
+        "walk": 96,
+        "attack": 17,
+        "windup": 33,
+        "death": 33
+      }
+    },
+    {
+      "name": "hero",
+      "weapon": "sword",
+      "atlas": "hero-longsword.webp",
+      "bytes": 3017506,
+      "directions": 16,
+      "stride": 3.5588,
+      "unitsPerPixel": 0.02625,
+      "dimensions": [2048, 4992],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 33
+      }
+    },
+    {
+      "name": "hero",
+      "weapon": "axe",
+      "atlas": "hero-hand_axe.webp",
+      "bytes": 2922164,
+      "directions": 16,
+      "stride": 3.5588,
+      "unitsPerPixel": 0.02625,
+      "dimensions": [2048, 4480],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 33
+      }
+    },
+    {
+      "name": "Bram",
+      "weapon": "a",
+      "atlas": "bram-mace.webp",
+      "bytes": 1345244,
+      "directions": 8,
+      "stride": 3.5588,
+      "unitsPerPixel": 0.02625,
+      "dimensions": [2048, 1920],
+      "clips": {
+        "idle": 1,
+        "walk": 48,
+        "attack": 17
+      }
+    }
+  ]
+}

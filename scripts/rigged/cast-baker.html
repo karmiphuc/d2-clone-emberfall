@@ -1,0 +1,498 @@
+<!doctype html>
+<html>
+  <head>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/node_modules/three/build/three.module.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body style="margin: 0; background: #272a2c">
+    <script type="module">
+      import * as T from "three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      const cell = 256,
+        renderer = new T.WebGLRenderer({
+          alpha: true,
+          antialias: true,
+          preserveDrawingBuffer: true,
+        });
+      renderer.setSize(cell, cell);
+      renderer.setClearColor(0, 0);
+      renderer.outputColorSpace = T.SRGBColorSpace;
+      renderer.toneMapping = T.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
+      document.body.append(renderer.domElement);
+      renderer.domElement.style.width = "640px";
+      renderer.domElement.style.height = "640px";
+      const scene = new T.Scene(),
+        camera = new T.OrthographicCamera(-3, 3, 3, -3, 0.1, 100);
+      scene.add(new T.HemisphereLight("#f5ead7", "#3c414c", 2.2));
+      const key = new T.DirectionalLight("#fff1da", 3);
+      key.position.set(-3, 6, 5);
+      scene.add(key);
+      const fill = new T.DirectionalLight("#a7b7cb", 1);
+      fill.position.set(4, 2, -3);
+      scene.add(fill);
+      import { CAST_PROFILES } from "/cast-profiles.js";
+      const loader = new GLTFLoader();
+      let gltf, mixer, actions, profile, bones, meshes, strideModel, toeNames;
+      let rightStart, rightEnd, leftStart, leftEnd;
+      const sources = new Map();
+      async function source(name) {
+        if (!sources.has(name))
+          sources.set(name, await loader.loadAsync("/" + name + ".glb"));
+        return sources.get(name);
+      }
+      function tracksFor(source) {
+        const names = new Map();
+        for (const clip of source.animations)
+          for (const track of clip.tracks) names.set(track.name, track);
+        return [...names.values()];
+      }
+      function makePoseClip(name, frames, tracks) {
+        return new T.AnimationClip(
+          name,
+          1,
+          tracks.map((track) => {
+            const times = [],
+              values = [],
+              interp = track.createInterpolant();
+            const min = Math.min(...tracks.map((t) => t.times[0]));
+            const origin =
+              profile.source === "minotaur" ? min : 1 / profile.fps;
+            frames.forEach((f, i) => {
+              times.push(i / (frames.length - 1));
+              values.push(...interp.evaluate(origin + (f - 1) / profile.fps));
+            });
+            return new track.constructor(
+              track.name,
+              times,
+              values,
+              T.InterpolateLinear,
+            );
+          }),
+        );
+      }
+      async function load(role) {
+        profile = CAST_PROFILES[role];
+        if (gltf) scene.remove(gltf.scene);
+        gltf = await source(
+          profile.source === "minotaur" ? "minotaur-walk" : profile.source,
+        );
+        scene.add(gltf.scene);
+        mixer = new T.AnimationMixer(gltf.scene);
+        bones = {};
+        meshes = {};
+        const partNames = new Set(
+          Object.values(CAST_PROFILES)
+            .filter((p) => p.source === profile.source)
+            .flatMap((p) => p.parts),
+        );
+        gltf.scene.traverse((o) => {
+          if (o.isBone) bones[o.name] = o;
+          if (partNames.has(o.name)) o.visible = profile.parts.includes(o.name);
+          if (o.isMesh) {
+            meshes[o.name] = o;
+            let owner = o;
+            while (owner.parent && !partNames.has(owner.name))
+              owner = owner.parent;
+            const part = owner.name;
+            o.visible = profile.parts.includes(part);
+            if (!o.userData.originalMaterials)
+              o.userData.originalMaterials = Array.isArray(o.material)
+                ? o.material
+                : [o.material];
+            const materials = o.userData.originalMaterials.map((original) => {
+              const m = original.clone();
+              m.roughness = Math.max(0.6, m.roughness);
+              m.metalness = Math.min(0.65, m.metalness);
+              if (/Steel|WhiteCloth|Pommel|Blade/i.test(m.name))
+                m.color.multiplyScalar(0.6);
+              const group = part.startsWith("leather_")
+                ? "leather"
+                : part.startsWith("mage_")
+                  ? "mage"
+                  : part.startsWith("plate_")
+                    ? "plate"
+                    : part === "mantle"
+                      ? "mantle"
+                      : part === "staff"
+                        ? "staff"
+                        : part === "head_long" && /hair/i.test(m.name)
+                          ? "hair"
+                          : part === "Goblin" ||
+                              part === "Zombie" ||
+                              part === "Minotaur"
+                            ? "skin"
+                            : part === "Skeleton"
+                              ? "bone"
+                              : part.startsWith("Armor")
+                                ? "armor"
+                                : null;
+              if (group && profile.colors[group]) {
+                const tint = new T.Color(profile.colors[group]);
+                m.color.copy(tint).multiplyScalar(group === "skin" ? 1 : 1.35);
+              }
+              const surfaces = {
+                Skin: "#b18a6d",
+                SkinNoNormal: "#796554",
+                Fur: "#514338",
+                Horns: "#b8aa88",
+                Teeth: "#baad91",
+                Bone: "#b4ae95",
+                Black: "#1e1c1d",
+                Bloody: "#682e2c",
+                RagsShirt: "#4c544c",
+                RagsPants: "#383a34",
+                Gold: "#a78b4e",
+                GreenGold: "#8b8251",
+                Grip: "#4a3525",
+              };
+              const materialName = m.name.split(".")[0];
+              if (surfaces[materialName])
+                m.color.set(
+                  profile.colors.skin && /^Skin/.test(materialName)
+                    ? profile.colors.skin
+                    : surfaces[materialName],
+                );
+              if (part.startsWith("mage_") && /Cloth|Leather/.test(m.name))
+                m.color.set(profile.colors.mage).multiplyScalar(1.25);
+              if (part === "staff" && /Crystal/.test(m.name)) {
+                m.color.set(profile.style === "heal" ? "#d8ba76" : "#6bb3c9");
+                m.emissive.copy(m.color).multiplyScalar(0.08);
+              }
+              return m;
+            });
+            o.material = Array.isArray(o.material) ? materials : materials[0];
+          }
+        });
+        const tracks = tracksFor(gltf);
+        actions = {};
+        actions.walk = mixer.clipAction(
+          makePoseClip("walk", profile.walk, tracks),
+        );
+        actions.idle = mixer.clipAction(
+          makePoseClip(
+            "idle",
+            [profile.idle, profile.idle],
+            profile.source === "minotaur"
+              ? tracksFor(await source("minotaur-idle"))
+              : tracks,
+          ),
+        );
+        for (const clip of ["attack", "windup", "death"])
+          if (profile[clip]) {
+            const clipSource =
+              profile.source === "minotaur"
+                ? await source(
+                    "minotaur-" + (clip === "windup" ? "attack" : clip),
+                  )
+                : gltf;
+            actions[clip] = mixer.clipAction(
+              makePoseClip(clip, profile[clip], tracksFor(clipSource)),
+            );
+          }
+        toeNames =
+          profile.source === "minotaur"
+            ? ["HoofDEFL", "HoofDEFR"]
+            : ["ToesLeft", "ToesRight"];
+        const intervals = profile.stances || [
+          ["Right", 0.25, 0.5],
+          ["Left", 0.75, 1],
+        ];
+        const anchors = {};
+        for (const [side, begin, end] of intervals) {
+          rawPose("walk", begin % 1);
+          const start = point(toeNames[side === "Left" ? 0 : 1]);
+          rawPose("walk", end % 1);
+          anchors[side] = {
+            start,
+            end: point(toeNames[side === "Left" ? 0 : 1]),
+            begin,
+            finish: end,
+          };
+        }
+        rightStart = anchors.Right.start;
+        rightEnd = anchors.Right.end;
+        leftStart = anchors.Left.start;
+        leftEnd = anchors.Left.end;
+        strideModel =
+          (Math.abs(rightStart.z - rightEnd.z) /
+            (anchors.Right.finish - anchors.Right.begin) +
+            Math.abs(leftStart.z - leftEnd.z) /
+              (anchors.Left.finish - anchors.Left.begin)) /
+          2;
+        if (strideModel < 0.15)
+          throw Error("Invalid stride " + role + ": " + strideModel);
+        for (const anchor of Object.values(anchors))
+          anchor.end.z =
+            anchor.start.z - strideModel * (anchor.finish - anchor.begin);
+        profile = { ...profile, anchors };
+      }
+      function rawPose(clip, phase) {
+        mixer.stopAllAction();
+        const a = actions[clip];
+        a.reset().play();
+        a.time = phase;
+        mixer.update(0);
+        gltf.scene.updateMatrixWorld(true);
+      }
+      function point(name) {
+        if (!bones[name]) throw Error("Missing bone " + name);
+        return bones[name].getWorldPosition(new T.Vector3());
+      }
+      function aimBone(bone, from, to) {
+        const q = bone.getWorldQuaternion(new T.Quaternion()),
+          parent = bone.parent.getWorldQuaternion(new T.Quaternion());
+        bone.quaternion.copy(
+          parent
+            .invert()
+            .multiply(
+              new T.Quaternion().setFromUnitVectors(
+                from.normalize(),
+                to.normalize(),
+              ),
+            )
+            .multiply(q),
+        );
+        gltf.scene.updateMatrixWorld(true);
+      }
+      function lockToe(side, target) {
+        const thigh = bones["Thigh" + side],
+          shin = bones["Shin" + side],
+          foot = bones["Foot" + side],
+          toe = bones["Toes" + side];
+        const hip = thigh.getWorldPosition(new T.Vector3()),
+          knee = shin.getWorldPosition(new T.Vector3()),
+          ankle = foot.getWorldPosition(new T.Vector3());
+        const footQ = foot.getWorldQuaternion(new T.Quaternion());
+        const toeOffset = toe.getWorldPosition(new T.Vector3()).sub(ankle),
+          desired = target.clone().sub(toeOffset);
+        const upper = knee.distanceTo(hip),
+          lower = ankle.distanceTo(knee),
+          axis = desired.clone().sub(hip),
+          distance = Math.min(upper + lower - 0.00001, axis.length());
+        axis.normalize();
+        let pole = knee.clone().sub(hip);
+        pole.addScaledVector(axis, -pole.dot(axis));
+        if (pole.lengthSq() < 0.000001) pole.set(0, 0, 1);
+        pole.normalize();
+        const along =
+            (upper * upper - lower * lower + distance * distance) /
+            (2 * distance),
+          height = Math.sqrt(Math.max(0, upper * upper - along * along));
+        const newKnee = hip
+          .clone()
+          .addScaledVector(axis, along)
+          .addScaledVector(pole, height);
+        aimBone(thigh, knee.clone().sub(hip), newKnee.clone().sub(hip));
+        const kneeNow = shin.getWorldPosition(new T.Vector3()),
+          ankleNow = foot.getWorldPosition(new T.Vector3());
+        aimBone(shin, ankleNow.sub(kneeNow), desired.clone().sub(kneeNow));
+        foot.quaternion.copy(
+          foot.parent
+            .getWorldQuaternion(new T.Quaternion())
+            .invert()
+            .multiply(footQ),
+        );
+        gltf.scene.updateMatrixWorld(true);
+      }
+      function pose(clip, phase) {
+        rawPose(clip, phase);
+        if (clip === "walk" && profile.toes)
+          for (const [side, anchor] of Object.entries(profile.anchors)) {
+            let p = phase;
+            if (p < anchor.begin) p += 1;
+            if (p >= anchor.begin && p <= anchor.finish) {
+              const target = anchor.start
+                .clone()
+                .lerp(
+                  anchor.end,
+                  (p - anchor.begin) / (anchor.finish - anchor.begin),
+                );
+              target.y = 0.02;
+              lockToe(side, target);
+            }
+          }
+      }
+      function view(column) {
+        const half = profile.span / 2,
+          angle = (-column / profile.directions) * Math.PI * 2;
+        camera.left = -half;
+        camera.right = half;
+        camera.top = half;
+        camera.bottom = -half;
+        camera.position.set(
+          30 * Math.cos(angle) + 42 * Math.sin(angle),
+          36,
+          42 * Math.cos(angle) - 30 * Math.sin(angle),
+        );
+        camera.lookAt(0, 1, 0);
+        camera.updateMatrixWorld();
+        camera.updateProjectionMatrix();
+        const origin = new T.Vector3().project(camera),
+          shift = (origin.y + 1) / 2 - 0.25;
+        camera.top += shift * profile.span;
+        camera.bottom += shift * profile.span;
+        camera.updateProjectionMatrix();
+      }
+      window.draw = (clip, phase, column = 0) => {
+        view(column);
+        pose(clip, phase);
+        renderer.render(scene, camera);
+        return renderer.domElement.toDataURL("image/png");
+      };
+      window.contactTrace = () => {
+        const trace = [];
+        for (let i = 0; i <= 8; i++) {
+          rawPose("walk", i / 8);
+          trace.push({
+            phase: i / 8,
+            left: point(toeNames[0]).toArray(),
+            right: point(toeNames[1]).toArray(),
+          });
+        }
+        return trace;
+      };
+      window.review = async (role) => {
+        await load(role);
+        return {
+          stride: strideModel,
+          strideVector: rightStart
+            .clone()
+            .sub(rightEnd)
+            .add(leftStart.clone().sub(leftEnd))
+            .multiplyScalar(2)
+            .toArray(),
+          meshes: Object.keys(meshes),
+          bones: Object.keys(bones),
+          animations: gltf.animations.map((a) => ({
+            name: a.name,
+            duration: a.duration,
+            tracks: a.tracks.length,
+          })),
+        };
+      };
+      window.bakeSet = async (role) => {
+        await load(role);
+        const directions = profile.directions;
+        const poses = [],
+          clips = {},
+          trace = [];
+        const capture = document.createElement("canvas");
+        capture.width = capture.height = cell;
+        const ctx = capture.getContext("2d", { willReadFrequently: true });
+        for (const clip of [
+          "idle",
+          "walk",
+          "attack",
+          ...(profile.enemy ? ["windup", "death"] : []),
+        ]) {
+          const count =
+            clip === "idle"
+              ? 1
+              : clip === "walk"
+                ? profile.walkFrames || 48
+                : clip === "attack"
+                  ? 17
+                  : 33;
+          clips[clip] = Array.from({ length: directions }, () => []);
+          for (let column = 0; column < directions; column++) {
+            for (let row = 0; row < count; row++) {
+              const phase =
+                clip === "walk"
+                  ? row / count
+                  : clip === "idle"
+                    ? 0
+                    : row / (count - 1);
+              window.draw(clip, phase, column);
+              ctx.clearRect(0, 0, cell, cell);
+              ctx.drawImage(renderer.domElement, 0, 0);
+              const rgba = ctx.getImageData(0, 0, cell, cell).data;
+              let x0 = cell,
+                y0 = cell,
+                x1 = 0,
+                y1 = 0;
+              for (let y = 0; y < cell; y++)
+                for (let x = 0; x < cell; x++)
+                  if (rgba[(y * cell + x) * 4 + 3] > 2) {
+                    x0 = Math.min(x0, x);
+                    y0 = Math.min(y0, y);
+                    x1 = Math.max(x1, x);
+                    y1 = Math.max(y1, y);
+                  }
+              if (x0 < 2 || y0 < 2 || x1 >= cell - 2 || y1 >= cell - 2)
+                throw Error(`Clipped ${role} ${clip} ${column} ${row}`);
+              x0 -= 2;
+              y0 -= 2;
+              x1 += 2;
+              y1 += 2;
+              const w = x1 - x0 + 1,
+                h = y1 - y0 + 1,
+                image = document.createElement("canvas");
+              image.width = w;
+              image.height = h;
+              image
+                .getContext("2d")
+                .drawImage(capture, x0, y0, w, h, 0, 0, w, h);
+              const frame = {
+                w,
+                h,
+                origin: [cell * 0.5 - x0, cell * 0.75 - y0],
+              };
+              clips[clip][column].push(frame);
+              poses.push({ frame, image });
+              if (clip === "walk" && column === 0) {
+                const record = { row, bones: {} };
+                for (const name of toeNames)
+                  record.bones[name] = point(name).toArray();
+                trace.push(record);
+              }
+            }
+            await new Promise((r) => setTimeout(r, 0));
+          }
+        }
+        poses.sort((a, b) => b.frame.h - a.frame.h || b.frame.w - a.frame.w);
+        const width = 2048;
+        let x = 0,
+          y = 0,
+          height = 0;
+        for (const p of poses) {
+          if (x + p.frame.w > width) {
+            x = 0;
+            y += height;
+            height = 0;
+          }
+          p.frame.x = x;
+          p.frame.y = y;
+          x += p.frame.w;
+          height = Math.max(height, p.frame.h);
+        }
+        const atlas = document.createElement("canvas");
+        atlas.width = width;
+        atlas.height = Math.ceil((y + height) / 128) * 128;
+        if (atlas.height > 8192) throw Error("Atlas exceeds texture budget");
+        const atlasContext = atlas.getContext("2d");
+        for (const p of poses)
+          atlasContext.drawImage(p.image, p.frame.x, p.frame.y);
+        return {
+          image: atlas.toDataURL("image/webp", 0.94),
+          metadata: {
+            directions,
+            width,
+            height: atlas.height,
+            unitsPerPixel: (profile.span * profile.scale) / cell,
+            stride: strideModel * profile.scale,
+            clips,
+          },
+          trace,
+        };
+      };
+      window.ready = true;
+    </script>
+  </body>
+</html>

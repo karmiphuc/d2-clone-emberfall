@@ -1,0 +1,86 @@
+{
+  "repository": "flareteam/flare-game-art-src",
+  "revision": "00d4ca3a20718345d9f8d8ebad865ce52da05be9",
+  "files": [
+    {
+      "file": "characters/hero/hero.blend",
+      "sha256": "239589387a549f0c551c92e1a6c987b9969b11825503550d9c86d2f8b330271c"
+    },
+    {
+      "file": "textures/chain_diffuse.jpg",
+      "sha256": "b0b9de073f71734c0be95f3b9343bc431da65ed250b04ae318213f3bcbc729a6"
+    },
+    {
+      "file": "textures/chain_normal.png",
+      "sha256": "38954edd125e41bd9dd4cd40e65789ecf3f32869147003449bce8737eacaf18f"
+    },
+    {
+      "file": "textures/darkiron.jpg",
+      "sha256": "2a5da805d26314421d7cb26b0fee6dd946f5238cd8ea6f74b611ec109dc0a56c"
+    },
+    {
+      "file": "textures/iron.jpg",
+      "sha256": "153b0f9be3564313cfed49828593e81d2f00c02f3f17d04d8720b22ee3e7dca3"
+    },
+    {
+      "file": "textures/leather.jpg",
+      "sha256": "7ee862c19e0e61156aaea2e10a4e471ecdc61d309312996010614b672b42de5d"
+    },
+    {
+      "file": "textures/wood.png",
+      "sha256": "856af1b2b5f33f070375f7d6aa10931c544b836d507a2710a0df39345457c66b"
+    },
+    {
+      "file": "textures/HairFur.png",
+      "sha256": "deb0bc3a37ee22f57512dfba65806a5c3853cd7b13e9dea46a985f4cd5ece691"
+    },
+    {
+      "file": "textures/cloudy_mountains.jpg",
+      "sha256": "9877a1ac31ea3ddbe22f5be01e93ae7961bf658bd09f43fe306cdb0b739178fd"
+    },
+    {
+      "file": "characters/heroine/heroine.blend",
+      "sha256": "fe754297c91d04f3f68cb0bc2733f4d6155342c887e9d74ad6280eafe5212540"
+    },
+    {
+      "file": "characters/goblin/goblin.blend",
+      "sha256": "34efa9f53e1ed89b372b9b1dcedd97264978186df0e65ea19483be7700e3a318"
+    },
+    {
+      "file": "characters/zombie/zombie.blend",
+      "sha256": "be307d9b1733265429d066081b404cd054d73f105249f5b42829f3b351635b3a"
+    },
+    {
+      "file": "characters/skeleton/skeleton.blend",
+      "sha256": "84f9f4ab5ee6f8acf7ccadbe0e0eb0f024cddf0d9c26fce632ffea57e2e111c5"
+    },
+    {
+      "file": "characters/minotaur/minotaur.blend",
+      "sha256": "f82fa00ab0f9191835cd0e55e7b5c2abbf3887a5dfc8e762f866ca5b74391953"
+    },
+    {
+      "file": "tilesets/dungeon/textures/pine_green.jpg",
+      "sha256": "6e3da5489e6203786ec75494be917365bab6bcd72dd9b096df3f3d840e18236e"
+    },
+    {
+      "file": "characters/minotaur/textures/minotaur_muscle_normal.png",
+      "sha256": "a16b0d43e3ea162821a25345d1a6a055db60e207efd0d0057cba882a7a3c8e8d"
+    },
+    {
+      "file": "textures/Paper001_4K-JPG/Paper001_4K_Color.jpg",
+      "sha256": "3aaed6c30f8bc7ea98628ccd75acb852e75d910f32f384f6193169214ab4bec1"
+    },
+    {
+      "file": "textures/Paper001_4K-JPG/Paper001_4K_NormalGL.jpg",
+      "sha256": "06c8dc9abafd531281fa24ab15d0d11e9b2a681f345565351056d68b6627c197"
+    },
+    {
+      "file": "textures/Paper001_4K-JPG/Paper001_4K_Roughness.jpg",
+      "sha256": "ce573361f0155d283f5b47d01335650576be01cd364684f19798878eba1f9984"
+    },
+    {
+      "file": "textures/Paper001_4K-JPG/Paper001_4K_Displacement.jpg",
+      "sha256": "8bada60127b9f476a77051ca9d95cf84baa21aa4f3f27f23383dcef225e1df71"
+    }
+  ]
+}
