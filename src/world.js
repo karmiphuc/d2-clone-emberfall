@@ -7,6 +7,7 @@ import {
   needsFollowRoute,
   formationDepth,
 } from "./companion-follow.js";
+import { cancelAttackMotion } from "./animation.js";
 import { beginAttackVariant } from "./action-variants.js";
 import { createRenderBudget } from "./render-budget.js";
 import { createDungeon } from "./dungeon.js";
@@ -919,19 +920,7 @@ export function createWorld(canvas) {
         });
       }
       if (event.type === "swing" && actor) {
-        if (["Ilyra", "Eira", "Soren"].includes(event.id) && target) {
-          const from = point(actor, 1.2),
-            to = point(target);
-          const kind = { Ilyra: "arrow", Eira: "holyBolt", Soren: "frostBolt" }[
-            event.id
-          ];
-          effects.spawn(kind, from, {
-            to,
-            size: event.id === "Ilyra" ? 1.1 : 1.4,
-            duration: Math.min(0.22, Math.max(0.08, from.distanceTo(to) / 36)),
-            opacity: event.id === "Ilyra" ? 1 : 0.8,
-          });
-        } else {
+        if (!["Ilyra", "Eira", "Soren"].includes(event.id)) {
           const pos = point(actor);
           if (target) pos.lerp(point(target), 0.5);
           const kind = event.id === "Nyx" ? "shadow" : "slash";
@@ -947,20 +936,25 @@ export function createWorld(canvas) {
             effects.spawn("frost", pos, { size: 1.8, duration: 0.35 });
         }
       }
+      if (event.type === "projectile" && actor && target) {
+        const kind = event.healing
+          ? "healBolt"
+          : { Ilyra: "arrow", Eira: "holyBolt", Soren: "frostBolt" }[event.id];
+        effects.spawn(kind, v(event.from.x, 1.2, event.from.z), {
+          to: point(target),
+          target,
+          targetHeight: 1,
+          size: event.id === "Ilyra" ? 1.1 : 1.4,
+          duration: event.duration,
+          opacity: event.id === "Ilyra" ? 1 : 0.8,
+        });
+      }
       if (event.type === "heal" && actor) {
         effects.spawn("heal", point(actor, 0.7), {
           size: 2.8,
           duration: 1,
           rise: 1,
         });
-        const caster = findActor(event.source);
-        if (caster && caster !== actor)
-          effects.spawn("healBolt", point(caster, 1.2), {
-            to: point(actor),
-            size: 1.4,
-            duration: 0.22,
-            opacity: 0.65,
-          });
       }
       if (event.type === "guard" && actor)
         effects.spawn("ward", point(actor, 0.5), {
@@ -1015,6 +1009,9 @@ export function createWorld(canvas) {
             target.position.z - actor.position.z,
           );
       }
+    },
+    cancelAttack() {
+      cancelAttackMotion(hero.userData);
     },
     releaseAttack(duration = 0.39) {
       hero.userData.swing = duration;

@@ -21,6 +21,14 @@ test("combat effects follow real healing and guard events, remain bounded and cl
     combat.allies.find((a) => a.id === "Bram").hp = 20;
     game.hold = true;
     game.update(0.03, 0, false);
+    const inFlight = {
+      hp: combat.allies.find((a) => a.id === "Bram").hp,
+      casting: eira.userData.swing > 0,
+      beam: game.effects.root.children.some(
+        (o) => o.visible && o.userData.kind === "healBolt",
+      ),
+    };
+    for (let i = 0; i < 3; i++) game.update(1 / 30, (i + 1) / 30, false);
     const heal = game.effects.root.children.find(
       (o) => o.visible && o.userData.kind === "heal",
     );
@@ -30,9 +38,7 @@ test("combat effects follow real healing and guard events, remain bounded and cl
       z: heal?.position.z,
       hp: combat.allies.find((a) => a.id === "Bram").hp,
       casting: eira.userData.swing > 0,
-      beam: game.effects.root.children.some(
-        (o) => o.visible && o.userData.kind === "healBolt",
-      ),
+      inFlight,
     };
     const guarded = combat.defend();
     const ward = game.effects.root.children.find(
@@ -74,7 +80,11 @@ test("combat effects follow real healing and guard events, remain bounded and cl
   expect(result.healing).toMatchObject({ found: true, x: -16, z: 13 });
   expect(result.healing.hp).toBeGreaterThan(20);
   expect(result.healing.casting).toBe(true);
-  expect(result.healing.beam).toBe(true);
+  expect(result.healing.inFlight).toEqual({
+    hp: 20,
+    casting: true,
+    beam: true,
+  });
   expect(result.guarded).toBe(true);
   expect(result.following).toBe(true);
   expect(result.allocated).toBeLessThanOrEqual(64);

@@ -193,7 +193,7 @@ test("Eira prioritizes a wounded ally over an attack in the same action", () => 
   assert.ok(
     events.some(
       (event) =>
-        event.type === "heal" && event.id === "hero" && event.source === "Eira",
+        event.type === "cast" && event.id === "Eira" && event.target === "hero",
     ),
   );
   assert.ok(

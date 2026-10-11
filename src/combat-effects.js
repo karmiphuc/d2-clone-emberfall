@@ -91,6 +91,8 @@ export function createCombatEffects(scene) {
       follow: options.follow,
       from: position.clone(),
       to: options.to?.clone(),
+      target: options.target,
+      targetHeight: options.targetHeight ?? 1,
       rotation: options.rotation ?? 0,
     });
     node.material.map = maps[CELLS[kind] ?? 1];
@@ -109,6 +111,14 @@ export function createCombatEffects(scene) {
     return effect;
   }
   function presentEffect(e, t, reduced, interpolated = false) {
+    if (e.to && e.target)
+      e.to
+        .copy(
+          interpolated
+            ? e.target.userData.renderPosition || e.target.position
+            : e.target.position,
+        )
+        .addScaledVector(up, e.targetHeight);
     if (e.follow)
       e.node.position
         .copy(

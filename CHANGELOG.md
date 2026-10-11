@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.21.3 — Companion contact and smooth recovery exits
+
+- Resolve ranged companion damage, Frostburst and Eira healing at projectile arrival instead of before release. Keep targeted flights and shared visual/simulation durations.
+- Give Ilyra volleys one body action and primary facing with up to three independent arrows. Preserve the approved rig atlases.
+- Clear in-flight actions on area changes/restoration; fizzle dead or blocked targets, prevent duplicate kill rewards and allow released shots to finish after caster death.
+- Let keyboard, mouse and touch movement exit hero recovery immediately while preserving the attack cooldown; clear interpolation history and restart the calibrated gait.
+- Keep creature release/recovery planted for 0.26 seconds before pursuing again. This modestly reduces immediate chase pressure while cooldowns continue.
+- Add contact/lifecycle and real-input browser regressions plus an in-game action review.
+
 ## 0.21.2 — Readable combat focus
 
 - Add a framed creature health panel with elite identity, current life and chilled/taunted states. Hover inspection preserves your selected attack target; nearby engaged elites remain readable during automatic attacks.

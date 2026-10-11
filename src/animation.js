@@ -146,3 +146,10 @@ export function sequenceFrames(data, attackFrames = false) {
     mix: pose.clip === "walk" && data.walkLoopSeconds ? 0 : position - row,
   };
 }
+
+// Cancel the rendered recovery without refunding the simulation cooldown.
+export function cancelAttackMotion(data) {
+  if (data.swing > 0) data.phase = data.previousPhase = 0;
+  data.swing = data.previousSwing = data.renderSwing = 0;
+  data.impactHold = 0;
+}

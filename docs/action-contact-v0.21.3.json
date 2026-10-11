@@ -1,0 +1,93 @@
+{
+  "capture": "Headless Chromium software renderer; controlled in-game scene, 1280x800, 30fps capture; not hardware FPS evidence",
+  "initialFlightAndContact": [
+    {
+      "tick": 0,
+      "hero": "idle",
+      "swing": 0,
+      "position": [-12, 0, 7],
+      "hp": 30,
+      "enemies": [80, 80, 80],
+      "arrows": 3,
+      "healBolts": 1,
+      "calls": 83,
+      "triangles": 31382
+    },
+    {
+      "tick": 1,
+      "hero": "idle",
+      "swing": 0,
+      "position": [-12, 0, 7],
+      "hp": 30,
+      "enemies": [80, 80, 80],
+      "arrows": 3,
+      "healBolts": 1,
+      "calls": 83,
+      "triangles": 31382
+    },
+    {
+      "tick": 2,
+      "hero": "idle",
+      "swing": 0,
+      "position": [-12, 0, 7],
+      "hp": 55,
+      "enemies": [71, 71, 71],
+      "arrows": 0,
+      "healBolts": 0,
+      "calls": 83,
+      "triangles": 31382
+    }
+  ],
+  "heroRecoveryExit": [
+    {
+      "tick": 41,
+      "hero": "attack",
+      "swing": 0.29000000000000004,
+      "position": [-8, 0, 3.2],
+      "hp": 55,
+      "enemies": [53, 71, 71],
+      "arrows": 0,
+      "healBolts": 0,
+      "calls": 77,
+      "triangles": 31534
+    },
+    {
+      "tick": 42,
+      "hero": "walk",
+      "swing": 0,
+      "position": [-8.108407292457356, 0, 3.2776249748460073],
+      "hp": 55,
+      "enemies": [53, 71, 71],
+      "arrows": 0,
+      "healBolts": 0,
+      "calls": 78,
+      "triangles": 31536
+    },
+    {
+      "tick": 44,
+      "hero": "walk",
+      "swing": 0,
+      "position": [-8.325221877372067, 0, 3.4328749245380217],
+      "hp": 55,
+      "enemies": [53, 71, 71],
+      "arrows": 0,
+      "healBolts": 0,
+      "calls": 77,
+      "triangles": 31440
+    },
+    {
+      "tick": 69,
+      "hero": "idle",
+      "swing": 0,
+      "position": [-10.818589603891251, 0, 5.218249345996194],
+      "hp": 55,
+      "enemies": [53, 71, 71],
+      "arrows": 0,
+      "healBolts": 0,
+      "calls": 76,
+      "triangles": 31438
+    }
+  ],
+  "rendererCallsRange": [73, 83],
+  "visualReview": "Attached weapons and stable exposure retained. Volley/heal precede HP changes. Attack-to-walk has no intervening idle clip; walking returns to idle only after input ends."
+}

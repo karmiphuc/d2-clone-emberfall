@@ -1,3 +1,4 @@
+import { flightSeconds } from "./projectiles.js";
 import {
   MOOR_EXTRA_ENCOUNTERS,
   MOOR_OBJECTIVE_IDS,
@@ -174,6 +175,7 @@ export function createCombat(
     taunter: null,
     cooldown: 0,
     windup: 0,
+    recovery: 0,
     victim: null,
     engaged: false,
   }));
@@ -208,6 +210,76 @@ export function createCombat(
     autoSuppressed = 0,
     movingHero = false;
   let enemyRoute = navigate;
+  let actionSerial = 0,
+    areaEpoch = 0;
+  const pendingImpacts = [];
+  function launch(
+    ally,
+    victim,
+    amount,
+    kind = "damage",
+    actionId = ++actionSerial,
+  ) {
+    const from = { x: ally.x, z: ally.z };
+    const duration = flightSeconds(from, victim);
+    pendingImpacts.push({
+      epoch: areaEpoch,
+      source: ally.id,
+      target: victim.id,
+      amount,
+      kind,
+      from,
+      remaining: duration,
+    });
+    emit({
+      type: "projectile",
+      id: ally.id,
+      target: victim.id,
+      duration,
+      actionId,
+      healing: kind === "heal",
+      from,
+    });
+  }
+  function resolveImpacts(dt) {
+    for (const impact of [...pendingImpacts]) {
+      if (impact.epoch !== areaEpoch) continue;
+      impact.remaining -= dt;
+      if (impact.remaining > 0.000001) continue;
+      pendingImpacts.splice(pendingImpacts.indexOf(impact), 1);
+      const victim = (impact.kind === "heal" ? allies : enemies).find(
+        (e) => e.id === impact.target,
+      );
+      if (
+        !victim?.hp ||
+        (impact.kind === "heal" && !victim.active) ||
+        !clearLine(impact.from, victim)
+      )
+        continue;
+      if (impact.kind === "heal") {
+        victim.hp = Math.min(victim.maxHp, victim.hp + impact.amount);
+        emit({ type: "heal", id: victim.id, source: impact.source });
+      } else if (impact.kind === "frostburst") {
+        enemies
+          .filter(
+            (e) =>
+              e.hp > 0 &&
+              distance(e, victim) < 3.5 &&
+              clearLine(impact.from, e),
+          )
+          .forEach((e) => {
+            e.slow = 3;
+            hurtEnemy(e, impact.amount, impact.source);
+          });
+        emit({
+          type: "special",
+          id: impact.source,
+          target: victim.id,
+          name: "Frostburst",
+        });
+      } else hurtEnemy(victim, impact.amount, impact.source);
+    }
+  }
   const clearLine = (a, b) => {
     if (!enemyRoute) return true;
     const steps = Math.ceil(distance(a, b) / 0.3);
@@ -427,6 +499,8 @@ export function createCombat(
   refreshStats(true);
   const api = {
     setArea(nextEncounters, nextProgress, navigate = null) {
+      areaEpoch++;
+      pendingImpacts.length = 0;
       encounters = nextEncounters;
       progress = nextProgress;
       enemyRoute = navigate;
@@ -447,6 +521,7 @@ export function createCombat(
           taunter: null,
           cooldown: 0,
           windup: 0,
+          recovery: 0,
           victim: null,
           engaged: false,
         })),
@@ -520,7 +595,7 @@ export function createCombat(
       }
     },
     cancel() {
-      if (pendingStrike) emit({ type: "cancelStrike", id: "hero" });
+      emit({ type: "cancelStrike", id: "hero" });
       pendingStrike = null;
       queuedCleave = false;
       queuedTarget = null;
@@ -587,6 +662,8 @@ export function createCombat(
       return true;
     },
     restore() {
+      areaEpoch++;
+      pendingImpacts.length = 0;
       api.cancel();
       allies.forEach((a) => {
         a.hp = a.maxHp;
@@ -604,6 +681,7 @@ export function createCombat(
       target = null;
       enemies.forEach((e) => {
         e.windup = 0;
+        e.recovery = 0;
         e.victim = null;
         e.engaged = false;
       });
@@ -624,6 +702,7 @@ export function createCombat(
         ally.engaged = false;
       }
       if (dead) return;
+      resolveImpacts(dt);
       if (pendingStrike) {
         pendingStrike.remaining -= dt;
         if (pendingStrike.remaining <= 0.000001) {
@@ -698,9 +777,9 @@ export function createCombat(
             )
             .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
           if (wounded) {
-            wounded.hp = Math.min(wounded.maxHp, wounded.hp + gear.healing);
+            emit({ type: "cast", id: ally.id, target: wounded.id });
+            launch(ally, wounded, gear.healing, "heal");
             ally.specialCooldown = 3.5;
-            emit({ type: "heal", id: wounded.id, source: ally.id });
             // Healing is her action: don't immediately turn away to attack.
             ally.cooldown = Math.max(ally.cooldown, spec.cooldown);
             continue;
@@ -738,35 +817,21 @@ export function createCombat(
         ally.engaged = true;
         if (ally.cooldown > 0) continue;
         ally.cooldown = spec.cooldown * gear.cooldownMultiplier;
+        // A volley is one body action; each released missile has its own contact.
+        emit({ type: "swing", id: ally.id, target: enemy.id });
         if (ally.specialCooldown <= 0 && ally.id === "Ilyra") {
-          near
+          const actionId = ++actionSerial;
+          [enemy, ...near.filter((e) => e !== enemy)]
             .filter((e) => distance(e, ally) <= 7 && clearLine(ally, e))
             .slice(0, 3)
-            .forEach((e) => {
-              hurtEnemy(e, spec.damage + bonus, ally.id);
-              emit({ type: "swing", id: ally.id, target: e.id });
-            });
+            .forEach((e) =>
+              launch(ally, e, spec.damage + bonus, "damage", actionId),
+            );
           ally.specialCooldown = 4;
           emit({ type: "special", id: ally.id, name: "Volley" });
         } else if (ally.specialCooldown <= 0 && ally.id === "Soren") {
-          const center = { x: enemy.x, z: enemy.z };
-          enemies
-            .filter(
-              (e) =>
-                e.hp > 0 && distance(e, center) < 3.5 && clearLine(ally, e),
-            )
-            .forEach((e) => {
-              e.slow = 3;
-              hurtEnemy(e, 14 + bonus, ally.id);
-            });
+          launch(ally, enemy, 14 + bonus, "frostburst");
           ally.specialCooldown = 6;
-          emit({
-            type: "special",
-            id: ally.id,
-            target: enemy.id,
-            name: "Frostburst",
-          });
-          emit({ type: "swing", id: ally.id, target: enemy.id });
         } else if (ally.specialCooldown <= 0 && ally.id === "Nyx") {
           hurtEnemy(enemy, (spec.damage + bonus) * 2.8, ally.id);
           ally.specialCooldown = 4;
@@ -776,7 +841,6 @@ export function createCombat(
             target: enemy.id,
             name: "Backstab",
           });
-          emit({ type: "swing", id: ally.id, target: enemy.id });
         } else if (ally.specialCooldown <= 0 && ally.id === "Aldric") {
           hurtEnemy(
             enemy,
@@ -793,10 +857,10 @@ export function createCombat(
             target: enemy.id,
             name: "Holy strike",
           });
-          emit({ type: "swing", id: ally.id, target: enemy.id });
+        } else if (["Ilyra", "Eira", "Soren"].includes(ally.id)) {
+          launch(ally, enemy, spec.damage + bonus);
         } else {
           hurtEnemy(enemy, spec.damage + bonus, ally.id);
-          emit({ type: "swing", id: ally.id, target: enemy.id });
         }
       }
       for (const enemy of enemies) {
@@ -817,7 +881,12 @@ export function createCombat(
               hitAlly(victim, enemy.damage, enemy.id);
             emit({ type: "enemyAttack", id: enemy.id, target: enemy.victim });
             enemy.cooldown = enemy.elite ? 1.4 : 1;
+            enemy.recovery = 0.26;
           }
+          continue;
+        }
+        if (enemy.recovery > 0) {
+          enemy.recovery = Math.max(0, enemy.recovery - dt);
           continue;
         }
         const forced =

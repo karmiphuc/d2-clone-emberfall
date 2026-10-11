@@ -156,10 +156,17 @@ test("tank taunts while archer volleys and mage slows multiple enemies", () => {
   c.tick(1 / 30, positions);
   assert.equal(
     events.filter((e) => e.type === "hit" && e.source === "Ilyra").length,
+    0,
+  );
+  c.tick(0.22, positions);
+  assert.equal(
+    events.filter((e) => e.type === "hit" && e.source === "Ilyra").length,
     3,
   );
   ({ c, events, positions } = roleScenario("Soren"));
   c.tick(1 / 30, positions);
+  assert.ok(c.enemies.slice(0, 3).every((e) => e.slow === 0));
+  c.tick(0.22, positions);
   assert.ok(c.enemies.slice(0, 3).every((e) => e.slow > 0 && e.hp < e.maxHp));
 });
 test("healer restores injured allies without enemies, and assassin uses a backstab", () => {
@@ -170,6 +177,8 @@ test("healer restores injured allies without enemies, and assassin uses a backst
   });
   c.allies[0].hp = 40;
   c.tick(1 / 30, positions);
+  assert.equal(c.allies[0].hp, 40);
+  c.tick(0.22, positions);
   assert.ok(c.allies[0].hp > 40);
   assert.ok(events.some((e) => e.type === "heal" && e.source === "Eira"));
   ({ c, events, positions } = roleScenario("Nyx"));

@@ -162,9 +162,10 @@ game.onPracticeStrike = () => {
 function combatEvent(event) {
   if (event.type === "prepare")
     game.animateAttack(event.id, event.target, event.duration, event.windup);
-  if (event.type === "cancelStrike") game.hero.userData.swing = 0;
+  if (event.type === "cancelStrike") game.cancelAttack();
   game.combatVisual(event);
   combatSound?.(event);
+  if (event.type === "cast") game.animateAttack(event.id, event.target, 0.26);
   if (event.type === "windup") game.animateAttack(event.id, event.target, 0);
   if (event.type === "enemyAttack")
     game.animateAttack(event.id, event.target, 0.26);
@@ -226,7 +227,6 @@ function combatEvent(event) {
     );
   }
   if (event.type === "heal") {
-    if (event.source) game.animateAttack(event.source, event.id, 0.26);
     save();
   }
   if (event.type === "down" && event.id !== "hero")
