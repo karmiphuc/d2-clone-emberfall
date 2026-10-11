@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.24.0 — Play first, details on demand
+
+- Enter the Blood Moor directly from the camp gate. Move the hunting ledger and respawn explanation into a collapsed Journal section available in camp, Moor and Den.
+- Hide the quest tracker, control reminders, routine success messages and repeated companion skill labels by default; retain optional preferences across reloads through Settings. Keep actionable failures, bag-overflow notices, companion defeat and level-up feedback.
+- Remove the forced defeat/rest dialog, single-destination waypoint dialog and duplicate Town button. Return to a restored camp with a short gold-loss notice after defeat.
+- Make menu shortcuts toggle their panel or switch directly to another. Opening a panel cancels pending NPC visits so arrival cannot replace it. Keep service transactions and equipment available through deliberate interactions.
+- Reveal NPC service/party role details on hover or keyboard focus. Preserve health, party portraits, skill controls and map navigation.
+- Disable Astra review at the user’s request; record the rule in repository guidance.
+
 ## 0.23.0 — Combat sound and a quieter HUD
 
 - Remove enemy windup bars, attack outlines and strike/recovery instructions from floating labels and the focus panel. Keep accessible creature health and meaningful conditions; boss anticipation remains visible in its animation and directional ground tell.

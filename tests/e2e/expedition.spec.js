@@ -14,9 +14,6 @@ test("complete a party expedition, collect loot, claim once and preserve progres
     g.renderer.shadowMap.enabled = false;
     window.__camp.interact("Blood Moor");
   });
-  await page
-    .getByRole("button", { name: "Enter the Blood Moor", exact: true })
-    .click();
   await expect(page.locator(".place h1")).toHaveText("Blood Moor");
   const result = await page.evaluate(() => {
     const { game, getCombat, action } = window.__camp,
@@ -65,9 +62,7 @@ test("complete a party expedition, collect loot, claim once and preserve progres
   expect(result.state.charm).toBe(true);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: "test-results/blood-moor.png" });
-  await page
-    .getByRole("button", { name: "Return to camp [6]", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Town [6]", exact: true }).click();
   await expect(page.locator(".place h1")).toHaveText("Rogue Encampment");
   await page.evaluate(() => window.__camp.interact("Akara"));
   await page
@@ -103,9 +98,10 @@ test("hero defeat restores the party in camp with the advertised gold penalty", 
     game.companions.forEach((o) => (o.visible = false));
     for (let i = 0; i < 30 && !c.dead; i++) game.update(1 / 30, i / 30, false);
   });
-  await expect(
-    page.getByRole("heading", { name: "The company retreats" }),
-  ).toBeVisible();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await expect(page.locator("#toast")).toContainText(
+    "The company retreats · 24 gold lost",
+  );
   await expect(page.locator(".place h1")).toHaveText("Rogue Encampment");
   const result = await page.evaluate(() => ({
     state: window.__camp.getState(),

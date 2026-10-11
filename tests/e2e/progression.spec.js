@@ -103,9 +103,6 @@ test("the first area supports repeat hunts, persistent quest credit, gear, skill
   expect(await page.locator(".party-card").count()).toBe(4);
   for (let hunt = 1; hunt < 4; hunt++) {
     await page.evaluate(() => window.__camp.interact("Blood Moor"));
-    await page
-      .getByRole("button", { name: "Enter the Blood Moor", exact: true })
-      .click();
     result = await clear();
     expect(result.alive, JSON.stringify(result)).toBe(true);
     expect(result.state.questKills, JSON.stringify(result)).toEqual(

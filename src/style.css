@@ -2409,3 +2409,29 @@ dialog {
     grid-template-columns: 1fr;
   }
 }
+
+/* Optional details stay out of the playfield until requested. */
+.hunt-details {
+  margin-top: 18px;
+  border-top: 1px solid #6b5b3f;
+  padding-top: 12px;
+}
+.hunt-details summary {
+  color: #e2c68b;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.hunt-details summary:focus-visible {
+  outline: 1px solid #e2c68b;
+  outline-offset: 3px;
+}
+.npc-label small,
+.party-card .member-role {
+  display: none;
+}
+.npc-label:hover small,
+.npc-label:focus-visible small,
+.party-card:hover .member-role,
+.party-card:focus-visible .member-role {
+  display: block;
+}

@@ -87,7 +87,9 @@ test("boss hunting ledger, expanded spawns and their trophies remain usable on a
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await page.waitForFunction(() => !!window.__camp);
-  await page.evaluate(() => window.__camp.interact("Blood Moor"));
+  await page.keyboard.press("j");
+  await expect(page.locator(".hunt-details")).not.toHaveAttribute("open");
+  await page.locator(".hunt-details summary").click();
   await expect(page.locator(".hunt-card")).toHaveCount(6);
   await expect(page.locator(".respawn-note")).toContainText(
     "Quest bosses stay defeated",
@@ -98,9 +100,9 @@ test("boss hunting ledger, expanded spawns and their trophies remain usable on a
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole("button", { name: "Enter the Blood Moor", exact: true })
-    .click();
+  await page.keyboard.press("Escape");
+  await page.evaluate(() => window.__camp.interact("Blood Moor"));
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   const result = await page.evaluate(() => {
     const g = window.__camp.game;
     g.renderer.setPixelRatio(0.5);

@@ -80,9 +80,7 @@ test("explore the Den, clear its chambers, preserve loot and claim its reward on
   expect(result.state.defeated).toEqual(result.moorBefore);
   await page.screenshot({ path: "test-results/den-cleared.png" });
   // Retreat and reload before collecting all loot: area drop persistence matters.
-  await page
-    .getByRole("button", { name: "Return to camp [6]", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Town [6]", exact: true }).click();
   await page.reload();
   await page.waitForFunction(() => !!window.__camp);
   expect((await page.evaluate(() => window.__camp.getState())).den).toEqual(
@@ -117,9 +115,7 @@ test("explore the Den, clear its chambers, preserve loot and claim its reward on
     .getByRole("button", { name: "Blood Moor · Exit", exact: true })
     .click();
   await expect(page.locator(".place h1")).toHaveText("Blood Moor");
-  await page
-    .getByRole("button", { name: "Return to camp [6]", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Town [6]", exact: true }).click();
   const beforeReward = await page.evaluate(() => window.__camp.getState().gold);
   await page.evaluate(() => window.__camp.interact("Akara"));
   await page

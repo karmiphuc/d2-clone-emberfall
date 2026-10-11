@@ -32,7 +32,7 @@ Open the URL printed by Vite. For a production build, run `npm run build` and `n
 - The hero automatically attacks nearby enemies when stationary. Left-click enemies to approach and focus them; movement takes priority over automatic attacks. Right-click an enemy or its label to approach and use Cleave. 1 cleaves (8 mana), queuing once behind an ongoing basic attack; moving cancels the queue. 2 guards for 3 seconds (10 mana, 8-second cooldown); 4 heals; 6 retreats and restores the company.
 - Click a mercenary portrait or use Inventory → Equip for to select the hero or any merc. Equip weapons, armor, rings and charms from the shared backpack in camp; Remove returns merc gear to the bag. Gear persists through dismissal and recruitment.
 - Click a nearby loot label or walk over a drop to collect it. Downed companions recover in camp.
-- Escape closes dialogs. Wind and combat sound are opt-in from the Sound button. Settings can soften combat effects; the system reduced-motion preference is honored.
+- I/C/J/P/K toggle their panels and switch directly between them; Escape closes dialogs. Quest tracking, control reminders and routine notifications start hidden and can be enabled in Settings. Wind and combat sound are opt-in from the Sound button. Settings can soften combat effects; the system reduced-motion preference is honored.
 
 ## Classic presentation
 
@@ -53,7 +53,7 @@ Enter the eastern gate to fight 12 enemies, including the Ashen Brute. Clear the
 
 Leaving camp automatically replenishes collected regular enemies and roaming bosses, even after a partial expedition. During play, collected packs also return after 90 seconds once every living party member is more than 18 units from their spawn. Quest credit is permanent; the Ashen Brute on the old road and Gravewarden never respawn. Uncollected drops protect their enemy slot until recovered. Repeat kills grant fresh XP, gold and unique item instances. Enemy scaling stops after expedition 4.
 
-The Moor holds **112 enemies across ten outer regions and the old road**, including ranged Embercallers, armored Risen Bulwarks and six named roaming bosses. Committed boss attacks lock their direction at windup: sidestep or use Guard, then strike during recovery. Cleave staggers regular enemies. Bosses enrage below half life. The gate and journal include a hunting ledger with locations, tactics, recommended levels and guaranteed distinct trophies.
+The Moor holds **112 enemies across ten outer regions and the old road**, including ranged Embercallers, armored Risen Bulwarks and six named roaming bosses. Committed boss attacks lock their direction at windup: sidestep or use Guard, then strike during recovery. Cleave staggers regular enemies. Bosses enrage below half life. The eastern gate enters the Moor directly. Journal → Boss hunts contains optional locations, tactics, recommended levels and trophy details.
 
 There are **69 item types** and ten levels. Higher-tier weapons cover every companion role. Haste speeds attacks/casts, life steal restores health on damage, and frost weapons chill. The 60-slot bag automatically sells overflow drops; comparisons show the new bonuses. Change equipment and talents in camp.
 
