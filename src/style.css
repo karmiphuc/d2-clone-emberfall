@@ -708,34 +708,23 @@ dialog p {
   font-size: 12px;
   z-index: 2;
 }
+/* Pointer/touch interaction belongs to the alpha-aware world picker. These
+   invisible buttons retain keyboard and assistive-technology targeting. */
 .enemy-label {
   position: absolute;
-  transform: translate(-50%, -100%);
-  background: #101717cc;
-  color: #d9c5b3;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: 0;
-  padding: 5px 8px;
-  font: 10px Inter;
-  pointer-events: auto;
-  min-width: 70px;
+  background: none;
+  box-shadow: none;
+  pointer-events: none;
 }
-.enemy-label i {
-  display: block;
-  height: 3px;
-  background: #312728;
-  margin-top: 4px;
-}
-.enemy-label b {
-  display: block;
-  height: 3px;
-  background: #b95c49;
-}
-.enemy-label.elite {
-  color: #f0cd8c;
-  border: 1px solid #a58a4f;
-}
-.enemy-label:hover {
-  background: #59352d;
+.enemy-label:focus-visible {
+  outline: 2px solid #ff3028;
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 .target-info {
   position: absolute;
@@ -768,11 +757,6 @@ dialog p {
     top: 260px;
     font-size: 10px;
   }
-  .enemy-label {
-    font-size: 8px;
-    min-width: 50px;
-    padding: 4px;
-  }
   .target-info {
     font-size: 11px;
     top: 107px;
@@ -789,10 +773,6 @@ dialog p {
   .target-info {
     max-width: 70vw;
     font-size: 10px;
-  }
-  .enemy-label {
-    min-width: 42px;
-    font-size: 7px;
   }
 }
 dialog {
@@ -983,9 +963,6 @@ dialog h3 {
   .inventory-summary {
     font-size: 12px;
   }
-}
-.enemy-label.chilled {
-  box-shadow: inset 0 0 0 1px #89bfd2;
 }
 .level-up {
   position: absolute;
@@ -1603,10 +1580,6 @@ dialog.inventory-dialog {
   font-size: 11px;
   min-height: 38px;
 }
-.enemy-label {
-  font-size: 11px;
-  background: #20130fd9;
-}
 .level-up {
   background: #211a10ed;
 }
@@ -2030,16 +2003,6 @@ dialog {
   body:has(#combat-status:not([hidden])) .controls {
     visibility: hidden;
   }
-}
-
-.enemy-label.hovered,
-.enemy-label.selected {
-  border-color: #d6b77b;
-  background: #392c21e8;
-  color: #f5dfb2;
-}
-.enemy-label.selected {
-  box-shadow: 0 0 0 1px #887043;
 }
 
 @media (max-width: 600px) {

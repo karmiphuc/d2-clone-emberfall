@@ -325,15 +325,15 @@ function refreshEnemyLabels() {
     const el = document.createElement("button");
     el.className = "enemy-label" + (enemy.elite ? " elite" : "");
     el.setAttribute("aria-label", `Attack ${enemy.name} ${enemy.id}`);
-    el.innerHTML = `<span>${enemy.name}</span><i><b></b></i>`;
+    el.setAttribute("aria-pressed", "false");
     el.onclick = () => {
       pending = null;
       combat.select(enemy.id);
     };
-    el.onpointerenter = () => {
+    el.onfocus = () => {
       game.hoveredEnemy = enemy.id;
     };
-    el.onpointerleave = () => {
+    el.onblur = () => {
       if (game.hoveredEnemy === enemy.id) game.hoveredEnemy = null;
     };
     el.oncontextmenu = (event) => {
@@ -1673,7 +1673,7 @@ function frame(now) {
     const rendered = game.enemyModels.get(enemy.id)?.userData.renderPosition;
     const v = new THREE.Vector3(
       rendered?.x ?? enemy.x,
-      enemy.elite ? 3.4 : 2.25,
+      enemy.elite ? 1.7 : 1.1,
       rendered?.z ?? enemy.z,
     ).project(camera);
     enemy.label.hidden =
@@ -1684,14 +1684,14 @@ function frame(now) {
       (-v.y * 0.5 + 0.5) * innerHeight < 86 ||
       (-v.y * 0.5 + 0.5) * innerHeight > innerHeight - 150;
     if (enemy.label.hidden) continue;
-    const edge = enemy.elite ? 64 : 42;
-    enemy.label.style.left = `${Math.max(edge, Math.min(innerWidth - edge, (v.x * 0.5 + 0.5) * innerWidth))}px`;
+    enemy.label.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
     enemy.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
-    enemy.label.querySelector("b").style.width =
-      `${(enemy.hp / enemy.maxHp) * 100}%`;
-    enemy.label.classList.toggle("chilled", enemy.slow > 0);
     enemy.label.classList.toggle("hovered", game.hoveredEnemy === enemy.id);
     enemy.label.classList.toggle("selected", combat.target === enemy.id);
+    enemy.label.setAttribute(
+      "aria-pressed",
+      String(combat.target === enemy.id),
+    );
   }
   updateCombatFocus(
     combatFocus(

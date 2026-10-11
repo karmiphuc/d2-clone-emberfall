@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.25.0 — Direct monster targeting
+
+- Remove floating monster nameplates and health boxes. Click or tap the visible creature directly; empty sprite margins remain walkable ground. Keep keyboard and assistive-technology attack controls.
+- Mark the selected creature with a steady, bold red silhouette contour that follows its current animation frame. Preserve the body, attached weapon, lighting and ground alignment; mask neighbouring packed atlas frames.
+- Keep selection marked while inspecting another creature, and clear the contour on death, deselection or camp return. Remove duplicate hover/selection ground rings and brightness washes; retain the single health/identity inspection panel.
+
 ## 0.24.0 — Play first, details on demand
 
 - Enter the Blood Moor directly from the camp gate. Move the hunting ledger and respawn explanation into a collapsed Journal section available in camp, Moor and Den.

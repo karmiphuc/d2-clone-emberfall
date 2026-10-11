@@ -1211,21 +1211,6 @@ export function createWorld(canvas) {
       api.moveTo(hits[0].point);
     }
   });
-  const targetRing = mesh(
-    new T.RingGeometry(0.63, 0.69, 48),
-    new T.MeshBasicMaterial({
-      color: "#bd6949",
-      transparent: true,
-      opacity: 0.8,
-      depthWrite: false,
-    }),
-    0,
-    0.04,
-    0,
-  );
-  targetRing.rotation.x = -Math.PI / 2;
-  targetRing.castShadow = false;
-  targetRing.visible = false;
   const keys = new Set();
   window.addEventListener("keydown", (e) => keys.add(e.code));
   window.addEventListener("keyup", (e) => keys.delete(e.code));
@@ -1263,19 +1248,11 @@ export function createWorld(canvas) {
       dt,
     );
     if (api.zone === "den") dungeon.update(time);
-    const marked =
+    const selected =
       api.zone !== "camp" &&
-      api.combat?.enemies.find(
-        (e) => e.hp > 0 && e.id === (api.hoveredEnemy || api.combat.target),
-      );
-    targetRing.visible = !!marked;
-    if (marked) {
-      targetRing.position.set(marked.x, 0.04, marked.z);
-      targetRing.scale.setScalar(marked.elite ? 1.7 : 1);
-      targetRing.material.color.set(
-        api.hoveredEnemy === marked.id ? "#e2c287" : "#bd6949",
-      );
-    }
+      api.combat?.enemies.find((e) => e.hp > 0 && e.id === api.combat.target);
+    for (const [id, model] of enemyModels)
+      model.userData.targetSelected = selected?.id === id;
     if (!paused) effects.update(dt, api.reducedEffects);
     flames.forEach((f, i) => {
       f.scale.y = 2.8 + Math.sin(time * 9 + i) * 0.12;
@@ -1406,12 +1383,7 @@ export function createWorld(canvas) {
         const dir = model.position.clone().sub(prev);
         if (dir.lengthSq() > 0.00001)
           model.rotation.y = Math.atan2(dir.x, dir.z);
-        model.userData.highlight =
-          api.hoveredEnemy === enemy.id
-            ? 0.2
-            : api.combat.target === enemy.id
-              ? 0.08
-              : 0;
+        model.userData.highlight = 0;
         const tell = model.userData.attackTell;
         if (tell) {
           tell.visible = model.visible && enemy.windup > 0 && !!enemy.attackAim;
@@ -1540,12 +1512,6 @@ export function createWorld(canvas) {
       if (actor.visible) presentActor(actor, alpha, dt);
     const h = hero.userData;
     select.position.set(h.shadow.position.x, 0.035, h.shadow.position.z);
-    const marked = api.combat?.enemies.find(
-      (e) => e.hp > 0 && e.id === (api.hoveredEnemy || api.combat.target),
-    );
-    const displayed =
-      marked && enemyModels.get(marked.id)?.userData.renderPosition;
-    if (displayed) targetRing.position.set(displayed.x, 0.04, displayed.z);
     effects.present(alpha, api.reducedEffects);
   };
   return api;

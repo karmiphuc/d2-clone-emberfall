@@ -14,6 +14,7 @@ import {
 } from "./animation.js";
 import { createMotionMaterial } from "./sprite-motion-material.js";
 import { ITEMS } from "./game/items.js";
+import { installTargetOutline } from "./target-outline.js";
 
 // Original painted, directional figures retain the game's Three.js world,
 // pathfinding and combat roots. Frames are ordered front-right, front-left,
@@ -205,6 +206,7 @@ export function createSpriteActor(name, weapon) {
         toneMapped: false,
       })
     : motionMaterial.material;
+  const targetOutline = rigged ? installTargetOutline(material) : null;
   const sprite = new T.Sprite(material);
   sprite.center.set(0.5, 0.06);
   const size =
@@ -333,19 +335,34 @@ export function createSpriteActor(name, weapon) {
       const displayRow = clip === "idle" ? 0 : packed.row;
       const frame = frames.clips[clip][column][displayRow];
       data.riggedFacing = column;
-      map.repeat.set(frame.w / frames.width, frame.h / frames.height);
+      // Extend the quad for an outside contour without shifting the authored
+      // root or scaling the body. The shader masks all adjacent atlas frames.
+      const padding = data.targetSelected ? 12 : 0;
+      const width = frame.w + padding * 2,
+        height = frame.h + padding * 2;
+      map.repeat.set(width / frames.width, height / frames.height);
       map.offset.set(
-        frame.x / frames.width,
-        1 - (frame.y + frame.h) / frames.height,
+        (frame.x - padding) / frames.width,
+        1 - (frame.y + frame.h + padding) / frames.height,
       );
+      targetOutline.targetSelected.value = data.targetSelected ? 1 : 0;
+      targetOutline.targetWidth.value = 3 * _renderer.getPixelRatio();
+      // Half-texel inset prevents a neighbour in the packed atlas bleeding in.
+      targetOutline.targetFrame.value.set(
+        (frame.x + 0.5) / frames.width,
+        1 - (frame.y + frame.h - 0.5) / frames.height,
+        (frame.x + frame.w - 0.5) / frames.width,
+        1 - (frame.y + 0.5) / frames.height,
+      );
+      sprite.userData.pickFrame = targetOutline.targetFrame.value;
       if (material.map !== map) material.map = map;
       sprite.center.set(
-        frame.origin[0] / frame.w,
-        1 - frame.origin[1] / frame.h,
+        (frame.origin[0] + padding) / width,
+        1 - (frame.origin[1] + padding) / height,
       );
       sprite.scale.set(
-        frame.w * frames.unitsPerPixel,
-        frame.h * frames.unitsPerPixel,
+        width * frames.unitsPerPixel,
+        height * frames.unitsPerPixel,
         1,
       );
       // Frame dimensions change during this callback, after scene traversal.

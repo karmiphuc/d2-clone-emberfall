@@ -27,6 +27,15 @@ export function visibleSpriteHit(hit) {
     if (local.x < 0 || local.x > 1 || local.y < 0 || local.y > 1) return false;
   }
   const uv = map.transformUv(local);
+  const frame = hit.object.userData.pickFrame;
+  if (
+    frame &&
+    (uv.x < frame.x ||
+      uv.x > frame.z ||
+      1 - uv.y < frame.y ||
+      1 - uv.y > frame.w)
+  )
+    return false;
   const x = Math.min(
     mask.width - 1,
     Math.max(0, Math.floor(uv.x * mask.width)),
