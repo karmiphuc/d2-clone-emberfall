@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("hover inspection preserves attack intent and elite warning clears on death and camp return", async ({
+test("hover inspection preserves attack intent and health focus clears on death and camp return", async ({
   page,
 }) => {
   const errors = [];
@@ -38,16 +38,13 @@ test("hover inspection preserves attack intent and elite warning clears on death
   });
   const hud = page.locator("#target-info");
   await expect(hud).toHaveAttribute("data-enemy", ids.brute);
-  await expect(hud).toContainText("Committed strike → You");
+  await expect(hud).not.toContainText(/Committed strike|Recovering|move clear/);
   await expect(hud).toContainText("Chilled");
   await expect(hud).not.toContainText("Unaware");
   await expect(
     page.getByRole("progressbar", { name: "Creature health" }),
   ).toHaveAttribute("aria-valuenow", /\d+/);
-  await expect(hud.locator(".target-warning i")).toHaveAttribute(
-    "style",
-    /50%/,
-  );
+  await expect(page.locator(".target-warning, .enemy-warning")).toHaveCount(0);
   await page.evaluate((id) => {
     window.__camp.game.hoveredEnemy = id;
   }, ids.fallen);

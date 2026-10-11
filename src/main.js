@@ -13,11 +13,7 @@ import {
   DEN_ROOMS,
   claimDenReward,
 } from "./game/den.js";
-import {
-  attackWarning,
-  combatFocus,
-  createCombatFocus,
-} from "./combat-focus.js";
+import { combatFocus, createCombatFocus } from "./combat-focus.js";
 import { skillTreeMarkup } from "./skill-tree.js";
 import { createCombatAudio } from "./combat-audio.js";
 import * as THREE from "three";
@@ -74,7 +70,7 @@ const save = () => {
 };
 const app = document.querySelector("#app");
 app.innerHTML = `<canvas id="world" aria-label="Playable encampment. Click to move, or use WASD. Press E near a towns-person to interact."></canvas><div id="vignette"></div><div class="labels" id="labels"></div>
-<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button optional" id="sound" title="Toggle sound" aria-label="Toggle sound">Sound</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">Help</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">Settings</button></div></header>
+<header class="top"><div><div class="brand">EMBERFALL</div><div class="edition">CHAPTER I · EARLY PLAYTEST</div></div><div class="place"><div class="eyebrow">The western kingdoms</div><h1>Rogue Encampment</h1><div class="safe">SANCTUARY</div></div><div class="top-actions"><button class="icon-button" id="sound" title="Toggle sound" aria-label="Toggle sound" aria-pressed="false">Sound: Off</button><button class="icon-button" id="help" title="Controls" aria-label="Controls">Help</button><button class="icon-button" id="settings" title="Settings" aria-label="Settings">Settings</button></div></header>
 <aside class="party" id="party" aria-label="Your party"></aside><aside class="quest"><div class="eyebrow">Quest journal</div><h2 id="quest-title">A light in the darkness</h2><p id="quest-text">Speak to Akara.<br>Find your footing in camp.</p><button id="journal-link">OPEN JOURNAL &nbsp; [J]</button></aside>
 <div class="minimap"><span class="north">N</span><div class="map-frame"><canvas id="map" width="274" height="216"></canvas></div><div class="map-caption">ROGUE ENCAMPMENT</div><div class="map-regions" aria-label="Wilderness destinations">${MOOR_REGIONS.map((r, i) => `<button data-map-region="${r.id}">${i + 1}. ${r.name}</button>`).join("")}</div></div>
 <div class="controls">CLICK TO MOVE <span>·</span> WASD <span>·</span> E INTERACT <span>·</span> SPACE REGROUP</div><div class="chapter"><strong>ACT I · THE SIGHTLESS EYE</strong><span id="save-note">PROGRESS SAVED ON THIS DEVICE</span></div>
@@ -166,7 +162,29 @@ function combatEvent(event) {
     game.animateAttack(event.id, event.target, event.duration, event.windup);
   if (event.type === "cancelStrike") game.cancelAttack();
   game.combatVisual(event);
-  combatSound?.(event);
+  const soundActor = event.victim
+    ? combat.enemies.find((e) => e.id === event.victim) ||
+      combat.allies.find((a) => a.id === event.victim)
+    : combat.enemies.find((e) => e.id === event.id) ||
+      combat.allies.find((a) => a.id === event.id);
+  const distance = soundActor
+    ? Math.hypot(soundActor.x - hero.position.x, soundActor.z - hero.position.z)
+    : 0;
+  combatSound?.({
+    ...event,
+    weapon:
+      ITEMS[
+        (event.id || event.source) === "hero"
+          ? hero.userData.weaponId
+          : state.companionEquipment?.[event.id || event.source]?.weapon?.itemId
+      ]?.weaponType,
+    heavy: event.heavy || combat.enemies.find((e) => e.id === event.id)?.elite,
+    ranged: combat.enemies.find((e) => e.id === event.id)?.behavior === "ember",
+    volume: Math.max(0, 1 - distance / 28),
+    pan: soundActor
+      ? (soundActor.x - hero.position.x - (soundActor.z - hero.position.z)) / 18
+      : 0,
+  });
   if (event.type === "cast") game.animateAttack(event.id, event.target, 0.26);
   if (event.type === "windup") game.animateAttack(event.id, event.target, 0);
   if (event.type === "enemyAttack")
@@ -258,7 +276,7 @@ function refreshEnemyLabels() {
     const el = document.createElement("button");
     el.className = "enemy-label" + (enemy.elite ? " elite" : "");
     el.setAttribute("aria-label", `Attack ${enemy.name} ${enemy.id}`);
-    el.innerHTML = `<span>${enemy.name}</span><i><b></b></i><em class="enemy-warning" aria-hidden="true"><b></b></em>`;
+    el.innerHTML = `<span>${enemy.name}</span><i><b></b></i>`;
     el.onclick = () => {
       pending = null;
       combat.select(enemy.id);
@@ -1283,9 +1301,11 @@ document.querySelector("#sound").onclick = async () => {
     source.start();
     audio = ctx;
     combatSound = createCombatAudio(ctx);
+    await ctx.resume();
     toast("Wind and combat sounds enabled.");
   } else {
     if (audio.state === "running") {
+      combatSound.clear();
       await audio.suspend();
       toast("Sound muted.");
     } else {
@@ -1293,8 +1313,11 @@ document.querySelector("#sound").onclick = async () => {
       toast("Wind and combat sounds enabled.");
     }
   }
-  document.querySelector("#sound").style.color =
-    audio.state === "running" ? "#f3d38f" : "#c9b38c";
+  const soundButton = document.querySelector("#sound");
+  soundButton.textContent =
+    audio.state === "running" ? "Sound: On" : "Sound: Off";
+  soundButton.setAttribute("aria-pressed", String(audio.state === "running"));
+  soundButton.style.color = audio.state === "running" ? "#f3d38f" : "#c9b38c";
 };
 window.addEventListener("keydown", (e) => {
   if (dialog.open) return;
@@ -1631,9 +1654,6 @@ function frame(now) {
     enemy.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
     enemy.label.querySelector("b").style.width =
       `${(enemy.hp / enemy.maxHp) * 100}%`;
-    enemy.label.classList.toggle("winding", enemy.windup > 0);
-    enemy.label.querySelector(".enemy-warning b").style.width =
-      `${attackWarning(enemy) * 100}%`;
     enemy.label.classList.toggle("chilled", enemy.slow > 0);
     enemy.label.classList.toggle("hovered", game.hoveredEnemy === enemy.id);
     enemy.label.classList.toggle("selected", combat.target === enemy.id);

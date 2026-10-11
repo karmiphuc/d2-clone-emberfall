@@ -69,8 +69,9 @@ export function createCombatEffects(scene) {
       // Atlas bolts point right. Rotate in camera space, including elevation,
       // so arrows travel tip-first in every world direction and viewport.
       node.onBeforeRender = (_renderer, _scene, camera) => {
-        if (!effect.to) return;
-        direction.subVectors(effect.to, effect.from);
+        if (!effect.to && !effect.direction) return;
+        if (effect.to) direction.subVectors(effect.to, effect.from);
+        else direction.copy(effect.direction);
         right.setFromMatrixColumn(camera.matrixWorld, 0);
         cameraUp.setFromMatrixColumn(camera.matrixWorld, 1);
         node.material.rotation = Math.atan2(
@@ -94,6 +95,7 @@ export function createCombatEffects(scene) {
       target: options.target,
       targetHeight: options.targetHeight ?? 1,
       rotation: options.rotation ?? 0,
+      direction: options.direction?.clone(),
     });
     node.material.map = maps[CELLS[kind] ?? 1];
     const blending = kind === "arrow" ? T.NormalBlending : T.AdditiveBlending;

@@ -33,3 +33,11 @@ References: [v0.21 camp](screenshots/rigged-company-v0.21.png), [full-cast runti
 The v0.21.1 [bow and patrol fixes](qa-v0.21.1.md) refine this baseline: attached bow geometry, preserved string motion and stable idle pauses are required going forward. Use its corrected archer and patrol reels when reviewing those behaviors.
 
 Retain source revisions, licenses, dependency hashes and rebuild instructions. See [third-party attribution](../THIRD_PARTY.md). New asset sources must have clear permission for their intended distribution.
+
+## Combat presentation
+
+Keep enemy UI to identity, life and meaningful conditions. Do not add windup/cooldown bars, flashing attack outlines or changing strike/recovery instructions. Boss anticipation belongs in its authored pose and restrained directional ground tell. Hero skill cooldowns remain useful player controls.
+
+Effects support contact and follow-through without covering bodies or attached weapons. Use brief, directional slashes and small contact accents; keep fire, frost and healing translucent and restrained. Honor softened effects and reduced motion.
+
+Sound follows gameplay events: a single bow release per volley, each surviving projectile's impact at arrival, and healing at delivery. Differentiate physical swishes/thuds, bow strings and magic; layer low weight into heavy blows while limiting total voices and fading distant combat. Sound is opt-in and the control must remain accessible on phones. See the [v0.23 presentation review](qa-v0.23.md).

@@ -18,32 +18,18 @@ export function combatFocus(enemies, hovered, selected, hero) {
   );
 }
 
-export function attackWarning(enemy) {
-  return enemy.windup > 0
-    ? Math.max(
-        0,
-        Math.min(
-          1,
-          1 - enemy.windup / (enemy.windupTotal || (enemy.elite ? 0.95 : 0.5)),
-        ),
-      )
-    : 0;
-}
-
 export function createCombatFocus(element) {
-  element.innerHTML = `<div class="target-heading"><span class="target-kind"></span><strong class="target-name"></strong><span class="target-life"></span></div><div class="target-health" role="progressbar" aria-label="Creature health" aria-valuemin="0"><i></i></div><div class="target-condition"></div><div class="target-warning" aria-hidden="true"><i></i></div>`;
+  element.innerHTML = `<div class="target-heading"><span class="target-kind"></span><strong class="target-name"></strong><span class="target-life"></span></div><div class="target-health" role="progressbar" aria-label="Creature health" aria-valuemin="0"><i></i></div><div class="target-condition"></div>`;
   const name = element.querySelector(".target-name"),
     kind = element.querySelector(".target-kind"),
     life = element.querySelector(".target-life"),
     health = element.querySelector(".target-health"),
-    condition = element.querySelector(".target-condition"),
-    warning = element.querySelector(".target-warning i");
+    condition = element.querySelector(".target-condition");
   return (enemy, camp) => {
     element.hidden = camp || !enemy;
     if (element.hidden) return;
     element.dataset.enemy = enemy.id;
     element.classList.toggle("elite", !!enemy.elite);
-    element.classList.toggle("winding", enemy.windup > 0);
     name.textContent = enemy.name;
     kind.textContent = enemy.questBoss
       ? "QUEST BOSS"
@@ -60,20 +46,12 @@ export function createCombatFocus(element) {
     health.querySelector("i").style.width =
       `${Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100))}%`;
     const statuses = [];
-    if (enemy.windup > 0)
-      statuses.push(
-        `${enemy.behavior === "ember" ? "Ember bolt" : enemy.elite ? "Committed strike" : "Strike"} → ${enemy.victim === "hero" ? "You" : enemy.victim || "Company"} · move clear`,
-      );
-    else if (enemy.recovery > 0 && enemy.elite)
-      statuses.push("Recovering · strike now");
-    else if (enemy.engaged) statuses.push("In combat");
-    else statuses.push("Unaware");
     if (enemy.enraged) statuses.push("Enraged");
     if (enemy.champion) statuses.push("Armored · 25% protection");
     if (enemy.slow > 0) statuses.push("Chilled");
     if (enemy.taunted > 0)
       statuses.push(`Challenged by ${enemy.taunter || "Bram"}`);
     condition.textContent = statuses.join(" · ");
-    warning.style.width = `${attackWarning(enemy) * 100}%`;
+    condition.hidden = statuses.length === 0;
   };
 }

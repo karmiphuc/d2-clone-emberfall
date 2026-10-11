@@ -734,10 +734,6 @@ dialog p {
   color: #f0cd8c;
   border: 1px solid #a58a4f;
 }
-.enemy-label.winding {
-  outline: 2px solid #f0b56d;
-  background: #623428;
-}
 .enemy-label:hover {
   background: #59352d;
 }
@@ -2303,29 +2299,6 @@ dialog {
 }
 .target-info.elite .target-name {
   color: #efd093;
-}
-.target-info.winding .target-condition {
-  color: #f5bd7e;
-}
-.target-warning {
-  height: 2px;
-  margin-top: 5px;
-  background: transparent;
-}
-.target-warning i,
-.enemy-warning b {
-  display: block;
-  height: 2px;
-  background: #e7ac69;
-}
-.enemy-warning {
-  display: block;
-  height: 2px;
-  margin-top: 2px;
-  visibility: hidden;
-}
-.enemy-label.winding .enemy-warning {
-  visibility: visible;
 }
 @media (max-width: 600px) {
   .target-info {

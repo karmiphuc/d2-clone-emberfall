@@ -974,8 +974,8 @@ export function createWorld(canvas) {
                 ? "holy"
                 : "impact";
         effects.spawn(kind, point(target), {
-          size: event.heavy ? 1.8 : 1.2,
-          duration: 0.3,
+          size: event.heavy ? 1.5 : 0.95,
+          duration: 0.18,
           opacity: kind === "impact" ? 0.55 : 0.25,
         });
       }
@@ -985,21 +985,30 @@ export function createWorld(canvas) {
           if (target) pos.lerp(point(target), 0.5);
           const kind = event.id === "Nyx" ? "shadow" : "slash";
           effects.spawn(kind, pos, {
-            size: event.cleave ? 4 : event.id === "hero" ? 2.4 : 1.8,
-            opacity: event.id === "hero" ? 0.65 : 0.4,
-            duration: event.cleave ? 0.4 : 0.23,
-            rotation: actor.rotation.y > 0 ? -0.3 : 0.3,
+            size: event.cleave ? 3 : event.id === "hero" ? 1.8 : 1.3,
+            opacity: event.id === "hero" ? 0.42 : 0.28,
+            duration: event.cleave ? 0.26 : 0.16,
+            direction: target ? point(target).sub(point(actor)) : null,
           });
           if (
             event.id === "hero" &&
             ITEMS[hero.userData.weaponId]?.element === "fire"
           )
-            effects.spawn("fire", pos, { size: 2, duration: 0.35 });
+            effects.spawn("fire", pos, {
+              size: 1.35,
+              duration: 0.22,
+              opacity: 0.25,
+              color: 0xe8a16a,
+            });
           if (
             event.id === "hero" &&
             ITEMS[hero.userData.weaponId]?.element === "frost"
           )
-            effects.spawn("frost", pos, { size: 1.8, duration: 0.35 });
+            effects.spawn("frost", pos, {
+              size: 1.35,
+              duration: 0.22,
+              opacity: 0.25,
+            });
         }
       }
       if (event.type === "projectile" && actor && target) {
@@ -1014,17 +1023,18 @@ export function createWorld(canvas) {
           to: point(target),
           target,
           targetHeight: 1,
-          size: event.id === "Ilyra" ? 1.1 : 1.4,
+          size: event.id === "Ilyra" ? 1.1 : 1,
           duration: event.duration,
           color: event.hostile ? 0xf16b28 : 0xffffff,
-          opacity: event.id === "Ilyra" ? 1 : 0.8,
+          opacity: event.id === "Ilyra" ? 1 : 0.5,
         });
       }
       if (event.type === "heal" && actor) {
         effects.spawn("heal", point(actor, 0.7), {
-          size: 2.8,
-          duration: 1,
-          rise: 1,
+          size: 2,
+          duration: 0.65,
+          rise: 0.5,
+          opacity: 0.3,
         });
       }
       if (event.type === "guard" && actor)

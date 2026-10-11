@@ -144,7 +144,7 @@ test("a boss telegraph keeps its facing through a close sidestep and shows the p
     document.querySelector("dialog").showModal();
   });
   const hud = page.locator("#target-info");
-  await expect(hud).toContainText("Committed strike → You");
+  await expect(hud).not.toContainText("Committed strike");
   await expect(hud).not.toContainText("Unaware");
   expect(
     await page.evaluate(
@@ -173,6 +173,6 @@ test("a boss telegraph keeps its facing through a close sidestep and shows the p
   expect(result.recovery).toBeGreaterThan(0);
   expect(result.facing).toBeCloseTo(0);
   expect(result.tell).toBe(false);
-  await expect(hud).toContainText("Recovering · strike now");
+  await expect(hud).not.toContainText("Recovering");
   expect(errors).toEqual([]);
 });

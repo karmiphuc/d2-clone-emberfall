@@ -1,0 +1,105 @@
+{
+  "peak": 0.26424288749694824,
+  "rms": 0.013832331316599136,
+  "events": [
+    [
+      0.1,
+      {
+        "type": "swing",
+        "id": "hero",
+        "weapon": "sword"
+      }
+    ],
+    [
+      0.27,
+      {
+        "type": "hit",
+        "source": "hero"
+      }
+    ],
+    [
+      0.7,
+      {
+        "type": "swing",
+        "id": "hero",
+        "weapon": "axe",
+        "cleave": true
+      }
+    ],
+    [
+      0.92,
+      {
+        "type": "hit",
+        "source": "hero",
+        "heavy": true
+      }
+    ],
+    [
+      1.35,
+      {
+        "type": "guard"
+      }
+    ],
+    [
+      1.85,
+      {
+        "type": "projectile",
+        "id": "Ilyra",
+        "actionId": 1,
+        "pan": -0.4
+      }
+    ],
+    [
+      2.02,
+      {
+        "type": "hit",
+        "source": "Ilyra",
+        "pan": -0.4
+      }
+    ],
+    [
+      2.4,
+      {
+        "type": "projectile",
+        "id": "Soren",
+        "actionId": 2,
+        "pan": 0.4
+      }
+    ],
+    [
+      2.6,
+      {
+        "type": "hit",
+        "source": "Soren",
+        "pan": 0.4
+      }
+    ],
+    [
+      3.15,
+      {
+        "type": "heal"
+      }
+    ],
+    [
+      4,
+      {
+        "type": "enemyAttack",
+        "heavy": true
+      }
+    ],
+    [
+      4.25,
+      {
+        "type": "hit",
+        "heavy": true
+      }
+    ],
+    [
+      4.3,
+      {
+        "type": "kill",
+        "boss": true
+      }
+    ]
+  ]
+}

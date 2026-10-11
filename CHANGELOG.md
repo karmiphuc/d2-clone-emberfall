@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.23.0 — Combat sound and a quieter HUD
+
+- Remove enemy windup bars, attack outlines and strike/recovery instructions from floating labels and the focus panel. Keep accessible creature health and meaningful conditions; boss anticipation remains visible in its animation and directional ground tell.
+- Replace generic combat noise with original procedural weapon swishes, bow release, elemental projectiles, layered contact, Guard, healing and creature/boss death cues. Separate release from arrival, deduplicate volley audio, fade distant combat and bound the compressed stereo mix to 24 voices.
+- Make Sound On/Off explicit and available on phones. Sound remains opt-in; muting clears transient voices before suspending the context.
+- Shorten contact/slash effects, aim slashes in camera space, and reduce elemental/healing overlays to preserve character and weapon readability. Preserve all approved actor atlases and action timing.
+- Add audio lifecycle/routing and browser regressions plus a runtime reel and synthesized audio reference.
+
 ## 0.22.1 — Quest-boss persistence and ranged enrage
 
 - Suppress already-cleared quest bosses when an older repeat hunt erased its population deaths. Permanent migrated quest credit now restores the boss death/collected slot without generating a second trophy. Add save/combat regression coverage.

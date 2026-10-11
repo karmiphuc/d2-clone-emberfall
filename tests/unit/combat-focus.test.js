@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { combatFocus, attackWarning } from "../../src/combat-focus.js";
+import { combatFocus } from "../../src/combat-focus.js";
 
 const enemy = (id, fields = {}) => ({
   id,
@@ -44,15 +44,4 @@ test("dead, hidden, unaware or distant elites cannot steal target details", () =
     combatFocus([enemy("dead", { hp: 0 })], null, "dead", { x: 0, z: 0 }),
     null,
   );
-});
-test("the warning advances to contact using the existing regular and elite windup durations", () => {
-  for (const [elite, duration] of [
-    [false, 0.5],
-    [true, 0.95],
-  ]) {
-    assert.equal(attackWarning({ elite, windup: duration }), 0);
-    assert.equal(attackWarning({ elite, windup: duration / 2 }), 0.5);
-    assert.ok(attackWarning({ elite, windup: 0.001 }) > 0.99);
-    assert.equal(attackWarning({ elite, windup: 0 }), 0);
-  }
 });
