@@ -4,7 +4,7 @@
 
 **[Play the latest build](https://karmiphuc.github.io/d2-clone-emberfall/)** · [Report a playtest bug](https://github.com/karmiphuc/d2-clone-emberfall/issues/new/choose)
 
-A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment, a complete first Blood Moor expedition, and a connected Den of Evil dungeon: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–6, usable skill trees, and six companion specialties.
+A browser-based, party-focused action RPG prototype built with Three.js. The playable slice includes the Rogue Encampment, a complete first Blood Moor expedition, and a connected Den of Evil dungeon: one hero, three recruitable companions, town services, enemy combat and persistent loot, levels 1–10, usable skill trees, and six companion specialties.
 
 ![Emberfall v0.8 camp at dusk](docs/screenshots/camp-v0.8.webp)
 
@@ -51,15 +51,19 @@ This is a stylized, original-asset interpretation of the classic game, not a pix
 
 Enter the eastern gate to fight 12 enemies, including the Ashen Brute. Clear the encounter, collect the Ashen charm, and claim 100 gold and two potions from Akara. Retreat at any time; slain enemies and uncollected drops persist. Reloading starts the party safely in camp.
 
-After collecting all 12 drops, return to the eastern gate and choose **Start fresh hunt**. Progress, equipment, talents and recruitment choices carry over. Four clears reach the level-6 playtest cap; enemy scaling stops after hunt 4. Each enemy guarantees an equipment drop. The 60-slot bag automatically sells overflow drops. Change equipment and talents in camp.
+Leaving camp automatically replenishes collected regular enemies and roaming bosses, even after a partial expedition. During play, collected packs also return after 90 seconds once every living party member is more than 18 units from their spawn. Quest credit is permanent; the Ashen Brute on the old road and Gravewarden never respawn. Uncollected drops protect their enemy slot until recovered. Repeat kills grant fresh XP, gold and unique item instances. Enemy scaling stops after expedition 4.
 
-The northeastern cleft in the Moor leads to the **Den of Evil** (recommended level 3): three connected chambers, 11 creatures including the Gravewarden, and a one-time 175 gold / 3 potion bounty from Akara. The entrance label approaches and enters the cave; the exit returns to the Moor. Dungeon kills and loot survive retreats/reloads independently of repeat Moor hunts. Living dungeon enemies reset when changing areas. The Den stays clear once completed.
+The Moor holds **112 enemies across ten outer regions and the old road**, including ranged Embercallers, armored Risen Bulwarks and six named roaming bosses. Committed boss attacks lock their direction at windup: sidestep or use Guard, then strike during recovery. Cleave staggers regular enemies. Bosses enrage below half life. The gate and journal include a hunting ledger with locations, tactics, recommended levels and guaranteed distinct trophies.
+
+There are **69 item types** and ten levels. Higher-tier weapons cover every companion role. Haste speeds attacks/casts, life steal restores health on damage, and frost weapons chill. The 60-slot bag automatically sells overflow drops; comparisons show the new bonuses. Change equipment and talents in camp.
+
+The northeastern cleft leads to the **Den of Evil** (recommended level 3): three connected chambers, 11 creatures including the Gravewarden, his guaranteed Graveward sword, and a one-time 175 gold / 3 potion bounty from Akara. Its entrance and exit use normal navigation. Dungeon quest credit and loose loot survive retreats/reloads; regular packs replenish while its quest boss stays dead.
 
 All six mercenaries can equip armor, rings and charms. Ilyra uses bows, Bram maces, Eira/Soren staves, Aldric swords or maces, and Nyx paired daggers. Charsi sells eight original mercenary weapons, also available as loot. Gear changes damage, life, armor, casting speed and Eira’s healing; class weapon silhouettes remain fixed, with enchanted equipment adding a light accent.
 
 Bram taunts and absorbs damage; Eira heals injured allies; Ilyra fires volleys; Soren slows groups with frost; Aldric protects nearby allies; Nyx flanks and backstabs. Companions share your level and grow in life and damage.
 
-This is an early vertical slice, not a completed Act I. The remaining Act I campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use original four-direction painted sprites, with 16-frame hero/monster movement, 24-frame mercenary movement and 33/17-frame action playback. Intermediate frames are generated from a smaller set of authored poses; denser authored foot-contact poses, eight-direction turning and authored death sequences remain unfinished. No Diablo assets are bundled.
+This is an early vertical slice, not a completed Act I. The remaining Act I campaign, additional hero classes, companion-specific talent trees and multiplayer are not implemented. Combat balance and environment geometry remain provisional. Characters use the approved skeletal sprite pipeline: sixteen hero facings, eight companion/creature facings, displacement-calibrated walks and authored windup, contact, recovery and death clips. The release preserves existing atlases and fixed actor lighting. No Diablo assets are bundled.
 
 ## GitHub Pages
 
@@ -84,7 +88,7 @@ The included `.github/workflows/pages.yml` builds and deploys on pushes to `main
 
 ## Next milestone
 
-Prioritize character motion and combat presentation: clearer foot planting and denser gait poses, eight-facing movement and authored death animation. Blood Moor now spans 84×68 units, with ten outer regions and 72 enemies. The twelve old-road enemies remain the early hunt objective; outer packs offer additional loot and patrol around graveyards, ruins, abandoned camps and a lost caravan. Press M or MAP to enlarge the area map, then click to issue a walking route. Refreshing a completed road hunt resets the whole Moor. The remaining Act I route, deeper skills and companion tactics remain on the roadmap.
+Extend the remaining Act I route from this camp/Moor/Den slice. The Moor spans 84×68 units with ten outer regions, 112 enemies and six roaming bosses. The twelve old-road foes remain the early quest objective; permanent quest credit survives population replenishment. Press M or MAP for the area map and click to walk. The remaining chapter route, additional active skills and richer companion tactics remain on the roadmap. Preserve the approved rigged character direction while refining encounters.
 
 ## Development
 

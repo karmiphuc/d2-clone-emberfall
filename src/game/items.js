@@ -317,6 +317,155 @@ export const ITEMS = {
     element: "shadow",
   },
 };
+// Named trophies have a reliable source; crafted tiers keep repeat hunts useful.
+Object.assign(ITEMS, {
+  graveward: {
+    name: "Graveward",
+    slot: "weapon",
+    weaponType: "sword",
+    rarity: "rare",
+    level: 3,
+    damage: 24,
+    armor: 4,
+    value: 125,
+    element: "holy",
+  },
+  mourning_seal: {
+    name: "Mourning Seal",
+    slot: "ring",
+    rarity: "rare",
+    level: 4,
+    life: 28,
+    leech: 5,
+    value: 130,
+  },
+  cinderbrand: {
+    name: "Cinderbrand",
+    slot: "weapon",
+    weaponType: "axe",
+    rarity: "rare",
+    level: 5,
+    damage: 34,
+    life: 12,
+    value: 160,
+    element: "fire",
+  },
+  oathbreaker_mace: {
+    name: "Oathbreaker's Judgment",
+    slot: "weapon",
+    weaponType: "mace",
+    rarity: "rare",
+    level: 5,
+    damage: 25,
+    armor: 5,
+    value: 160,
+    element: "holy",
+  },
+  carrion_plate: {
+    name: "Carrion King's Mantle",
+    slot: "armor",
+    rarity: "rare",
+    level: 6,
+    armor: 22,
+    life: 42,
+    value: 185,
+  },
+  thornwood_bow: {
+    name: "Thornwitch's String",
+    slot: "weapon",
+    weaponType: "bow",
+    rarity: "rare",
+    level: 4,
+    damage: 20,
+    haste: 10,
+    value: 140,
+  },
+  hollow_staff: {
+    name: "Hollow Seer's Crook",
+    slot: "weapon",
+    weaponType: "staff",
+    rarity: "rare",
+    level: 4,
+    damage: 17,
+    healing: 14,
+    mana: 20,
+    value: 145,
+    element: "frost",
+  },
+  quicksilver_band: {
+    name: "Quicksilver Band",
+    slot: "ring",
+    rarity: "magic",
+    level: 3,
+    haste: 8,
+    mana: 8,
+    value: 65,
+  },
+  bloodstone: {
+    name: "Bloodstone",
+    slot: "charm",
+    rarity: "magic",
+    level: 3,
+    leech: 3,
+    life: 12,
+    value: 60,
+  },
+  company_standard: {
+    name: "Company Standard",
+    slot: "charm",
+    rarity: "rare",
+    level: 6,
+    damage: 5,
+    armor: 6,
+    mana: 18,
+    value: 145,
+  },
+});
+for (const level of [6, 8, 10]) {
+  const tier = level === 6 ? "Runed" : level === 8 ? "Duskforged" : "Ancient";
+  for (const [type, noun] of [
+    ["sword", "longsword"],
+    ["axe", "war axe"],
+    ["mace", "war hammer"],
+    ["bow", "longbow"],
+    ["staff", "crook"],
+    ["daggers", "fangs"],
+  ]) {
+    ITEMS[`${type}_tier_${level}`] = {
+      name: `${tier} ${noun}`,
+      slot: "weapon",
+      weaponType: type,
+      rarity: "rare",
+      level,
+      damage:
+        type === "sword" || type === "axe" ? 12 + level * 4 : 8 + level * 3,
+      life: type === "axe" || type === "mace" ? level * 3 : 0,
+      mana: type === "staff" ? level * 3 : 0,
+      healing: type === "staff" ? level * 2 : 0,
+      haste: type === "bow" || type === "daggers" ? level : 0,
+      value: level * 35,
+    };
+  }
+  ITEMS[`armor_tier_${level}`] = {
+    name: `${tier} hauberk`,
+    slot: "armor",
+    rarity: "rare",
+    level,
+    armor: 14 + level,
+    life: level * 7,
+    value: level * 30,
+  };
+  ITEMS[`ring_tier_${level}`] = {
+    name: `${tier} covenant`,
+    slot: "ring",
+    rarity: "rare",
+    level,
+    damage: level,
+    mana: level * 3,
+    haste: level,
+    value: level * 25,
+  };
+}
 for (const [id, item] of Object.entries(ITEMS))
   if (item.slot === "weapon" && !item.weaponType)
     item.weaponType = ["iron_axe", "ember_cleaver"].includes(id)
@@ -342,6 +491,12 @@ export const VENDOR_STOCK = [
   "iron_bastion",
   "dawnsteel",
   "oath_ring",
+  "quicksilver_band",
+  "bloodstone",
+  "sword_tier_6",
+  "axe_tier_8",
+  "armor_tier_6",
+  "ring_tier_8",
 ];
 export const BAG_LIMIT = 60;
 export function starterEquipment() {
@@ -354,11 +509,11 @@ export function starterEquipment() {
 }
 export function itemStats(item) {
   return (
-    ["damage", "life", "mana", "armor", "healing"]
+    ["damage", "life", "mana", "armor", "healing", "haste", "leech"]
       .filter((k) => item[k])
       .map(
         (k) =>
-          `${item[k] > 0 ? "+" : ""}${item[k]}${k === "armor" ? "%" : ""} ${k}`,
+          `${item[k] > 0 ? "+" : ""}${item[k]}${["armor", "haste", "leech"].includes(k) ? "%" : ""} ${k}`,
       )
       .join(" · ") || "No bonuses"
   );
@@ -377,6 +532,9 @@ export function heroStats(state) {
     mana: 60 + 5 * (level - 1) + sum("mana"),
     armor: Math.min(45, sum("armor")),
     regen: 3 + (state.skills.flow || 0),
+    haste: Math.min(20, sum("haste")),
+    leech: Math.min(15, sum("leech")),
+    element: gear.find((i) => i.slot === "weapon")?.element,
   };
 }
 export function freshCompanionEquipment() {
@@ -423,7 +581,10 @@ export function companionStats(state, id) {
     damage: base.damage + (level - 1) * 2 + sum("damage"),
     armor: Math.min(45, sum("armor")),
     healing: 22 + level * 3 + sum("healing") + Math.floor(sum("mana") / 3),
-    cooldownMultiplier: 1 - Math.min(0.2, sum("mana") * 0.003),
+    leech: Math.min(15, sum("leech")),
+    element: gear.find((i) => i.slot === "weapon")?.element,
+    cooldownMultiplier:
+      1 - Math.min(0.25, sum("mana") * 0.003 + sum("haste") / 100),
   };
 }
 export function equipItem(state, uid, owner = "hero") {
@@ -476,9 +637,18 @@ export function buyItem(state, id) {
   state.inventory.push({ uid: `shop-${state.itemSerial}`, itemId: id });
   return true;
 }
-export function lootItem(state, enemyId, index, elite = false) {
-  if (elite && state.run === 0)
-    return { uid: `loot-${state.run}-${enemyId}`, itemId: "ashen_charm" };
+export function lootItem(
+  state,
+  enemyId,
+  index,
+  elite = false,
+  generation = 0,
+  reward = null,
+) {
+  const uid = `loot-${state.run}-${enemyId}-${generation}`;
+  // Boss trophies are distinct and guaranteed, including items above current level.
+  if (reward && ITEMS[reward]) return { uid, itemId: reward };
+  if (elite && enemyId === "brute") return { uid, itemId: "ashen_charm" };
   const pool = Object.entries(ITEMS).filter(
     ([id, item]) =>
       ![
@@ -486,10 +656,20 @@ export function lootItem(state, enemyId, index, elite = false) {
         "traveler_coat",
         "tempered_sword",
         "ashen_charm",
-      ].includes(id) && item.level <= Math.min(6, levelOf(state) + 1),
+        "graveward",
+        "mourning_seal",
+        "cinderbrand",
+        "oathbreaker_mace",
+        "carrion_plate",
+        "thornwood_bow",
+        "hollow_staff",
+      ].includes(id) &&
+      item.level <= Math.min(10, levelOf(state) + 1) &&
+      (!elite || item.rarity !== "common"),
   );
-  const selected = pool[(state.run * 7 + index * 5) % pool.length];
-  return { uid: `loot-${state.run}-${enemyId}`, itemId: selected[0] };
+  const selected =
+    pool[(state.run * 7 + index * 5 + generation * 11) % pool.length];
+  return { uid, itemId: selected[0] };
 }
 export function addLoot(state, item) {
   if (

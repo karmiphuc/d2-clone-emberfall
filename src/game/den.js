@@ -1,3 +1,4 @@
+import { questKills } from "./expedition.js";
 // Authored dungeon footprint shared by collision, scenery and the map.
 export const DEN_ROOMS = [
   { x: -12, z: 8, w: 10, d: 10 },
@@ -30,6 +31,10 @@ export const DEN_ENCOUNTERS = [
 ].map(([x, z, name], i) => ({
   id: `den-${i + 1}`,
   name,
+  archetype: name,
+  questBoss: name === "Gravewarden",
+  behavior: name === "Gravewarden" ? "duelist" : "melee",
+  reward: name === "Gravewarden" ? "graveward" : undefined,
   x,
   z,
   hp: name === "Gravewarden" ? 240 : name === "Risen" ? 66 : 46,
@@ -40,6 +45,8 @@ export const DEN_ENCOUNTERS = [
 }));
 export const freshDen = () => ({
   defeated: [],
+  questKills: [],
+  spawnCounts: {},
   lootTaken: [],
   dropLocations: {},
   dropItems: {},
@@ -50,7 +57,7 @@ export function claimDenReward(state) {
   const den = state.den;
   if (
     den.rewardClaimed ||
-    !DEN_ENCOUNTERS.every((e) => den.defeated.includes(e.id))
+    !DEN_ENCOUNTERS.every((e) => questKills(den).includes(e.id))
   )
     return false;
   den.rewardClaimed = true;

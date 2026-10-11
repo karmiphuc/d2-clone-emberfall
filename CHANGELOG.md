@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.22.0 — A living Moor and boss hunts
+
+- Expand the Moor to 112 enemies: ranged Embercallers, fast raiders, armored champions and six named roaming bosses with distinct trophies. Preserve the approved rig atlases and weapon attachments.
+- Add committed directional melee boss strikes, readable ground arrows, half-life enrage and recovery windows. Add enemy ember projectiles with arrival damage and line-of-sight checks.
+- Make Cleave interrupt ordinary foes, strengthen heavy-hit recoil, impact marks and opt-in sound, and add a restrained camera impulse that honors softened/reduced effects.
+- Replenish collected regular packs and roaming bosses on departure from camp, plus 90-second field respawns away from every living ally. Quest bosses remain dead, loose drops stay available, and persistent quest credit preserves one-time bounties. Migrate older completed hunt saves.
+- Extend progression to level 10, add deeper talent ranks and expand equipment to 69 types, including role-specific tiers, haste, life steal, frost chill and seven distinct boss trophies.
+- Add a hunting ledger with regions, tactics, level guidance and trophy previews; show boss/champion identity, enrage and recovery in the combat focus panel and new bonuses in item comparisons. Skip offscreen label updates.
+- Add save, replenishment, contact, boss-dodge, trophy and browser regressions with runtime visual review.
+
 ## 0.21.3 — Companion contact and smooth recovery exits
 
 - Resolve ranged companion damage, Frostburst and Eira healing at projectile arrival instead of before release. Keep targeted flights and shared visual/simulation durations.

@@ -2,7 +2,7 @@
 
 ## Current milestone: connected Den of Evil
 
-Playable camp, Blood Moor and an authored three-chamber Den of Evil. One warrior plus three of six recruitable companions; licensed rig-rendered heroes and creatures with original environment art; device-local persistence. The Moor spans 84 × 68 units, ten regions and 72 enemies (twelve on the main hunt), with repeat hunts, levels 1–6, 35 item types and nine talents. The Den adds eleven creatures, the Gravewarden, separate persistent loot and a one-time Akara bounty. Its fixed footprint drives navigation, wall-aware attacks and the minimap. Area changes preserve party vitals; camp restores them.
+Playable camp, Blood Moor and an authored three-chamber Den of Evil. One warrior plus three of six recruitable companions; licensed rig-rendered heroes and creatures with original environment art; device-local persistence. The Moor spans 84 × 68 units, ten regions and 112 enemies (twelve on the main hunt), with six roaming bosses, ranged casters, armored champions and automatic pack replenishment, levels 1–10, 69 item types and nine talents. The Den adds eleven creatures, the Gravewarden, separate persistent loot and a one-time Akara bounty. Its fixed footprint drives navigation, wall-aware attacks and the minimap. Area changes preserve party vitals; camp restores them.
 
 ## Next: expand the chapter route
 

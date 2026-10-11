@@ -29,22 +29,125 @@ const offsets = [
   [-2.4, 1.5],
   [0, 2.6],
   [2.8, 1.4],
+  [-5.3, 0],
+  [5.2, 0],
+  [-1, 5.5],
+  [2, -5.3],
 ];
+export const MOOR_BOSSES = {
+  graves: {
+    name: "Mournfang",
+    archetype: "Gravewarden",
+    behavior: "duelist",
+    reward: "mourning_seal",
+    hp: 330,
+  },
+  northcamp: {
+    name: "Cinderhorn",
+    archetype: "Brute",
+    behavior: "crusher",
+    reward: "cinderbrand",
+    hp: 360,
+  },
+  eastwatch: {
+    name: "The Oathbreaker",
+    archetype: "Gravewarden",
+    behavior: "duelist",
+    reward: "oathbreaker_mace",
+    hp: 420,
+  },
+  southcamp: {
+    name: "Carrion King",
+    archetype: "Brute",
+    behavior: "crusher",
+    reward: "carrion_plate",
+    hp: 460,
+  },
+  thicket: {
+    name: "Thornwitch",
+    archetype: "Fallen",
+    behavior: "ember",
+    reward: "thornwood_bow",
+    hp: 260,
+  },
+  eastgraves: {
+    name: "Hollow Seer",
+    archetype: "Risen",
+    behavior: "ember",
+    reward: "hollow_staff",
+    hp: 300,
+  },
+};
 export const MOOR_EXTRA_ENCOUNTERS = MOOR_REGIONS.flatMap((region, r) =>
   offsets.map(([dx, dz], i) => {
-    const elite = i === 5 && [2, 4, 6, 7].includes(r);
+    const boss = i === 9 ? MOOR_BOSSES[region.id] : null;
+    const elite = !!boss || (i === 5 && [2, 4, 6, 7].includes(r));
     const risen = region.kind === "graves" || (i === 4 && r % 2 === 0);
+    const caster = !elite && i === 7;
+    const champion = !elite && i === 8;
     return {
       id: `${region.id}-${i + 1}`,
-      name: elite ? "Ashen Brute" : risen ? "Risen" : "Fallen",
+      name:
+        boss?.name ||
+        (elite
+          ? "Ashen Brute"
+          : caster
+            ? "Embercaller"
+            : champion
+              ? "Risen Bulwark"
+              : risen
+                ? "Risen"
+                : i === 6
+                  ? "Fallen Raider"
+                  : "Fallen"),
+      archetype:
+        boss?.archetype ||
+        (elite ? "Brute" : champion || (risen && !caster) ? "Risen" : "Fallen"),
+      behavior:
+        boss?.behavior || (caster ? "ember" : elite ? "crusher" : "melee"),
+      reward: boss?.reward,
+      boss: !!boss,
+      champion,
+      armor: champion ? 0.25 : 0,
       x: region.x + dx,
-      z: region.z + dz,
-      hp: elite ? 150 : risen ? 52 : 34,
-      damage: elite ? 18 : risen ? 10 : 7,
-      speed: risen ? 1.1 : elite ? 1.25 : 1.65,
-      gold: elite ? 45 : risen ? 16 : 12,
+      z: region.z + (region.id === "cartroad" && i === 9 ? -dz : dz),
+      hp:
+        boss?.hp ||
+        (elite ? 190 : champion ? 115 : caster ? 60 : risen ? 62 : 42),
+      damage: boss
+        ? 26
+        : elite
+          ? 20
+          : champion
+            ? 14
+            : caster
+              ? 12
+              : risen
+                ? 11
+                : 8,
+      speed:
+        boss?.behavior === "duelist"
+          ? 1.65
+          : risen || champion
+            ? 1.1
+            : elite
+              ? 1.25
+              : i === 6
+                ? 2.2
+                : 1.65,
+      gold: boss
+        ? 95
+        : elite
+          ? 45
+          : champion
+            ? 28
+            : caster
+              ? 22
+              : risen
+                ? 16
+                : 12,
       elite,
-      patrol: true,
+      patrol: !boss,
       region: region.id,
     };
   }),

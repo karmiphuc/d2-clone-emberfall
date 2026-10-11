@@ -1,4 +1,4 @@
-export const LEVEL_XP = [0, 80, 220, 450, 760, 1150];
+export const LEVEL_XP = [0, 80, 220, 450, 760, 1150, 1650, 2300, 3200, 4400];
 export const LEVEL_CAP = LEVEL_XP.length;
 export function levelOf(state) {
   let level = 1;
@@ -10,14 +10,14 @@ export const TALENTS = {
   vitality: {
     name: "Vitality",
     branch: "Vanguard",
-    max: 3,
+    max: 5,
     level: 1,
     description: "+15 maximum life per rank.",
   },
   ironSkin: {
     name: "Iron Skin",
     branch: "Vanguard",
-    max: 2,
+    max: 3,
     level: 3,
     requires: "vitality",
     description: "Take 8% less damage per rank.",
@@ -33,14 +33,14 @@ export const TALENTS = {
   mastery: {
     name: "Weapon Mastery",
     branch: "Slayer",
-    max: 3,
+    max: 5,
     level: 1,
     description: "+2 weapon damage per rank.",
   },
   wideArc: {
     name: "Wide Arc",
     branch: "Slayer",
-    max: 2,
+    max: 3,
     level: 3,
     requires: "mastery",
     description: "Cleave gains 0.6 reach and 15% damage per rank.",
@@ -56,14 +56,14 @@ export const TALENTS = {
   flow: {
     name: "Battle Flow",
     branch: "Tactician",
-    max: 3,
+    max: 5,
     level: 1,
     description: "Regenerate 1 additional mana per second per rank.",
   },
   bulwark: {
     name: "Bulwark",
     branch: "Tactician",
-    max: 2,
+    max: 3,
     level: 3,
     requires: "flow",
     description: "Guard lasts 1 additional second per rank.",

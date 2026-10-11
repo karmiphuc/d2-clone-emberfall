@@ -48,7 +48,7 @@ test("expanded wilderness routes to distant regions and map clicks issue real wa
       }),
     };
   });
-  expect(result.enemies).toBe(72);
+  expect(result.enemies).toBe(112);
   for (const route of result.paths) {
     expect(route.length).toBeGreaterThan(5);
     expect(route.valid).toBe(true);

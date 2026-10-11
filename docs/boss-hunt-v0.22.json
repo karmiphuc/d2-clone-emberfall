@@ -1,0 +1,1790 @@
+{
+  "errors": [],
+  "frames": [
+    {
+      "frame": 0,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 130,
+      "bossHP": 330,
+      "windup": 0.8833333333333333,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 1,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 330,
+      "windup": 0.85,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 2,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 330,
+      "windup": 0.85,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 3,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.7833333333333333,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 4,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.75,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 5,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.75,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 6,
+      "heroClip": "idle",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.6833333333333333,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 7,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.65,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 8,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.65,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 9,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.5833333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 10,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.55,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 11,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 313,
+      "windup": 0.55,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 12,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.4833333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 84
+    },
+    {
+      "frame": 13,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.45000000000000007,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 84
+    },
+    {
+      "frame": 14,
+      "heroClip": "attack",
+      "hero": [-6, 0, 4.4],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.45000000000000007,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 84
+    },
+    {
+      "frame": 15,
+      "heroClip": "walk",
+      "hero": [-5.78318541508529, 0, 4.244750050307985],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.3833333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 16,
+      "heroClip": "walk",
+      "hero": [-5.674778122627935, 0, 4.1671250754619775],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.3500000000000001,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 17,
+      "heroClip": "walk",
+      "hero": [-5.674778122627935, 0, 4.1671250754619775],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.3500000000000001,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 18,
+      "heroClip": "walk",
+      "hero": [-5.457963537713225, 0, 4.011875125769962],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.28333333333333344,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 19,
+      "heroClip": "walk",
+      "hero": [-5.3495562452558705, 0, 3.934250150923955],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.2500000000000001,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 20,
+      "heroClip": "walk",
+      "hero": [-5.3495562452558705, 0, 3.934250150923955],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.2500000000000001,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 21,
+      "heroClip": "walk",
+      "hero": [-5.132741660341161, 0, 3.779000201231941],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.18333333333333346,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 22,
+      "heroClip": "walk",
+      "hero": [-5.024334367883806, 0, 3.7013752263859336],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.15000000000000013,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 23,
+      "heroClip": "walk",
+      "hero": [-5.024334367883806, 0, 3.7013752263859336],
+      "heroHP": 167,
+      "bossHP": 265,
+      "windup": 0.15000000000000013,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 81
+    },
+    {
+      "frame": 24,
+      "heroClip": "walk",
+      "hero": [-4.807519782969096, 0, 3.5461252766939193],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0.08333333333333348,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 80
+    },
+    {
+      "frame": 25,
+      "heroClip": "walk",
+      "hero": [-4.699112490511741, 0, 3.468500301847912],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0.05000000000000015,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 80
+    },
+    {
+      "frame": 26,
+      "heroClip": "walk",
+      "hero": [-4.699112490511741, 0, 3.468500301847912],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0.05000000000000015,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 80
+    },
+    {
+      "frame": 27,
+      "heroClip": "walk",
+      "hero": [-4.482297905597031, 0, 3.313250352155898],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.6,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 79
+    },
+    {
+      "frame": 28,
+      "heroClip": "walk",
+      "hero": [-4.373890613139676, 0, 3.2356253773098906],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.5666666666666667,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 79
+    },
+    {
+      "frame": 29,
+      "heroClip": "walk",
+      "hero": [-4.373890613139676, 0, 3.2356253773098906],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.5666666666666667,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 79
+    },
+    {
+      "frame": 30,
+      "heroClip": "walk",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.5,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 79
+    },
+    {
+      "frame": 31,
+      "heroClip": "walk",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.5,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 79
+    },
+    {
+      "frame": 32,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.43333333333333335,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 79
+    },
+    {
+      "frame": 33,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.4,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 80
+    },
+    {
+      "frame": 34,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.4,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 80
+    },
+    {
+      "frame": 35,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.33333333333333337,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 79
+    },
+    {
+      "frame": 36,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.30000000000000004,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 79
+    },
+    {
+      "frame": 37,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 265,
+      "windup": 0,
+      "recovery": 0.30000000000000004,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 79
+    },
+    {
+      "frame": 38,
+      "heroClip": "idle",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 248,
+      "windup": 0,
+      "recovery": 0.2333333333333334,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 79
+    },
+    {
+      "frame": 39,
+      "heroClip": "attack",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 248,
+      "windup": 0,
+      "recovery": 0.20000000000000007,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 79
+    },
+    {
+      "frame": 40,
+      "heroClip": "attack",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 248,
+      "windup": 0,
+      "recovery": 0.20000000000000007,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 79
+    },
+    {
+      "frame": 41,
+      "heroClip": "attack",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 248,
+      "windup": 0,
+      "recovery": 0.13333333333333341,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 42,
+      "heroClip": "attack",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 248,
+      "windup": 0,
+      "recovery": 0.10000000000000009,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 43,
+      "heroClip": "attack",
+      "hero": [-4.157076028224966, 0, 3.0803754276178763],
+      "heroHP": 155,
+      "bossHP": 248,
+      "windup": 0,
+      "recovery": 0.10000000000000009,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 44,
+      "heroClip": "attack",
+      "hero": [-4.290311634963024, 0, 3.0752714218460047],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0.03333333333333343,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 45,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 9.71445146547012e-17,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 46,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 9.71445146547012e-17,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 83
+    },
+    {
+      "frame": 47,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "walk",
+      "calls": 82
+    },
+    {
+      "frame": 48,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "walk",
+      "calls": 82
+    },
+    {
+      "frame": 49,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "walk",
+      "calls": 82
+    },
+    {
+      "frame": 50,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 82
+    },
+    {
+      "frame": 51,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 52,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 53,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 54,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 55,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 200,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 56,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 188,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 57,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 188,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 58,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 188,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 59,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 188,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 60,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 188,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 61,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 188,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": false,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 62,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 63,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 64,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 65,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 66,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 67,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 68,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 84
+    },
+    {
+      "frame": 69,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 83
+    },
+    {
+      "frame": 70,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 82
+    },
+    {
+      "frame": 71,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 140,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 82
+    },
+    {
+      "frame": 72,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 73,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 74,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 75,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 76,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 77,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0,
+      "recovery": 0,
+      "aim": {
+        "x": 0,
+        "z": 1
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "idle",
+      "calls": 81
+    },
+    {
+      "frame": 78,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0.7666666666666667,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 79,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0.7333333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 80,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 123,
+      "windup": 0.7333333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 81,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.6666666666666667,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 82,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.6333333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 83,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.6333333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 84,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.5666666666666668,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 85,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.5333333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 86,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.5333333333333334,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 87,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.4666666666666668,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 88,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.43333333333333346,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 89,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.43333333333333346,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 86
+    },
+    {
+      "frame": 90,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.3666666666666668,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 84
+    },
+    {
+      "frame": 91,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.3333333333333335,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 92,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.3333333333333335,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 93,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.26666666666666683,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 94,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.2333333333333335,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 95,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.2333333333333335,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 96,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.16666666666666685,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 97,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.13333333333333353,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 98,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.13333333333333353,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 99,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.06666666666666687,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 82
+    },
+    {
+      "frame": 100,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.03333333333333354,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 101,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 155,
+      "bossHP": 36.599999999999994,
+      "windup": 0.03333333333333354,
+      "recovery": 0,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": true,
+      "bossClip": "windup",
+      "calls": 83
+    },
+    {
+      "frame": 102,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 126,
+      "bossHP": 36.599999999999994,
+      "windup": 0,
+      "recovery": 0.6,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "attack",
+      "calls": 83
+    },
+    {
+      "frame": 103,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 126,
+      "bossHP": 0,
+      "windup": 0,
+      "recovery": 0.6,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "death",
+      "calls": 86
+    },
+    {
+      "frame": 104,
+      "heroClip": "attack",
+      "hero": [-4.423547241701082, 0, 3.070167416074133],
+      "heroHP": 126,
+      "bossHP": 0,
+      "windup": 0,
+      "recovery": 0.6,
+      "aim": {
+        "x": 0.9990109133360047,
+        "z": 0.044465661308041325
+      },
+      "enraged": true,
+      "tell": false,
+      "bossClip": "death",
+      "calls": 86
+    }
+  ]
+}

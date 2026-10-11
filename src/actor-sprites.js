@@ -137,23 +137,17 @@ export function equipSprite(actor, weapon) {
     d.weaponLight.visible = !!element;
   }
   if (d.characterId === "hero") {
-    d.spriteRow = ["iron_axe", "ember_cleaver"].includes(weapon) ? 1 : 0;
+    d.spriteRow = ITEMS[weapon]?.weaponType === "axe" ? 1 : 0;
     d.motionKey = d.spriteRow ? "axe" : "sword";
     // Elemental equipment has a restrained, distinct in-world light accent.
     d.weaponLight.color.set(
-      weapon === "frost_edge"
+      ITEMS[weapon]?.element === "frost"
         ? "#75bfe5"
-        : weapon === "dawnsteel"
+        : ITEMS[weapon]?.element === "holy"
           ? "#ffe6a4"
           : "#e87936",
     );
-    d.weaponLight.intensity = [
-      "frost_edge",
-      "ember_cleaver",
-      "dawnsteel",
-    ].includes(weapon)
-      ? 1.8
-      : 0;
+    d.weaponLight.intensity = ITEMS[weapon]?.element ? 1.8 : 0;
     d.weaponLight.visible = d.weaponLight.intensity > 0;
   }
 }

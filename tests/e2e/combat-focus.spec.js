@@ -38,8 +38,9 @@ test("hover inspection preserves attack intent and elite warning clears on death
   });
   const hud = page.locator("#target-info");
   await expect(hud).toHaveAttribute("data-enemy", ids.brute);
-  await expect(hud).toContainText("Heavy strike → You");
+  await expect(hud).toContainText("Committed strike → You");
   await expect(hud).toContainText("Chilled");
+  await expect(hud).not.toContainText("Unaware");
   await expect(
     page.getByRole("progressbar", { name: "Creature health" }),
   ).toHaveAttribute("aria-valuenow", /\d+/);

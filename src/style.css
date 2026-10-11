@@ -2354,3 +2354,85 @@ dialog {
     bottom: 162px;
   }
 }
+
+/* Expedition ledger uses the same parchment, metal and restrained gold as gear. */
+.respawn-note {
+  padding: 12px 15px;
+  border-left: 2px solid #947044;
+  background: #191914;
+  color: #c2b49d;
+  line-height: 1.65;
+}
+.ledger-title {
+  margin-top: 24px;
+  color: #c7a16b;
+  letter-spacing: 0.08em;
+}
+.hunt-ledger {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.hunt-card {
+  padding: 15px;
+  border: 1px solid #514534;
+  background: linear-gradient(140deg, #25241e, #141818);
+}
+.hunt-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  justify-content: space-between;
+}
+.hunt-card-heading strong {
+  color: #d6ba83;
+  font-family: Georgia, serif;
+  font-size: 17px;
+}
+.hunt-card-heading small {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #b39b72;
+}
+.hunt-card p {
+  margin: 7px 0;
+  font-size: 12px;
+}
+.hunt-card .boss-tactic {
+  color: #a6aca9;
+  line-height: 1.5;
+}
+.hunt-trophy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 9px;
+  margin-top: 10px;
+  border-top: 1px solid #453b2b;
+  color: #d2b15f;
+  font-size: 12px;
+}
+.hunt-trophy .item-art {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.hunt-trophy small {
+  display: block;
+  color: #a6aaa5;
+  margin-top: 5px;
+  font-size: 10px;
+}
+.damage-number.heavy {
+  color: #f5d6a0;
+  font-size: 25px;
+  text-shadow:
+    0 2px 4px #000,
+    0 0 8px #632b16;
+}
+@media (max-width: 600px) {
+  .hunt-ledger {
+    grid-template-columns: 1fr;
+  }
+}

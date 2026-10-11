@@ -1,3 +1,4 @@
+import { ITEMS } from "./game/items.js";
 export const PORTRAIT_ORDER = [
   "hero",
   "Ilyra",
@@ -31,7 +32,14 @@ const icons = {
   portal: 11,
 };
 export function itemIcon(id, slot = "", extra = "") {
-  const merc = [
+  const alias = {
+    bow: "hunting_bow",
+    mace: "iron_mace",
+    staff: "renewal_staff",
+    daggers: "steel_daggers",
+    axe: "iron_axe",
+  };
+  const mercIcons = [
     "hunting_bow",
     "frost_bow",
     "iron_mace",
@@ -40,7 +48,14 @@ export function itemIcon(id, slot = "", extra = "") {
     "glacial_staff",
     "steel_daggers",
     "nightfang",
-  ].indexOf(id);
+  ];
+  if (
+    !Object.hasOwn(icons, id) &&
+    !mercIcons.includes(id) &&
+    ITEMS[id]?.weaponType
+  )
+    id = alias[ITEMS[id].weaponType] || "tempered_sword";
+  const merc = mercIcons.indexOf(id);
   if (merc >= 0)
     return `<span class="item-art merc-weapon-art ${extra}" style="--ix:${((merc % 4) * 100) / 3}%;--iy:${Math.floor(merc / 4) * 100}%" aria-hidden="true"></span>`;
   const index =

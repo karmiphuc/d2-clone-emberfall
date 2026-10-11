@@ -20,7 +20,13 @@ export function combatFocus(enemies, hovered, selected, hero) {
 
 export function attackWarning(enemy) {
   return enemy.windup > 0
-    ? Math.max(0, Math.min(1, 1 - enemy.windup / (enemy.elite ? 0.95 : 0.5)))
+    ? Math.max(
+        0,
+        Math.min(
+          1,
+          1 - enemy.windup / (enemy.windupTotal || (enemy.elite ? 0.95 : 0.5)),
+        ),
+      )
     : 0;
 }
 
@@ -39,7 +45,15 @@ export function createCombatFocus(element) {
     element.classList.toggle("elite", !!enemy.elite);
     element.classList.toggle("winding", enemy.windup > 0);
     name.textContent = enemy.name;
-    kind.textContent = enemy.elite ? "ELITE" : "HOSTILE";
+    kind.textContent = enemy.questBoss
+      ? "QUEST BOSS"
+      : enemy.boss
+        ? "BOSS"
+        : enemy.champion
+          ? "CHAMPION"
+          : enemy.elite
+            ? "ELITE"
+            : "HOSTILE";
     life.textContent = `${Math.ceil(enemy.hp)} / ${enemy.maxHp}`;
     health.setAttribute("aria-valuemax", enemy.maxHp);
     health.setAttribute("aria-valuenow", Math.ceil(enemy.hp));
@@ -48,10 +62,14 @@ export function createCombatFocus(element) {
     const statuses = [];
     if (enemy.windup > 0)
       statuses.push(
-        `${enemy.elite ? "Heavy strike" : "Strike"} → ${enemy.victim === "hero" ? "You" : enemy.victim || "Company"} · move clear`,
+        `${enemy.behavior === "ember" ? "Ember bolt" : enemy.elite ? "Committed strike" : "Strike"} → ${enemy.victim === "hero" ? "You" : enemy.victim || "Company"} · move clear`,
       );
+    else if (enemy.recovery > 0 && enemy.elite)
+      statuses.push("Recovering · strike now");
     else if (enemy.engaged) statuses.push("In combat");
     else statuses.push("Unaware");
+    if (enemy.enraged) statuses.push("Enraged");
+    if (enemy.champion) statuses.push("Armored · 25% protection");
     if (enemy.slow > 0) statuses.push("Chilled");
     if (enemy.taunted > 0)
       statuses.push(`Challenged by ${enemy.taunter || "Bram"}`);

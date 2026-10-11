@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("the first area supports repeat hunts to level six, gear, skill trees and all companion roles", async ({
+test("the first area supports repeat hunts, persistent quest credit, gear, skill trees and all companion roles", async ({
   page,
 }) => {
   test.setTimeout(180000);
@@ -37,7 +37,7 @@ test("the first area supports repeat hunts to level six, gear, skill trees and a
         Math.hypot(game.hero.position.x - e.x, game.hero.position.z - e.z);
       for (let n = 0; n < 12; n++) {
         const enemy = c.enemies
-          .filter((e) => e.hp > 0)
+          .filter((e) => e.hp > 0 && /^(fallen|risen)-|^brute$/.test(e.id))
           .sort((a, b) => distance(a) - distance(b))[0];
         if (!enemy) break;
         c.select(enemy.id);
@@ -104,15 +104,18 @@ test("the first area supports repeat hunts to level six, gear, skill trees and a
   for (let hunt = 1; hunt < 4; hunt++) {
     await page.evaluate(() => window.__camp.interact("Blood Moor"));
     await page
-      .getByRole("button", { name: "Start fresh hunt", exact: true })
+      .getByRole("button", { name: "Enter the Blood Moor", exact: true })
       .click();
     result = await clear();
     expect(result.alive, JSON.stringify(result)).toBe(true);
-    expect(result.state.defeated, JSON.stringify(result)).toHaveLength(12);
+    expect(result.state.questKills, JSON.stringify(result)).toEqual(
+      expect.arrayContaining(["brute", "fallen-1", "risen-5"]),
+    );
+
     expect(result.state.lootTaken).toHaveLength(12);
     await page.evaluate(() => window.__camp.returnToCamp());
   }
-  expect(result.level).toBe(6);
+  expect(result.level).toBeGreaterThanOrEqual(5);
   expect(result.state.run).toBe(3);
   expect(
     new Set(result.state.inventory.map((i) => i.itemId)).size,

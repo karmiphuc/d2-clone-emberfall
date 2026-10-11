@@ -1,4 +1,5 @@
-import { MOOR_BOUNDS, huntComplete } from "./moor.js";
+import { questKills, replenish } from "./expedition.js";
+import { MOOR_BOUNDS, MOOR_OBJECTIVE_IDS, huntComplete } from "./moor.js";
 import { DEN_ENCOUNTERS, freshDen, denWalkable } from "./den.js";
 import { ENCOUNTERS } from "./combat.js";
 import { COMPANIONS } from "./companions.js";
@@ -25,6 +26,8 @@ export function freshState() {
     weapon: false,
     stash: 0,
     defeated: [],
+    questKills: [],
+    spawnCounts: {},
     lootTaken: [],
     dropLocations: {},
     dropItems: {},
@@ -59,6 +62,25 @@ export function normalizeSave(raw) {
   result.lootTaken = result.lootTaken.filter((id) =>
     result.defeated.includes(id),
   );
+  result.questKills = [
+    ...new Set(
+      (Array.isArray(raw.questKills)
+        ? raw.questKills
+        : Array.isArray(raw.defeated)
+          ? raw.defeated
+          : []
+      ).filter((id) => ids.includes(id)),
+    ),
+  ];
+  // Earlier repeat hunts erased road kills after paying the bounty. Preserve
+  // that legitimate completed quest when migrating those pre-ledger saves.
+  if (!Array.isArray(raw.questKills) && result.rewardClaimed)
+    result.questKills = [
+      ...new Set([...result.questKills, ...MOOR_OBJECTIVE_IDS]),
+    ];
+  for (const id of ids)
+    if (Number.isSafeInteger(raw.spawnCounts?.[id]) && raw.spawnCounts[id] >= 0)
+      result.spawnCounts[id] = Math.min(999999, raw.spawnCounts[id]);
   const seen = new Set();
   const item = (value) => {
     if (
@@ -148,9 +170,25 @@ export function normalizeSave(raw) {
         ),
       ),
     ];
+    result.den.questKills = [
+      ...new Set(
+        (Array.isArray(den.questKills)
+          ? den.questKills
+          : Array.isArray(den.defeated)
+            ? den.defeated
+            : []
+        ).filter((id) => allowed.includes(id)),
+      ),
+    ];
+    for (const id of allowed)
+      if (
+        Number.isSafeInteger(den.spawnCounts?.[id]) &&
+        den.spawnCounts[id] >= 0
+      )
+        result.den.spawnCounts[id] = Math.min(999999, den.spawnCounts[id]);
     result.den.rewardClaimed =
       den.rewardClaimed === true &&
-      result.den.defeated.length === allowed.length;
+      allowed.every((id) => questKills(result.den).includes(id));
     for (const id of result.den.defeated) {
       if (result.den.lootTaken.includes(id)) continue;
       const p = den.dropLocations?.[id];
@@ -183,19 +221,20 @@ export function normalizeSave(raw) {
   return result;
 }
 export function claimReward(state) {
-  if (state.rewardClaimed || !huntComplete(state.defeated)) return false;
+  if (state.rewardClaimed || !huntComplete(questKills(state))) return false;
   state.rewardClaimed = true;
   state.gold += 100;
   state.potions += 2;
   return true;
 }
 export function newExpedition(state) {
-  if (!huntComplete(state.defeated) || !huntComplete(state.lootTaken))
-    return false;
-  state.run++;
-  state.defeated = [];
-  state.lootTaken = [];
-  state.dropLocations = {};
-  state.dropItems = {};
-  return true;
+  let renewed = false;
+  for (const [progress, encounters] of [
+    [state, ENCOUNTERS],
+    [state.den, DEN_ENCOUNTERS],
+  ])
+    for (const encounter of encounters)
+      renewed = replenish(progress, encounter) || renewed;
+  if (renewed) state.run++;
+  return renewed;
 }

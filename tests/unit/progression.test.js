@@ -39,8 +39,8 @@ test("talent prerequisites, points and free respec change real combat statistics
   assert.equal(trainTalent(s, "vitality"), true);
   assert.equal(heroStats(s).life, 171);
   s.xp = 999999;
-  assert.equal(levelOf(s), 6);
-  assert.equal(skillPoints(s), 10);
+  assert.equal(levelOf(s), 10);
+  assert.equal(skillPoints(s), 18);
 });
 test("equipment swaps preserve items, affect stats and cannot bypass level requirements", () => {
   const s = freshState();
@@ -94,7 +94,7 @@ test("repeat hunts require collecting drops, retain builds and create fresh loot
   assert.notEqual(second.uid, first.uid);
   assert.equal(
     createCombat(s).enemies.filter((e) => e.hp > 0).length,
-    ENCOUNTERS.length,
+    ENCOUNTERS.length - 1,
   );
 });
 test("recruitment enforces three active companions and supports all six specialists", () => {

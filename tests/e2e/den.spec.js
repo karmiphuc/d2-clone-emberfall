@@ -101,7 +101,13 @@ test("explore the Den, clear its chambers, preserve loot and claim its reward on
     }
     return window.__camp.getState();
   });
-  expect(loot.den.lootTaken).toHaveLength(11);
+  expect(loot.den.questKills).toHaveLength(11);
+  const retainedItems = [...loot.inventory, ...Object.values(loot.equipment)]
+    .filter(Boolean)
+    .map((i) => i.uid);
+  for (const item of Object.values(result.state.den.dropItems))
+    expect(retainedItems).toContain(item.uid);
+  expect(loot.den.lootTaken).toContain("den-11");
   await page.evaluate(() => {
     window.__camp.moveTo(-14, 10);
     for (let i = 0; i < 1800; i++)
@@ -114,6 +120,7 @@ test("explore the Den, clear its chambers, preserve loot and claim its reward on
   await page
     .getByRole("button", { name: "Return to camp [6]", exact: true })
     .click();
+  const beforeReward = await page.evaluate(() => window.__camp.getState().gold);
   await page.evaluate(() => window.__camp.interact("Akara"));
   await page
     .getByRole("button", {
@@ -123,7 +130,7 @@ test("explore the Den, clear its chambers, preserve loot and claim its reward on
     .click();
   const claimed = await page.evaluate(() => window.__camp.getState());
   expect(claimed.den.rewardClaimed).toBe(true);
-  expect(claimed.gold).toBe(loot.gold + 175);
+  expect(claimed.gold).toBe(beforeReward + 175);
   await page.evaluate(() => window.__camp.interact("Akara"));
   await expect(
     page.getByRole("button", {

@@ -1,6 +1,8 @@
+import { questKills } from "./game/expedition.js";
 import {
   MOOR_BOUNDS,
   MOOR_REGIONS,
+  MOOR_BOSSES,
   huntCount,
   huntComplete,
 } from "./game/moor.js";
@@ -175,7 +177,10 @@ function combatEvent(event) {
   }
   if (event.type === "hit") {
     const el = document.createElement("span");
-    el.className = "damage-number" + (event.victim === "hero" ? " taken" : "");
+    el.className =
+      "damage-number" +
+      (event.victim === "hero" ? " taken" : "") +
+      (event.heavy ? " heavy" : "");
     el.textContent = Math.round(event.damage);
     document.querySelector("#damage-numbers").append(el);
     const lane = damageNumbers.filter((d) => d.victim === event.victim).length;
@@ -209,14 +214,16 @@ function combatEvent(event) {
       damageNumbers.push({ el, x: ally.x, z: ally.z, life: 1.2 });
     }
   }
+  if (event.type === "respawn") save();
   if (event.type === "kill") {
     update();
+    if (event.boss) toast(`${event.name} defeated · a named trophy awaits.`);
     if (event.complete)
       toast(
         game.zone === "den"
           ? "The Den is clear. Gather the spoils and return to Akara."
           : state.rewardClaimed
-            ? "Road hunt cleared. Collect the road drops, then start a fresh hunt at the eastern gate."
+            ? "Road bounty completed. Explore the named bosses or return for another expedition."
             : "The old road is clear. Return to Akara or explore the outer regions.",
       );
   }
@@ -282,6 +289,7 @@ function installArea(zone) {
   refreshEnemyLabels();
 }
 function enterMoor(fromDen = false) {
+  if (game.zone === "camp") beginNewExpedition();
   installArea("moor");
   pending = null;
   dialog.close();
@@ -306,6 +314,7 @@ function enterMoor(fromDen = false) {
   toast("Stay together. Enemy attacks are telegraphed—move to dodge.");
 }
 function enterDen() {
+  if (game.zone === "camp") beginNewExpedition();
   pending = null;
   dialog.close();
   installArea("den");
@@ -346,16 +355,25 @@ function beginNewExpedition() {
   update();
   return true;
 }
+function huntingLedger() {
+  return `<h3 class="ledger-title">The Moor's most wanted</h3><div class="hunt-ledger">${Object.entries(
+    MOOR_BOSSES,
+  )
+    .map(([id, boss]) => {
+      const region = MOOR_REGIONS.find((r) => r.id === id),
+        dead = state.defeated.includes(`${id}-10`);
+      return `<article class="hunt-card"><div class="hunt-card-heading"><strong>${boss.name}</strong><small>${dead ? "DEFEATED" : "ROAMING BOSS"}</small></div><p>${region.name} · Suggested level ${boss.reward === "carrion_plate" ? 6 : boss.reward === "cinderbrand" || boss.reward === "oathbreaker_mace" ? 5 : 4}</p><p class="boss-tactic">${boss.behavior === "ember" ? "Ranged ember bolts · close the gap or break sight" : boss.behavior === "duelist" ? "Committed blade · sidestep, then punish recovery" : "Heavy committed strike · dodge or raise Guard"}</p><div class="hunt-trophy">${itemIcon(boss.reward, ITEMS[boss.reward].slot)}<span>${ITEMS[boss.reward].name}<small>Guaranteed trophy · Lv ${ITEMS[boss.reward].level}</small></span></div></article>`;
+    })
+    .join("")}</div>`;
+}
 function expeditionModal() {
-  const clear = huntComplete(state.defeated),
-    allLoot = huntComplete(state.lootTaken);
+  const clear = state.defeated.some(
+    (id) => id !== "brute" && state.lootTaken.includes(id),
+  );
   const actions = [{ label: "Enter the Blood Moor", run: () => enterMoor() }];
   if (clear)
     actions.unshift({
-      label: allLoot
-        ? "Start fresh hunt"
-        : "Collect remaining drops before a fresh hunt",
-      disabled: !allLoot,
+      label: "Start fresh hunt",
       run: () => {
         if (beginNewExpedition()) enterMoor();
       },
@@ -363,7 +381,7 @@ function expeditionModal() {
   actions.push({ label: "Stay in camp", run: () => dialog.close() });
   modal(
     "Beyond the palisade",
-    `<p>Hunt ${state.run + 1} · ${huntCount(state.defeated)}/12 enemies defeated. Clear the twelve foes on the old road to finish the hunt. Ten outer regions hold sixty additional foes and more loot. Collect the road drops before refreshing; a fresh hunt resets the entire Moor, including uncollected outer spoils.</p><p>The Den of Evil lies beyond the northeastern ruins (recommended level 3). Earn levels 1–${LEVEL_CAP}, try talents in camp [K], and equip new items [I]. Your three companions share your level.</p><p class="muted">Cleave [1] · Guard [2] · Rally [3] · Potion [4] · Retreat [6]. Later hunts are slightly stronger, capped at hunt 4.</p>`,
+    `<p>Expedition ${state.run + 1} · ${ENCOUNTERS.length} creatures across the old road and ten outer regions. Hunt ranged Embercallers, armored champions and six named bosses. Earn levels 1–${LEVEL_CAP}, build your talents [K], and outfit your whole company [I].</p><p class="respawn-note">Regular enemies and roaming bosses replenish when you leave camp after collecting their loot. In the field, collected packs return after 90 seconds while the company is far away. Quest bosses stay defeated. Quest credit and uncollected spoils are preserved.</p>${huntingLedger()}<p class="muted">The Den of Evil lies at the northeastern cleft (level 3). Cleave [1] staggers regular foes · Guard [2] withstands heavy blows · Potion [4] · Retreat [6].</p>`,
     actions,
     "Blood Moor · Repeatable first area",
   );
@@ -401,8 +419,10 @@ function update() {
     (c, i) => (c.visible = state.roster.includes(Object.keys(roster)[i])),
   );
   const inMoor = game.zone === "moor";
-  const complete = huntComplete(state.defeated);
-  const denClear = state.den.defeated.length === DEN_ENCOUNTERS.length;
+  const complete = huntComplete(questKills(state));
+  const denClear = DEN_ENCOUNTERS.every((e) =>
+    questKills(state.den).includes(e.id),
+  );
   const denQuest =
     game.zone === "den" || (denClear && !state.den.rewardClaimed);
   document.querySelector("#quest-title").textContent = denQuest
@@ -419,9 +439,9 @@ function update() {
             ? "Prepare for the wilderness"
             : "A light in the darkness";
   document.querySelector("#quest-text").innerHTML = denQuest
-    ? `${state.den.defeated.length} / ${DEN_ENCOUNTERS.length} creatures defeated.<br>${denClear ? (state.den.rewardClaimed ? "Bounty claimed. Gather any remaining spoils." : "Return to Akara for your reward.") : "Clear every chamber and defeat the Gravewarden."}`
+    ? `${questKills(state.den).length} / ${DEN_ENCOUNTERS.length} creatures defeated.<br>${denClear ? (state.den.rewardClaimed ? "Bounty claimed. Gather any remaining spoils." : "Return to Akara for your reward.") : "Clear every chamber and defeat the Gravewarden."}`
     : inMoor
-      ? `${huntCount(state.defeated)} / 12 enemies defeated.<br>${complete ? "Road cleared. Explore the outer regions or return to camp." : "Explore the old road and ten outer regions."}`
+      ? `${huntCount(questKills(state))} / 12 enemies defeated.<br>${complete ? "Road cleared. Explore the outer regions or return to camp." : "Explore the old road and ten outer regions."}`
       : complete && !state.rewardClaimed
         ? "Speak to Akara for your reward."
         : state.rewardClaimed
@@ -540,7 +560,7 @@ function itemCard(item, equipped = false) {
         .filter((k) => (def[k] || 0) !== (current[k] || 0))
         .map((k) => {
           const d = (def[k] || 0) - (current[k] || 0);
-          return `<span class="${d > 0 ? "stat-up" : "stat-down"}">${d > 0 ? "+" : ""}${d}${k === "armor" ? "%" : ""} ${k}</span>`;
+          return `<span class="${d > 0 ? "stat-up" : "stat-down"}">${d > 0 ? "+" : ""}${d}${["armor", "haste", "leech"].includes(k) ? "%" : ""} ${k}</span>`;
         })
         .join(" · ")
     : "";
@@ -607,11 +627,11 @@ function showInventory(owner = inventoryOwner) {
   const current = def ? equipment[def.slot] : null;
   const currentDef = current ? ITEMS[current.itemId] : null;
   const compare = def
-    ? ["damage", "life", "mana", "armor", "healing"]
+    ? ["damage", "life", "mana", "armor", "healing", "haste", "leech"]
         .filter((k) => def[k] || 0 || currentDef?.[k] || 0)
         .map((k) => {
           const delta = (def[k] || 0) - (currentDef?.[k] || 0);
-          return `<div class="compare-row"><span>${k === "armor" ? "Protection" : k[0].toUpperCase() + k.slice(1)}</span><span>${currentDef?.[k] || 0}${k === "armor" ? "%" : ""}</span><strong>${def[k] || 0}${k === "armor" ? "%" : ""}</strong><span class="${delta > 0 ? "stat-up" : delta < 0 ? "stat-down" : ""}">${delta > 0 ? "+" : ""}${delta || "—"}</span></div>`;
+          return `<div class="compare-row"><span>${k === "armor" ? "Protection" : k[0].toUpperCase() + k.slice(1)}</span><span>${currentDef?.[k] || 0}${["armor", "haste", "leech"].includes(k) ? "%" : ""}</span><strong>${def[k] || 0}${["armor", "haste", "leech"].includes(k) ? "%" : ""}</strong><span class="${delta > 0 ? "stat-up" : delta < 0 ? "stat-down" : ""}">${delta > 0 ? "+" : ""}${delta || "—"}</span></div>`;
         })
         .join("")
     : "";
@@ -622,7 +642,8 @@ function showInventory(owner = inventoryOwner) {
     def?.slot === "weapon" && compatible
       ? selected.itemId
       : equipment.weapon?.itemId;
-  const appearance = weaponArtwork[weapon] ?? 0;
+  const appearance =
+    weaponArtwork[weapon] ?? (ITEMS[weapon]?.weaponType === "axe" ? 2 : 1);
   modal(
     "Inventory",
     `
@@ -687,7 +708,7 @@ function showInventory(owner = inventoryOwner) {
       .join(
         "",
       )}${!bag.length ? `<p class="bag-empty">${state.inventory.length ? "No items in this category. Choose another filter." : "Your next find belongs here."}</p>` : ""}</div>
-    <p class="inventory-help">Select an item to compare. Equip and sell in camp. Progress saves automatically.</p>`,
+    <p class="inventory-help">Select an item to compare. Equip and sell in camp. Haste speeds attacks/casts; leech restores life on damage. Progress saves automatically.</p>`,
     [],
     ownerName + " · Equipment",
   );
@@ -805,19 +826,21 @@ function showShop() {
 }
 function showJournal() {
   if (state.den.entered) {
-    const clear = state.den.defeated.length === DEN_ENCOUNTERS.length;
+    const clear = DEN_ENCOUNTERS.every((e) =>
+      questKills(state.den).includes(e.id),
+    );
     modal(
       "Den of Evil",
-      `<p>Cleanse the three chambers beneath the Blood Moor. Defeat every creature, including the Gravewarden, then return to Akara.</p><div class="item-row"><span>Creatures defeated</span><span>${state.den.defeated.length} / ${DEN_ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>175 gold · 3 potions</span></div><p>${state.den.rewardClaimed ? "Bounty claimed. The Den remains clear; uncollected loot stays in the dungeon." : clear ? "The Den is cleansed. Speak to Akara in camp." : "Enter through the northeastern cleft in the Blood Moor. Recommended level 3. Retreating preserves defeated enemies and uncollected loot."}</p><h3>The old road</h3><p>Blood Moor: ${huntCount(state.defeated)} / 12 road foes · ${state.defeated.length} / ${ENCOUNTERS.length} total foes defeated · ${state.rewardClaimed ? "First bounty claimed" : "100 gold and 2 potions from Akara after clearing"}.</p>`,
+      `<p>Cleanse the three chambers beneath the Blood Moor. Defeat every creature, including the Gravewarden, then return to Akara.</p><div class="item-row"><span>Creatures defeated</span><span>${questKills(state.den).length} / ${DEN_ENCOUNTERS.length}</span></div><div class="item-row"><span>Reward</span><span>175 gold · 3 potions</span></div><p>${state.den.rewardClaimed ? "Bounty claimed. The Gravewarden stays defeated; regular packs can return. Uncollected spoils stay." : clear ? "The Den is cleansed. Speak to Akara in camp." : "Enter through the northeastern cleft in the Blood Moor. Recommended level 3. Retreating preserves quest credit and uncollected loot. Collected regular packs replenish next expedition."}</p><h3>The old road</h3><p>Blood Moor: ${huntCount(questKills(state))} / 12 road foes · ${state.defeated.length} / ${ENCOUNTERS.length} total foes defeated · ${state.rewardClaimed ? "First bounty claimed" : "100 gold and 2 potions from Akara after clearing"}.</p>`,
       [],
       "Act I · Beneath the Moor",
     );
     return;
   }
-  if (game.zone !== "camp" || state.defeated.length) {
+  if (game.zone !== "camp" || questKills(state).length) {
     modal(
       "The old road",
-      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${huntCount(state.defeated)} / 12 road foes</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "First bounty claimed. Collect the old-road drops, then start another hunt at the eastern gate to keep leveling and finding gear." : huntComplete(state.defeated) ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>`,
+      `<p>Clear the Blood Moor and return to Akara. Your company must defeat the Ashen Brute and the creatures haunting the road.</p><div class="item-row"><span>Enemies defeated</span><span>${huntCount(questKills(state))} / 12 road foes</span></div><div class="item-row"><span>Reward</span><span>100 gold · 2 potions</span></div><p>${state.rewardClaimed ? "First bounty claimed. Leave camp for another hunt, or pursue the six named bosses. Quest credit stays complete." : huntComplete(questKills(state)) ? "Return to Akara to claim your reward." : "Use the eastern gate in camp to begin. Progress is preserved when you retreat."}</p>${huntingLedger()}`,
       [],
       "Act I · First expedition",
     );
@@ -893,7 +916,7 @@ function interact(id) {
   if (game.zone !== "camp") return;
   if (id === "Akara") {
     if (
-      state.den.defeated.length === DEN_ENCOUNTERS.length &&
+      DEN_ENCOUNTERS.every((e) => questKills(state.den).includes(e.id)) &&
       !state.den.rewardClaimed
     ) {
       modal(
@@ -915,7 +938,7 @@ function interact(id) {
       );
       return;
     }
-    if (huntComplete(state.defeated) && !state.rewardClaimed) {
+    if (huntComplete(questKills(state)) && !state.rewardClaimed) {
       modal(
         "The road is clear",
         "<p>“You have given us a little breathing room, traveler. Take these supplies. There will be darker paths ahead.”</p>",
@@ -1438,7 +1461,15 @@ function drawMap() {
     for (const enemy of combat.enemies.filter((e) => e.hp > 0)) {
       const [x, z] = pos(enemy);
       ctx.fillStyle = enemy.elite ? "#e0b068" : "#c36554";
-      ctx.fillRect(x - 2, z - 2, 4, 4);
+      if (enemy.boss || enemy.questBoss) {
+        ctx.beginPath();
+        ctx.moveTo(x, z - 4);
+        ctx.lineTo(x + 4, z);
+        ctx.lineTo(x, z + 4);
+        ctx.lineTo(x - 4, z);
+        ctx.closePath();
+        ctx.fill();
+      } else ctx.fillRect(x - 2, z - 2, 4, 4);
     }
   const [x, z] = pos(hero.position);
   ctx.fillStyle = "#ffe2a1";
@@ -1594,6 +1625,7 @@ function frame(now) {
       Math.abs(v.x) > 1 ||
       (-v.y * 0.5 + 0.5) * innerHeight < 86 ||
       (-v.y * 0.5 + 0.5) * innerHeight > innerHeight - 150;
+    if (enemy.label.hidden) continue;
     const edge = enemy.elite ? 64 : 42;
     enemy.label.style.left = `${Math.max(edge, Math.min(innerWidth - edge, (v.x * 0.5 + 0.5) * innerWidth))}px`;
     enemy.label.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;

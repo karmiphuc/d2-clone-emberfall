@@ -1,3 +1,9 @@
+import {
+  questKills,
+  recordKill,
+  replenish,
+  RESPAWN_SECONDS,
+} from "./expedition.js";
 import { flightSeconds } from "./projectiles.js";
 import {
   MOOR_EXTRA_ENCOUNTERS,
@@ -127,6 +133,9 @@ export const CORE_ENCOUNTERS = [
   },
   {
     id: "brute",
+    questBoss: true,
+    behavior: "crusher",
+    reward: "ashen_charm",
     name: "Ashen Brute",
     x: 11,
     z: -10,
@@ -194,6 +203,8 @@ export function createCombat(
           e.id,
           encounters.findIndex((a) => a.id === e.id),
           e.elite,
+          progress.spawnCounts?.[e.id] || 0,
+          e.reward,
         ),
     }));
   let target = null,
@@ -238,6 +249,7 @@ export function createCombat(
       duration,
       actionId,
       healing: kind === "heal",
+      hostile: kind === "enemy",
       from,
     });
   }
@@ -247,18 +259,20 @@ export function createCombat(
       impact.remaining -= dt;
       if (impact.remaining > 0.000001) continue;
       pendingImpacts.splice(pendingImpacts.indexOf(impact), 1);
-      const victim = (impact.kind === "heal" ? allies : enemies).find(
-        (e) => e.id === impact.target,
-      );
+      const victim = (
+        ["heal", "enemy"].includes(impact.kind) ? allies : enemies
+      ).find((e) => e.id === impact.target);
       if (
         !victim?.hp ||
-        (impact.kind === "heal" && !victim.active) ||
+        (["heal", "enemy"].includes(impact.kind) && !victim.active) ||
         !clearLine(impact.from, victim)
       )
         continue;
       if (impact.kind === "heal") {
         victim.hp = Math.min(victim.maxHp, victim.hp + impact.amount);
         emit({ type: "heal", id: victim.id, source: impact.source });
+      } else if (impact.kind === "enemy") {
+        hitAlly(victim, impact.amount, impact.source);
       } else if (impact.kind === "frostburst") {
         enemies
           .filter(
@@ -294,7 +308,7 @@ export function createCombat(
     return true;
   };
   const hero = allies[0];
-  function hurtEnemy(enemy, damage, source) {
+  function hurtEnemy(enemy, damage, source, heavy = false) {
     if (enemy.hp <= 0) return;
     if (
       source === "hero" &&
@@ -302,10 +316,30 @@ export function createCombat(
       enemy.hp < enemy.maxHp * 0.35
     )
       damage *= 1.35;
+    damage *= 1 - (enemy.armor || 0);
+    if (heavy && !enemy.elite) {
+      enemy.windup = 0;
+      enemy.recovery = Math.max(enemy.recovery, 0.35);
+    }
+    const sourceAlly = allies.find((a) => a.id === source);
+    const sourceStats =
+      source === "hero"
+        ? stats
+        : sourceAlly
+          ? companionStats(state, source)
+          : null;
+    if (sourceStats?.element === "frost")
+      enemy.slow = Math.max(enemy.slow, 1.5);
+    if (sourceStats?.leech && sourceAlly?.hp > 0)
+      sourceAlly.hp = Math.min(
+        sourceAlly.maxHp,
+        sourceAlly.hp + (Math.min(enemy.hp, damage) * sourceStats.leech) / 100,
+      );
     enemy.hp = Math.max(0, enemy.hp - damage);
     emit({
       type: "hit",
       victim: enemy.id,
+      heavy,
       source,
       damage,
       x: enemy.x,
@@ -314,12 +348,15 @@ export function createCombat(
     if (!enemy.hp) {
       enemy.windup = 0;
       if (!progress.defeated.includes(enemy.id)) {
+        recordKill(progress, enemy.id);
         progress.defeated.push(enemy.id);
+        enemy.respawnTimer = RESPAWN_SECONDS;
         progress.dropLocations[enemy.id] = { x: enemy.x, z: enemy.z };
         const oldLevel = levelOf(state);
         state.xp = Math.min(
           LEVEL_XP.at(-1),
-          state.xp + (enemy.elite ? 100 : 20),
+          state.xp +
+            (enemy.boss ? 160 : enemy.elite ? 100 : enemy.champion ? 40 : 20),
         );
         if (levelOf(state) > oldLevel) {
           refreshStats(true);
@@ -330,6 +367,8 @@ export function createCombat(
           enemy.id,
           encounters.findIndex((e) => e.id === enemy.id),
           enemy.elite,
+          progress.spawnCounts?.[enemy.id] || 0,
+          enemy.reward,
         );
         progress.dropItems[enemy.id] = item;
         drops.push({
@@ -343,11 +382,13 @@ export function createCombat(
         emit({
           type: "kill",
           id: enemy.id,
+          boss: enemy.boss || enemy.questBoss,
+          name: enemy.name,
           complete:
             progress === state
               ? MOOR_OBJECTIVE_IDS.includes(enemy.id) &&
-                huntComplete(progress.defeated)
-              : progress.defeated.length === encounters.length,
+                huntComplete(questKills(progress))
+              : encounters.every((e) => questKills(progress).includes(e.id)),
         });
       }
       if (target === enemy.id) target = null;
@@ -391,6 +432,7 @@ export function createCombat(
       damage: reduced,
       x: ally.x,
       z: ally.z,
+      heavy: enemies.find((e) => e.id === source)?.elite || false,
     });
     if (ally.id === "hero" && !target && !movingHero && autoSuppressed <= 0) {
       const attacker = enemies.find(
@@ -421,8 +463,9 @@ export function createCombat(
     )
       return false;
     if (cleave && mana < 8) return false;
-    const duration = cleave ? 0.8 : 0.55,
-      windup = cleave ? 0.22 : 0.16;
+    const speed = 1 - stats.haste / 100;
+    const duration = (cleave ? 0.8 : 0.55) * speed,
+      windup = (cleave ? 0.22 : 0.16) * speed;
     hero.cooldown = duration;
     pendingStrike = {
       id: enemy.id,
@@ -481,6 +524,7 @@ export function createCombat(
             e,
             damage * (1.5 + (state.skills.wideArc || 0) * 0.15),
             "hero",
+            true,
           ),
         );
     else hurtEnemy(enemy, damage, "hero");
@@ -544,6 +588,8 @@ export function createCombat(
                 e.id,
                 encounters.findIndex((a) => a.id === e.id),
                 e.elite,
+                progress.spawnCounts?.[e.id] || 0,
+                e.reward,
               ),
           })),
       );
@@ -844,7 +890,10 @@ export function createCombat(
         } else if (ally.specialCooldown <= 0 && ally.id === "Aldric") {
           hurtEnemy(
             enemy,
-            (spec.damage + bonus) * (enemy.name === "Risen" ? 2 : 1.5),
+            (spec.damage + bonus) *
+              (["Risen", "Gravewarden"].includes(enemy.archetype || enemy.name)
+                ? 2
+                : 1.5),
             ally.id,
           );
           allies
@@ -864,7 +913,39 @@ export function createCombat(
         }
       }
       for (const enemy of enemies) {
-        if (enemy.hp <= 0) continue;
+        if (enemy.hp <= 0) {
+          if (!enemy.questBoss && progress.lootTaken.includes(enemy.id)) {
+            enemy.respawnTimer = (enemy.respawnTimer ?? RESPAWN_SECONDS) - dt;
+            const home = encounters.find((e) => e.id === enemy.id);
+            if (
+              enemy.respawnTimer <= 0 &&
+              allies
+                .filter((a) => a.active && a.hp > 0)
+                .every((a) => distance(a, home) > 18) &&
+              replenish(progress, enemy)
+            ) {
+              Object.assign(enemy, {
+                x: home.x,
+                z: home.z,
+                hp: enemy.maxHp,
+                windup: 0,
+                recovery: 0,
+                cooldown: 0,
+                engaged: false,
+                slow: 0,
+                taunted: 0,
+                victim: null,
+                patrolGoal: null,
+                route: null,
+                navigationReady: false,
+                enraged: false,
+                attackAim: null,
+              });
+              emit({ type: "respawn", id: enemy.id });
+            }
+          }
+          continue;
+        }
         enemy.cooldown = Math.max(0, enemy.cooldown - dt);
         enemy.slow = Math.max(0, enemy.slow - dt);
         enemy.taunted = Math.max(0, enemy.taunted - dt);
@@ -876,12 +957,28 @@ export function createCombat(
               victim?.active &&
               victim.hp > 0 &&
               clearLine(enemy, victim) &&
-              distance(enemy, victim) < (enemy.elite ? 3 : 2)
-            )
-              hitAlly(victim, enemy.damage, enemy.id);
+              distance(enemy, victim) <
+                (enemy.behavior === "ember" ? 8 : enemy.elite ? 3.4 : 2) &&
+              (!enemy.attackAim ||
+                enemy.behavior === "ember" ||
+                ((victim.x - enemy.x) * enemy.attackAim.x +
+                  (victim.z - enemy.z) * enemy.attackAim.z) /
+                  Math.max(0.01, distance(enemy, victim)) >
+                  0.65)
+            ) {
+              if (enemy.behavior === "ember")
+                launch(enemy, victim, enemy.damage, "enemy");
+              else
+                hitAlly(
+                  victim,
+                  enemy.damage * (enemy.enraged ? 1.12 : 1),
+                  enemy.id,
+                );
+            }
             emit({ type: "enemyAttack", id: enemy.id, target: enemy.victim });
-            enemy.cooldown = enemy.elite ? 1.4 : 1;
-            enemy.recovery = 0.26;
+            enemy.cooldown =
+              enemy.behavior === "ember" ? 2.1 : enemy.elite ? 1.65 : 1;
+            enemy.recovery = enemy.elite ? 0.6 : 0.26;
           }
           continue;
         }
@@ -900,6 +997,11 @@ export function createCombat(
             .sort((a, b) => distance(a, enemy) - distance(b, enemy))[0];
         if (!victim) continue;
         const dist = distance(enemy, victim);
+        if (enemy.elite && !enemy.enraged && enemy.hp < enemy.maxHp * 0.5) {
+          enemy.enraged = true;
+          emit({ type: "special", id: enemy.id, name: "Enraged" });
+        }
+        const attackRange = enemy.behavior === "ember" ? 6 : 1.45;
         if (!enemy.engaged && (dist > 8 || !clearLine(enemy, victim))) {
           // Fixed destinations and deliberate pauses prevent near-goal walk/idle chatter.
           if (enemy.patrol) {
@@ -935,7 +1037,17 @@ export function createCombat(
           continue;
         }
         enemy.engaged = true;
-        if (dist > 1.45 || !clearLine(enemy, victim)) {
+        if (enemy.behavior === "ember" && dist < 3 && enemy.cooldown > 0) {
+          const step = enemy.speed * dt;
+          const x =
+            enemy.x + ((enemy.x - victim.x) / Math.max(dist, 0.01)) * step;
+          const z =
+            enemy.z + ((enemy.z - victim.z) / Math.max(dist, 0.01)) * step;
+          if (!blocked(x, z)) {
+            enemy.x = x;
+            enemy.z = z;
+          }
+        } else if (dist > attackRange || !clearLine(enemy, victim)) {
           let destination = victim;
           if (enemyRoute && !clearLine(enemy, victim)) {
             enemy.routeTimer = (enemy.routeTimer || 0) - dt;
@@ -961,7 +1073,22 @@ export function createCombat(
           if (!blocked(enemy.x + dx, enemy.z)) enemy.x += dx;
           if (!blocked(enemy.x, enemy.z + dz)) enemy.z += dz;
         } else if (enemy.cooldown <= 0) {
-          enemy.windup = enemy.elite ? 0.95 : 0.5;
+          enemy.windup =
+            enemy.behavior === "ember"
+              ? 0.7
+              : enemy.elite
+                ? enemy.enraged
+                  ? 0.8
+                  : 0.95
+                : 0.5;
+          enemy.windupTotal = enemy.windup;
+          enemy.attackAim =
+            enemy.elite && enemy.behavior !== "ember"
+              ? {
+                  x: (victim.x - enemy.x) / Math.max(0.01, dist),
+                  z: (victim.z - enemy.z) / Math.max(0.01, dist),
+                }
+              : null;
           enemy.victim = victim.id;
           emit({ type: "windup", id: enemy.id, target: victim.id });
         }

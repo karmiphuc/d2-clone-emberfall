@@ -17,7 +17,7 @@ export function createCombatAudio(context) {
     next = now + 0.07;
     const magic = ["heal", "special", "guard"].includes(event.type);
     const gain = context.createGain();
-    gain.gain.setValueAtTime(magic ? 0.045 : 0.065, now);
+    gain.gain.setValueAtTime(magic ? 0.045 : event.heavy ? 0.09 : 0.065, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + (magic ? 0.3 : 0.12));
     gain.connect(context.destination);
     if (magic) {
@@ -37,7 +37,10 @@ export function createCombatAudio(context) {
         filter = context.createBiquadFilter();
       source.buffer = noise;
       filter.type = "bandpass";
-      filter.frequency.setValueAtTime(event.type === "hit" ? 750 : 1600, now);
+      filter.frequency.setValueAtTime(
+        event.heavy ? 320 : event.type === "hit" ? 750 : 1600,
+        now,
+      );
       filter.frequency.exponentialRampToValueAtTime(220, now + 0.12);
       filter.Q.value = event.type === "hit" ? 1.3 : 0.6;
       source.connect(filter).connect(gain);

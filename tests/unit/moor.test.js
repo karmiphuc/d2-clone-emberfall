@@ -18,7 +18,7 @@ import { gridRoute } from "../../src/grid-route.js";
 
 test("expanded packs fit the map, have unique persistent IDs and leave the starting road isolated", () => {
   assert.equal(MOOR_REGIONS.length, 10);
-  assert.equal(ENCOUNTERS.length, 72);
+  assert.equal(ENCOUNTERS.length, 112);
   assert.equal(new Set(ENCOUNTERS.map((e) => e.id)).size, ENCOUNTERS.length);
   for (const e of MOOR_EXTRA_ENCOUNTERS) {
     assert.ok(e.x > MOOR_BOUNDS.minX + 2 && e.x < MOOR_BOUNDS.maxX - 2);
@@ -35,7 +35,8 @@ test("old-road bounty and repeat hunt remain available without clearing optional
   s.lootTaken = [...MOOR_OBJECTIVE_IDS];
   s.defeated.push(MOOR_EXTRA_ENCOUNTERS[0].id);
   assert.equal(newExpedition(s), true);
-  assert.equal(s.defeated.length, 0);
+  assert.deepEqual(s.defeated, ["brute", MOOR_EXTRA_ENCOUNTERS[0].id]);
+  assert.equal(claimReward(s), false);
 });
 test("outer-region drops survive reload, while out-of-world coordinates are rejected", () => {
   const e = MOOR_EXTRA_ENCOUNTERS[0],
